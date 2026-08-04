@@ -1,4 +1,3 @@
 {
-  "buildCommand": "cd apps/web && npm run build",
-  "outputDirectory": ".vercel/output/static"
+  "buildCommand": "npm run build --workspace=apps/web && rm -rf .vercel && cp -a apps/web/.vercel .vercel"
 }
