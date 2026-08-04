@@ -1,4 +1,4 @@
-# Solo Leveling Academy — Gamified Hunter LMS
+# Cyber Tech Academy — Gamified Hunter LMS
 
 A dark, gamified learning platform where students level up through ranked courses, XP, and achievements.
 
