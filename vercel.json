@@ -1,4 +1,5 @@
 {
-  "buildCommand": "npm run build --workspace=apps/web",
-  "framework": "vite"
+  "framework": null,
+  "buildCommand": "cd apps/web && npm run build",
+  "outputDirectory": "apps/web/.output/public"
 }
