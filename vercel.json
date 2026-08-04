@@ -1,5 +1,3 @@
 {
-  "framework": null,
-  "buildCommand": "cd apps/web && npm run build",
-  "outputDirectory": "apps/web/.output/public"
+  "buildCommand": "cd apps/web && npm run build"
 }
