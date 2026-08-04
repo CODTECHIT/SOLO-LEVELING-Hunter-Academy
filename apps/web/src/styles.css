@@ -260,3 +260,68 @@
 @utility animate-pulse-glow {
   animation: pulse-glow 3.5s ease-in-out infinite;
 }
+
+@keyframes meteor-fall {
+  0% {
+    transform: translateY(-120vh) scale(0.15) rotate(-35deg);
+    filter: brightness(2.5) drop-shadow(0 -40px 60px #00f3ff);
+    opacity: 0;
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: brightness(1.2) drop-shadow(0 0 35px #a855f7);
+    opacity: 1;
+  }
+}
+
+@keyframes shockwave-ring {
+  0% {
+    transform: scale(0.1);
+    opacity: 1;
+    border-width: 8px;
+  }
+  100% {
+    transform: scale(4.5);
+    opacity: 0;
+    border-width: 1px;
+  }
+}
+
+@keyframes impact-shake {
+  0%, 100% { transform: translate(0, 0); }
+  15% { transform: translate(-8px, 6px); }
+  30% { transform: translate(8px, -6px); }
+  45% { transform: translate(-5px, -3px); }
+  60% { transform: translate(5px, 3px); }
+  75% { transform: translate(-2px, 1px); }
+}
+
+@keyframes crack-glow-pulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 15px #00f3ff) drop-shadow(0 0 30px #a855f7);
+    opacity: 0.8;
+  }
+  50% {
+    filter: drop-shadow(0 0 35px #00f3ff) drop-shadow(0 0 60px #ffffff);
+    opacity: 1;
+  }
+}
+
+@utility animate-meteor {
+  animation: meteor-fall 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@utility animate-shockwave {
+  animation: shockwave-ring 0.8s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+}
+
+@utility animate-impact-shake {
+  animation: impact-shake 0.4s ease-in-out forwards;
+}
+
+@utility animate-crack-pulse {
+  animation: crack-glow-pulse 0.4s ease-in-out infinite;
+}

@@ -48,6 +48,11 @@ function Login() {
     <AuthLayout>
       <Panel accent="cyan" className="p-7">
         <div className="text-center">
+          <img
+            src="/logo.png"
+            alt="Solo Leveling Logo"
+            className="mx-auto h-16 w-auto object-contain mb-3 drop-shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+          />
           <p className="font-display text-2xl font-bold tracking-widest text-neon">Cyber Tech</p>
           <p className="text-[10px] uppercase tracking-[0.4em] text-muted-foreground">Academy</p>
           <h1 className="mt-6 font-display text-lg font-bold uppercase text-neon-cyan glow-text">

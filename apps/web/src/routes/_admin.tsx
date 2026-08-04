@@ -43,9 +43,16 @@ function AdminLayout() {
     <div className="flex min-h-screen bg-background">
       {/* Sidebar */}
       <aside className="w-64 flex-shrink-0 border-r border-border bg-surface-2/50 p-6">
-        <div className="mb-8">
-          <h2 className="font-display text-xl font-bold text-neon-purple glow-text">Guild Master</h2>
-          <p className="text-xs tracking-widest text-muted-foreground uppercase mt-1">System Control</p>
+        <div className="mb-8 flex items-center gap-3">
+          <img
+            src="/logo.png"
+            alt="Solo Leveling Logo"
+            className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]"
+          />
+          <div>
+            <h2 className="font-display text-lg font-bold text-neon-purple glow-text">Guild Master</h2>
+            <p className="text-[10px] tracking-widest text-muted-foreground uppercase">System Control</p>
+          </div>
         </div>
         
         <nav className="space-y-1">

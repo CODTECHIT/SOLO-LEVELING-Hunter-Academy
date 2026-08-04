@@ -16,9 +16,11 @@ export function TopNav() {
     <header className="sticky top-0 z-50 border-b border-neon-purple/25 bg-background/80 backdrop-blur-xl">
       <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:flex sm:justify-between">
         <Link to="/" className="flex min-w-0 items-center gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-neon-cyan/50 bg-surface font-display text-sm font-bold text-neon-cyan">
-            SL
-          </span>
+          <img
+            src="/logo.png"
+            alt="Solo Leveling Hunter Academy Logo"
+            className="h-9 w-auto object-contain transition-transform hover:scale-105"
+          />
           <span className="min-w-0">
             <span className="block truncate font-display text-sm font-bold tracking-widest text-neon">
               Cyber Tech
