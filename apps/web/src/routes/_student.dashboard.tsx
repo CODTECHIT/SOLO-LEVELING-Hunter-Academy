@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { getCurrentUserFn } from "@/server/auth";
 import { getEnrolledCoursesFn } from "@/server/courses";
+import { HunterStatsBar } from "@/components/site/HunterStatsBar";
 
 export const Route = createFileRoute('/_student/dashboard')({
   beforeLoad: async () => {
@@ -37,22 +38,12 @@ function Dashboard() {
     <div className="animate-in fade-in duration-500 space-y-6">
       <h1 className="font-display text-2xl font-bold text-foreground">Welcome back, {user.name}</h1>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-center">
         <Panel accent="cyan" className="flex flex-col justify-center">
           <div className="text-sm text-muted-foreground mb-1 uppercase tracking-wider">Current Rank</div>
           <div className="flex items-center gap-3">
-            <span className="text-4xl font-display font-bold text-neon-cyan">E</span>
-            <span className="text-sm text-muted-foreground border border-border px-2 py-0.5 rounded-full">Novice</span>
-          </div>
-        </Panel>
-
-        <Panel accent="purple" className="flex flex-col justify-center">
-          <div className="text-sm text-muted-foreground mb-1 uppercase tracking-wider">Total XP</div>
-          <div className="text-4xl font-display font-bold text-neon-purple">
-            150 <span className="text-lg text-muted-foreground font-sans font-normal">/ 1000</span>
-          </div>
-          <div className="h-1.5 bg-background mt-3 rounded-full overflow-hidden">
-            <div className="h-full bg-neon-purple w-[15%]" />
+            <span className="text-4xl font-display font-bold text-neon-cyan glow-text">E</span>
+            <span className="text-sm text-muted-foreground border border-border px-2 py-0.5 rounded-full">Novice Hunter</span>
           </div>
         </Panel>
 
@@ -62,6 +53,10 @@ function Dashboard() {
             0
           </div>
         </Panel>
+
+        <div className="sm:col-span-2 lg:col-span-1">
+          <HunterStatsBar expCurrent={150} expMax={1000} hpPercent={88} mpPercent={75} />
+        </div>
       </div>
 
       <Panel>

@@ -13,42 +13,60 @@ export function TopNav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-neon-purple/25 bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto grid max-w-7xl grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-4 py-3 sm:flex sm:justify-between">
-        <Link to="/" className="flex min-w-0 items-center gap-3">
-          <img
-            src="/logo.png"
-            alt="Solo Leveling Hunter Academy Logo"
-            className="h-9 w-auto object-contain transition-transform hover:scale-105"
-          />
-          <span className="min-w-0">
-            <span className="block truncate font-display text-sm font-bold tracking-widest text-neon">
-              Cyber Tech
-            </span>
-            <span className="block truncate text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-              Hunter Academy
-            </span>
-          </span>
-        </Link>
-
-        <nav className="hidden items-center gap-1 lg:flex">
+    <header className="sticky top-0 z-50 border-b border-neon-purple/25 bg-background/85 backdrop-blur-xl">
+      <div className="mx-auto max-w-7xl px-4 py-2.5 flex items-center justify-between gap-4">
+        
+        {/* Left Side: Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-2 flex-1 justify-start">
           {links.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               activeOptions={{ exact: l.to === "/" }}
               activeProps={{
-                className: "text-neon-cyan border-neon-cyan/50 bg-neon-cyan/10",
+                className: "text-neon-cyan border-neon-cyan/50 bg-neon-cyan/10 shadow-[0_0_12px_rgba(0,243,255,0.2)]",
               }}
-              inactiveProps={{ className: "text-muted-foreground border-transparent" }}
-              className="rounded-lg border px-3 py-1.5 font-display text-xs uppercase tracking-wider transition-colors hover:text-foreground"
+              inactiveProps={{ className: "text-muted-foreground border-transparent hover:text-foreground" }}
+              className="rounded-lg border px-3.5 py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition-colors"
             >
               {l.label}
             </Link>
           ))}
         </nav>
 
-        <div className="flex shrink-0 items-center gap-2">
+        {/* Mobile menu trigger on the left for small screens */}
+        <div className="lg:hidden flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Menu"
+            onClick={() => setOpen((v) => !v)}
+          >
+            <Menu />
+          </Button>
+        </div>
+
+        {/* Center: BIG Prominent Logo */}
+        <div className="flex-1 flex justify-center items-center">
+          <Link to="/" className="flex flex-col sm:flex-row items-center gap-2 group py-1">
+            <img
+              src="/logo.png"
+              alt="Solo Leveling Hunter Academy Logo"
+              className="h-14 sm:h-18 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_0_16px_rgba(0,243,255,0.5)]"
+            />
+            <div className="text-center sm:text-left">
+              <span className="block font-display text-base sm:text-lg font-black tracking-widest text-neon uppercase leading-none">
+                Cyber Tech
+              </span>
+              <span className="block text-[10px] uppercase tracking-[0.35em] text-neon-cyan/80 font-bold mt-0.5">
+                Hunter Academy
+              </span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Right Side: Action Buttons */}
+        <div className="flex-1 flex items-center justify-end gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -61,33 +79,25 @@ export function TopNav() {
             <Bell className="text-muted-foreground" />
           </Button>
           <Link to="/login">
-            <Button variant="neon" size="sm">
-              <Shield /> Sign in
+            <Button variant="neon" size="sm" className="font-display tracking-wider">
+              <Shield className="w-4 h-4" /> Sign in
             </Button>
           </Link>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="lg:hidden"
-            aria-label="Menu"
-            onClick={() => setOpen((v) => !v)}
-          >
-            <Menu />
-          </Button>
         </div>
       </div>
 
+      {/* Mobile Navigation Dropdown */}
       {open && (
-        <nav className="grid gap-1 border-t border-neon-purple/20 px-4 py-3 lg:hidden">
+        <nav className="grid gap-1 border-t border-neon-purple/20 px-4 py-3 lg:hidden bg-background/95 backdrop-blur-2xl">
           {links.map((l) => (
             <Link
               key={l.to}
               to={l.to}
               onClick={() => setOpen(false)}
               activeOptions={{ exact: l.to === "/" }}
-              activeProps={{ className: "text-neon-cyan" }}
+              activeProps={{ className: "text-neon-cyan font-bold bg-neon-cyan/10" }}
               inactiveProps={{ className: "text-muted-foreground" }}
-              className="rounded-lg px-3 py-2 font-display text-xs uppercase tracking-wider"
+              className="rounded-lg px-3 py-2 font-display text-xs uppercase tracking-wider transition-colors"
             >
               {l.label}
             </Link>

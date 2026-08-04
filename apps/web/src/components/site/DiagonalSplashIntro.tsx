@@ -49,8 +49,8 @@ export function DiagonalSplashIntro() {
       {/* Meteor Shockwave Rings */}
       {(stage === "impact" || stage === "crack") && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-          <div className="w-64 h-64 rounded-full border-4 border-neon-cyan/80 animate-shockwave shadow-[0_0_50px_#00f3ff]" />
-          <div className="w-64 h-64 rounded-full border-4 border-neon-purple/80 animate-shockwave delay-100 shadow-[0_0_50px_#a855f7]" />
+          <div className="w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full border-4 border-neon-cyan/80 animate-shockwave shadow-[0_0_80px_#00f3ff]" />
+          <div className="w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full border-4 border-neon-purple/80 animate-shockwave delay-100 shadow-[0_0_80px_#a855f7]" />
         </div>
       )}
 
@@ -60,7 +60,7 @@ export function DiagonalSplashIntro() {
           stage === "split"
             ? "translate-x-[90vw] -translate-y-[90vh] rotate-3 opacity-0"
             : stage === "crack"
-            ? "-translate-x-1.5 -translate-y-1.5"
+            ? "-translate-x-2 -translate-y-2"
             : "translate-x-0 translate-y-0"
         }`}
         style={{
@@ -68,22 +68,22 @@ export function DiagonalSplashIntro() {
         }}
       >
         <div className="relative h-full w-full bg-[#07090e] grid-runes flex flex-col items-center justify-center">
-          <div className="absolute inset-0 bg-radial from-neon-purple/25 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-radial from-neon-purple/30 via-transparent to-transparent pointer-events-none" />
 
-          {/* Logo Container with Meteor Fall Animation */}
-          <div className={`relative flex flex-col items-center ${stage === "meteor" ? "animate-meteor" : ""}`}>
+          {/* Large Centered Logo */}
+          <div className={`relative flex flex-col items-center justify-center ${stage === "meteor" ? "animate-meteor" : ""}`}>
             <div className="relative">
               <img
                 src="/logo.png"
                 alt="Solo Leveling Logo"
-                className="h-36 sm:h-44 w-auto object-contain drop-shadow-[0_0_35px_rgba(0,243,255,0.7)]"
+                className="h-56 sm:h-72 md:h-80 lg:h-96 w-auto object-contain drop-shadow-[0_0_50px_rgba(0,243,255,0.85)]"
               />
             </div>
-            <div className="text-center mt-3">
-              <h1 className="font-display text-3xl sm:text-4xl font-black uppercase tracking-[0.25em] text-neon glow-text">
+            <div className="text-center mt-4">
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black uppercase tracking-[0.25em] text-neon glow-text">
                 Solo Leveling
               </h1>
-              <p className="font-display text-xs uppercase tracking-[0.4em] text-neon-cyan mt-1">
+              <p className="font-display text-sm sm:text-base uppercase tracking-[0.45em] text-neon-cyan font-bold mt-2">
                 Hunter Academy
               </p>
             </div>
@@ -97,7 +97,7 @@ export function DiagonalSplashIntro() {
           stage === "split"
             ? "-translate-x-[90vw] translate-y-[90vh] -rotate-3 opacity-0"
             : stage === "crack"
-            ? "translate-x-1.5 translate-y-1.5"
+            ? "translate-x-2 translate-y-2"
             : "translate-x-0 translate-y-0"
         }`}
         style={{
@@ -105,22 +105,22 @@ export function DiagonalSplashIntro() {
         }}
       >
         <div className="relative h-full w-full bg-[#07090e] grid-runes flex flex-col items-center justify-center">
-          <div className="absolute inset-0 bg-radial from-neon-cyan/25 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute inset-0 bg-radial from-neon-cyan/30 via-transparent to-transparent pointer-events-none" />
 
-          {/* Logo Container with Meteor Fall Animation */}
-          <div className={`relative flex flex-col items-center ${stage === "meteor" ? "animate-meteor" : ""}`}>
+          {/* Large Centered Logo */}
+          <div className={`relative flex flex-col items-center justify-center ${stage === "meteor" ? "animate-meteor" : ""}`}>
             <div className="relative">
               <img
                 src="/logo.png"
                 alt="Solo Leveling Logo"
-                className="h-36 sm:h-44 w-auto object-contain drop-shadow-[0_0_35px_rgba(168,85,247,0.7)]"
+                className="h-56 sm:h-72 md:h-80 lg:h-96 w-auto object-contain drop-shadow-[0_0_50px_rgba(168,85,247,0.85)]"
               />
             </div>
-            <div className="text-center mt-3">
-              <h1 className="font-display text-3xl sm:text-4xl font-black uppercase tracking-[0.25em] text-neon glow-text">
+            <div className="text-center mt-4">
+              <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black uppercase tracking-[0.25em] text-neon glow-text">
                 Solo Leveling
               </h1>
-              <p className="font-display text-xs uppercase tracking-[0.4em] text-neon-cyan mt-1">
+              <p className="font-display text-sm sm:text-base uppercase tracking-[0.45em] text-neon-cyan font-bold mt-2">
                 Hunter Academy
               </p>
             </div>
@@ -140,8 +140,8 @@ export function DiagonalSplashIntro() {
               <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
             </linearGradient>
             <filter id="neonGlowBlur" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="6" result="blur1" />
-              <feGaussianBlur stdDeviation="15" result="blur2" />
+              <feGaussianBlur stdDeviation="8" result="blur1" />
+              <feGaussianBlur stdDeviation="18" result="blur2" />
               <feMerge>
                 <feMergeNode in="blur2" />
                 <feMergeNode in="blur1" />
@@ -157,7 +157,7 @@ export function DiagonalSplashIntro() {
             x2="100%"
             y2="42%"
             stroke="url(#crackBeam)"
-            strokeWidth="12"
+            strokeWidth="14"
             filter="url(#neonGlowBlur)"
             className={`transition-opacity duration-300 ${
               stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
@@ -171,7 +171,7 @@ export function DiagonalSplashIntro() {
             x2="100%"
             y2="42%"
             stroke="#ffffff"
-            strokeWidth="3"
+            strokeWidth="4"
             className={`transition-opacity duration-300 ${
               stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
             }`}
@@ -182,17 +182,17 @@ export function DiagonalSplashIntro() {
       {/* Impact Sparks & Flash */}
       {stage === "impact" && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-          <div className="w-full h-full bg-white/20 blur-xl animate-ping" />
+          <div className="w-full h-full bg-white/25 blur-2xl animate-ping" />
         </div>
       )}
 
       {/* System Status Text */}
       <div
-        className={`absolute bottom-8 left-1/2 -translate-x-1/2 font-display text-xs tracking-[0.35em] uppercase text-neon-cyan transition-opacity duration-300 z-40 ${
+        className={`absolute bottom-8 left-1/2 -translate-x-1/2 font-display text-sm tracking-[0.35em] uppercase text-neon-cyan transition-opacity duration-300 z-40 ${
           stage === "split" ? "opacity-0" : "opacity-100"
         }`}
       >
-        <span className="inline-block animate-pulse">
+        <span className="inline-block animate-pulse font-bold">
           {stage === "meteor"
             ? "⚡ METEORIC GATE DESCENDING..."
             : stage === "impact" || stage === "crack"

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { PlayCircle, Lock, Send, Bot, CheckCircle2, ChevronRight, Pause, Volume2, Maximize } from "lucide-react";
 import { getCatalogFn } from "@/server/courses";
 import { Panel } from "@/components/site/ui-bits";
+import { HunterStatsBar } from "@/components/site/HunterStatsBar";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -45,37 +46,7 @@ function LandingPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 w-full md:w-[400px]">
-            <div className="space-y-1">
-              <div className="flex justify-between text-[10px] font-display uppercase tracking-wider text-muted-foreground">
-                <span>EXP</span>
-                <span className="text-neon-cyan">74,999 / 75,000</span>
-              </div>
-              <div className="h-2 w-full bg-surface-2 rounded-full overflow-hidden">
-                <div className="h-full bg-neon-cyan shadow-[0_0_10px_var(--neon-cyan)]" style={{ width: '99%' }} />
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="space-y-1 flex-1">
-                <div className="flex justify-between text-[10px] font-display uppercase tracking-wider text-muted-foreground">
-                  <span>HP • Focus</span>
-                  <span className="text-neon-lime">92%</span>
-                </div>
-                <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden">
-                  <div className="h-full bg-neon-lime shadow-[0_0_10px_var(--neon-lime)]" style={{ width: '92%' }} />
-                </div>
-              </div>
-              <div className="space-y-1 flex-1">
-                <div className="flex justify-between text-[10px] font-display uppercase tracking-wider text-muted-foreground">
-                  <span>MP • Streak</span>
-                  <span className="text-neon-purple">68%</span>
-                </div>
-                <div className="h-1.5 w-full bg-surface-2 rounded-full overflow-hidden">
-                  <div className="h-full bg-neon-purple shadow-[0_0_10px_var(--neon-purple)]" style={{ width: '68%' }} />
-                </div>
-              </div>
-            </div>
-          </div>
+          <HunterStatsBar expCurrent={74999} expMax={75000} hpPercent={92} mpPercent={68} />
         </Panel>
 
         <div className="grid lg:grid-cols-[1fr_400px] gap-6">
