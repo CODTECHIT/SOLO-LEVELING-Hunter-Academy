@@ -1,42 +1,63 @@
-import { createFileRoute, Outlet, redirect, Link, useRouter } from '@tanstack/react-router'
-import { getCurrentUserFn } from '@/server/auth'
-import { promoteToAdminFn } from '@/server/admin'
-import { LayoutDashboard, BookOpen, Users, ShieldAlert, FolderTree, Shield, PieChart, ReceiptText as ReceiptRefund, FileText, HelpCircle, ImageIcon, Settings, Monitor, Star, UserPlus } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
+import { getCurrentUserFn } from "@/server/auth";
+import { promoteToAdminFn } from "@/server/admin";
+import {
+  LayoutDashboard,
+  BookOpen,
+  Users,
+  ShieldAlert,
+  FolderTree,
+  Shield,
+  PieChart,
+  ReceiptText as ReceiptRefund,
+  FileText,
+  HelpCircle,
+  ImageIcon,
+  Settings,
+  Monitor,
+  Star,
+  UserPlus,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export const Route = createFileRoute('/_admin')({
+export const Route = createFileRoute("/_admin")({
   beforeLoad: async () => {
-    const user = await getCurrentUserFn()
+    const user = await getCurrentUserFn();
     if (!user) {
-      throw redirect({ to: '/login' })
+      throw redirect({ to: "/login" });
     }
-    return { user }
+    return { user };
   },
   component: AdminLayout,
-})
+});
 
 function AdminLayout() {
-  const { user } = Route.useRouteContext()
-  const router = useRouter()
+  const { user } = Route.useRouteContext();
+  const router = useRouter();
 
   const handlePromote = async () => {
-    await promoteToAdminFn()
-    router.invalidate()
-  }
+    await promoteToAdminFn();
+    router.invalidate();
+  };
 
-  if (user.role !== 'ADMIN') {
+  if (user.role !== "ADMIN") {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4 text-center">
         <ShieldAlert className="mb-4 h-16 w-16 text-neon-amber" />
         <h1 className="font-display text-2xl font-bold text-foreground">Access Denied</h1>
-        <p className="mt-2 text-muted-foreground">You must be a Guild Master (ADMIN) to access this sector.</p>
-        
-        {/* Temporary promotion button for testing */}
-        <Button variant="neonPurple" className="mt-6" onClick={handlePromote}>
-          Promote Me to Admin (Dev Mode)
-        </Button>
+        <p className="mt-2 text-muted-foreground">
+          You must be a Guild Master (ADMIN) to access this sector.
+        </p>
+
+        {/* Temporary promotion button for testing — dev builds only. The server
+            fn also refuses to promote in production. */}
+        {import.meta.env.DEV && (
+          <Button variant="neonPurple" className="mt-6" onClick={handlePromote}>
+            Promote Me to Admin (Dev Mode)
+          </Button>
+        )}
       </div>
-    )
+    );
   }
 
   return (
@@ -50,13 +71,19 @@ function AdminLayout() {
             className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]"
           />
           <div>
-            <h2 className="font-display text-lg font-bold text-neon-purple glow-text">Guild Master</h2>
-            <p className="text-[10px] tracking-widest text-muted-foreground uppercase">System Control</p>
+            <h2 className="font-display text-lg font-bold text-neon-purple glow-text">
+              Guild Master
+            </h2>
+            <p className="text-[10px] tracking-widest text-muted-foreground uppercase">
+              System Control
+            </p>
           </div>
         </div>
-        
+
         <nav className="space-y-1">
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Dashboard</div>
+          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Dashboard
+          </div>
           <Link
             to="/admin"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
@@ -64,7 +91,9 @@ function AdminLayout() {
             <LayoutDashboard className="h-4 w-4" /> Overview
           </Link>
 
-          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Courses</div>
+          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Courses
+          </div>
           <Link
             to="/admin/courses"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
@@ -78,7 +107,9 @@ function AdminLayout() {
             <FolderTree className="h-4 w-4" /> Categories
           </Link>
 
-          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Users</div>
+          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Users
+          </div>
           <Link
             to="/admin/users/students"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
@@ -98,7 +129,9 @@ function AdminLayout() {
             <Shield className="h-4 w-4" /> Roles
           </Link>
 
-          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Financials</div>
+          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Financials
+          </div>
           <Link
             to="/admin/reports"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-amber/10 hover:text-neon-amber [&.active]:bg-neon-amber/20 [&.active]:text-neon-amber"
@@ -112,7 +145,9 @@ function AdminLayout() {
             <ReceiptRefund className="h-4 w-4" /> Refunds
           </Link>
 
-          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">CMS</div>
+          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            CMS
+          </div>
           <Link
             to="/admin/cms/pages"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-lime/10 hover:text-neon-lime [&.active]:bg-neon-lime/20 [&.active]:text-neon-lime"
@@ -132,7 +167,9 @@ function AdminLayout() {
             <ImageIcon className="h-4 w-4" /> Sliders
           </Link>
 
-          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Settings</div>
+          <div className="px-3 py-2 mt-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            Settings
+          </div>
           <Link
             to="/admin/settings/site"
             className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-cyan/10 hover:text-neon-cyan [&.active]:bg-neon-cyan/20 [&.active]:text-neon-cyan"
@@ -159,5 +196,5 @@ function AdminLayout() {
         <Outlet />
       </main>
     </div>
-  )
+  );
 }

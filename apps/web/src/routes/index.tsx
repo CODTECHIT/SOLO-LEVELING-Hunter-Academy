@@ -20,9 +20,10 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
-  const { courses } = Route.useLoaderData();
-  // Use up to 4 courses for the mock enrolled list
-  const mockCourses = courses.slice(0, 4);
+  const { fullCourses } = Route.useLoaderData();
+  // Mock "my enrolled" list shows the flagship full courses (consistent tier);
+  // topic modules live in the Hunter Pass section.
+  const mockCourses = fullCourses.slice(0, 4);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">

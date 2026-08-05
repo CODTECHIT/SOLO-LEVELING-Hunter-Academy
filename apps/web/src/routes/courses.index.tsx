@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, PlayCircle } from "lucide-react";
+import { Search, PlayCircle, Layers } from "lucide-react";
 import { PageShell } from "@/components/site/nav";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ export const Route = createFileRoute("/courses/")({
 });
 
 function Catalog() {
-  const { courses, categories } = Route.useLoaderData();
+  const { categories, fullCourses } = Route.useLoaderData();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
@@ -32,19 +32,34 @@ function Catalog() {
   };
 
   const filteredCourses = useMemo(() => {
-    return courses.filter(course => {
+    return fullCourses.filter(course => {
       const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.description.toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(course.categoryId);
       return matchesSearch && matchesCategory;
     });
-  }, [courses, searchQuery, selectedCategories]);
+  }, [fullCourses, searchQuery, selectedCategories]);
 
   return (
     <PageShell
-      title="System Catalog: Advanced Studies"
-      subtitle="Browse and unlock modules individually or claim the full pathway."
+      title="System Catalog: Full Courses"
+      subtitle="Complete paid pathways. Master an entire discipline from start to finish."
     >
+      {/* Cross-link to the module tier (Hunter Pass) */}
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-neon-amber/25 bg-neon-amber/5 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <Layers className="h-5 w-5 text-neon-amber shrink-0" />
+          <p className="text-sm text-muted-foreground">
+            Want a quick, topic-wise fix instead? Short <span className="text-neon-amber font-medium">module courses</span> start at just ₹399.
+          </p>
+        </div>
+        <Link to="/pricing">
+          <Button variant="neon" size="sm" className="shrink-0">
+            Browse Hunter Pass
+          </Button>
+        </Link>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
         {/* Sidebar */}
         <Panel accent="cyan" className="h-max">
@@ -71,7 +86,7 @@ function Catalog() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search for a skill, module or pathway..."
+              placeholder="Search for a skill or pathway..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-background/50 border border-border rounded-xl pl-10 pr-4 py-3 text-sm focus:outline-none focus:border-neon-cyan/50 focus:ring-1 focus:ring-neon-cyan/50 transition-all"
@@ -90,6 +105,9 @@ function Catalog() {
                     </div>
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
+                  <span className="absolute left-3 top-3 inline-flex items-center rounded-md bg-neon-purple/20 px-2 py-1 text-[10px] font-display font-bold uppercase tracking-widest text-neon-purple ring-1 ring-inset ring-neon-purple/40">
+                    Full Course
+                  </span>
                 </div>
                 <div className="flex flex-1 flex-col p-6 relative z-10 -mt-10">
                   <span className="inline-flex items-center rounded-md bg-neon-purple/10 px-2 py-1 text-xs font-medium text-neon-purple ring-1 ring-inset ring-neon-purple/20 mb-4 w-fit">
@@ -108,7 +126,7 @@ function Catalog() {
             ))}
             {filteredCourses.length === 0 && (
               <div className="col-span-full py-12 text-center text-muted-foreground">
-                No courses found matching your criteria.
+                No full courses found matching your criteria.
               </div>
             )}
           </div>

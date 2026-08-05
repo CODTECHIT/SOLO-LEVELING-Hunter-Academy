@@ -121,6 +121,12 @@
   --glow-lime:
     0 0 0 1px color-mix(in oklab, var(--neon-lime) 45%, transparent),
     0 0 24px -4px color-mix(in oklab, var(--neon-lime) 50%, transparent);
+  --glow-amber:
+    0 0 0 1px color-mix(in oklab, var(--neon-amber) 45%, transparent),
+    0 0 24px -4px color-mix(in oklab, var(--neon-amber) 50%, transparent);
+  --glow-slate:
+    0 0 0 1px color-mix(in oklab, var(--neon-cyan) 30%, transparent),
+    0 0 24px -4px color-mix(in oklab, var(--neon-cyan) 35%, transparent);
 }
 
 .dark {
@@ -181,6 +187,22 @@
   border: 1px solid color-mix(in oklab, var(--neon-lime) 30%, transparent);
   border-radius: var(--radius-2xl);
   box-shadow: var(--glow-lime);
+}
+
+@utility panel-amber {
+  background-image: var(--gradient-panel);
+  backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in oklab, var(--neon-amber) 30%, transparent);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--glow-amber);
+}
+
+@utility panel-slate {
+  background-image: var(--gradient-panel);
+  backdrop-filter: blur(14px);
+  border: 1px solid color-mix(in oklab, var(--neon-cyan) 25%, transparent);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--glow-slate);
 }
 
 @utility hover-glow {
@@ -291,16 +313,30 @@
 }
 
 @keyframes impact-shake {
-  0%, 100% { transform: translate(0, 0); }
-  15% { transform: translate(-8px, 6px); }
-  30% { transform: translate(8px, -6px); }
-  45% { transform: translate(-5px, -3px); }
-  60% { transform: translate(5px, 3px); }
-  75% { transform: translate(-2px, 1px); }
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  15% {
+    transform: translate(-8px, 6px);
+  }
+  30% {
+    transform: translate(8px, -6px);
+  }
+  45% {
+    transform: translate(-5px, -3px);
+  }
+  60% {
+    transform: translate(5px, 3px);
+  }
+  75% {
+    transform: translate(-2px, 1px);
+  }
 }
 
 @keyframes crack-glow-pulse {
-  0%, 100% {
+  0%,
+  100% {
     filter: drop-shadow(0 0 15px #00f3ff) drop-shadow(0 0 30px #a855f7);
     opacity: 0.8;
   }

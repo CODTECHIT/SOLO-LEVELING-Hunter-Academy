@@ -1,9 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { Panel, PanelTitle } from '@/components/site/ui-bits'
+import { createFileRoute } from "@tanstack/react-router";
+import { Panel, PanelTitle } from "@/components/site/ui-bits";
 
-export const Route = createFileRoute('/_admin/admin/courses/new')({
+export const Route = createFileRoute("/_admin/admin/courses/new")({
   component: AdminCourseNew,
-})
+});
 
 function AdminCourseNew() {
   return (
@@ -14,8 +14,11 @@ function AdminCourseNew() {
       </div>
       <Panel>
         <PanelTitle>Course Details</PanelTitle>
-        <p className="text-sm text-muted-foreground mt-4">Form placeholder for Title, description, category dropdown, price, thumbnail upload, and status toggle.</p>
+        <p className="text-sm text-muted-foreground mt-4">
+          Form placeholder for Title, description, category dropdown, price, thumbnail upload, and
+          status toggle.
+        </p>
       </Panel>
     </div>
-  )
+  );
 }

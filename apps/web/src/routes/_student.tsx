@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, Link, useRouter } from '@tanstack/react-router';
+import { createFileRoute, Outlet, Link, useRouter, redirect } from '@tanstack/react-router';
 import { TopNav, SiteFooter } from "@/components/site/nav";
 import { LayoutDashboard, ShoppingBag, RotateCcw, UserCircle } from "lucide-react";
 import { getCurrentUserFn } from "@/server/auth";
@@ -7,7 +7,9 @@ export const Route = createFileRoute('/_student')({
   loader: async () => {
     const user = await getCurrentUserFn();
     if (!user) {
-      throw new Error('Not authenticated');
+      // Redirect like the dashboard's beforeLoad does, instead of letting the
+      // layout loader throw (which surfaces a 500 "This page didn't load").
+      throw redirect({ to: '/login' });
     }
     return { user };
   },

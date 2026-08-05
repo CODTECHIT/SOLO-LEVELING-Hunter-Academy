@@ -1,13 +1,15 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-type Accent = "purple" | "cyan" | "lime" | "pink";
+type Accent = "purple" | "cyan" | "lime" | "pink" | "amber" | "slate";
 
 const accentBorder: Record<Accent, string> = {
   purple: "panel",
   cyan: "panel-cyan",
   lime: "panel-lime",
   pink: "panel",
+  amber: "panel-amber",
+  slate: "panel-slate",
 };
 
 export function Panel({

@@ -5,7 +5,19 @@ import bcrypt from 'bcryptjs'
 import { SignJWT, jwtVerify } from 'jose'
 import { z } from 'zod'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'solo-leveling-secret-key-123')
+// The fallback key is committed to the repo, so it must never be used in
+// production: anyone who knows it can forge auth tokens for any userId (full
+// account takeover via getCurrentUserFn). In production a missing JWT_SECRET
+// must fail loudly instead of silently signing with the public key.
+const DEV_FALLBACK_SECRET = 'solo-leveling-secret-key-123'
+
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET || (process.env.NODE_ENV === 'production' ? undefined : DEV_FALLBACK_SECRET)
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required in production')
+  }
+  return new TextEncoder().encode(secret)
+}
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -39,7 +51,7 @@ export const loginUserFn = createServerFn({ method: 'POST' })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('7d')
-      .sign(JWT_SECRET)
+      .sign(getJwtSecret())
 
     setCookie('auth_token', token, {
       httpOnly: true,
@@ -80,7 +92,7 @@ export const registerUserFn = createServerFn({ method: 'POST' })
       .setProtectedHeader({ alg: 'HS256' })
       .setIssuedAt()
       .setExpirationTime('7d')
-      .sign(JWT_SECRET)
+      .sign(getJwtSecret())
 
     setCookie('auth_token', token, {
       httpOnly: true,
@@ -98,7 +110,7 @@ export const getCurrentUserFn = createServerFn({ method: 'GET' })
     if (!token) return null
 
     try {
-      const { payload } = await jwtVerify(token, JWT_SECRET)
+      const { payload } = await jwtVerify(token, getJwtSecret())
       if (!payload.userId) return null
       
       const user = await prisma.user.findUnique({

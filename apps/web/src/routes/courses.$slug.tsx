@@ -68,8 +68,19 @@ function CourseDetail() {
           {/* Header Section */}
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 mb-16 items-start">
             <div>
-              <div className="inline-flex items-center rounded-md bg-neon-cyan/10 px-3 py-1 text-sm font-medium text-neon-cyan ring-1 ring-inset ring-neon-cyan/20 mb-6">
-                {course.category.name}
+              <div className="flex flex-wrap items-center gap-2 mb-6">
+                <div className="inline-flex items-center rounded-md bg-neon-cyan/10 px-3 py-1 text-sm font-medium text-neon-cyan ring-1 ring-inset ring-neon-cyan/20">
+                  {course.category.name}
+                </div>
+                {course.type === 'MODULE' ? (
+                  <div className="inline-flex items-center rounded-md bg-neon-amber/10 px-3 py-1 text-sm font-medium text-neon-amber ring-1 ring-inset ring-neon-amber/20">
+                    Hunter Pass Module
+                  </div>
+                ) : (
+                  <div className="inline-flex items-center rounded-md bg-neon-purple/10 px-3 py-1 text-sm font-medium text-neon-purple ring-1 ring-inset ring-neon-purple/20">
+                    Full Course
+                  </div>
+                )}
               </div>
               <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-6">
                 {course.title}
