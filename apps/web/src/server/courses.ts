@@ -52,6 +52,7 @@ export const getCourseFn = createServerFn({ method: "GET" })
     const user = await getCurrentUserFn();
     let isEnrolled = false;
     let completedLessonIds: string[] = [];
+    let lessonProgress: Record<string, number> = {};
 
     if (user) {
       const enrollment = await prisma.enrollment.findUnique({
@@ -67,15 +68,15 @@ export const getCourseFn = createServerFn({ method: "GET" })
       const progress = await prisma.lessonProgress.findMany({
         where: {
           userId: user.id,
-          completed: true,
           lessonId: { in: course.lessons.map((l) => l.id) },
         },
-        select: { lessonId: true },
+        select: { lessonId: true, progressSeconds: true, completed: true },
       });
-      completedLessonIds = progress.map((p) => p.lessonId);
+      completedLessonIds = progress.filter((p) => p.completed).map((p) => p.lessonId);
+      lessonProgress = Object.fromEntries(progress.map((p) => [p.lessonId, p.progressSeconds]));
     }
 
-    return { course, isEnrolled, completedLessonIds };
+    return { course, isEnrolled, completedLessonIds, lessonProgress };
   });
 
 export const enrollUserFn = createServerFn({ method: "POST" })
@@ -175,6 +176,90 @@ export const markLessonCompletedFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+const lessonProgressSchema = z.object({
+  lessonId: z.string(),
+  watchedSeconds: z.number().min(0),
+  duration: z.number().min(0).optional(),
+});
+
+// Records real watch time for a lesson and auto-completes it once the student
+// has watched at least 90% of the video. progressSeconds only ever grows (max),
+// so scrubbing back or replaying cannot reduce recorded progress.
+export const updateLessonProgressFn = createServerFn({ method: "POST" })
+  .validator((data) => lessonProgressSchema.parse(data))
+  .handler(async ({ data }) => {
+    const user = await getCurrentUserFn();
+    if (!user) throw new Error("Must be logged in");
+
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: data.lessonId },
+      select: { id: true, courseId: true, duration: true },
+    });
+    if (!lesson) throw new Error("Lesson not found");
+
+    // Only enrolled students may record progress; otherwise any logged-in user
+    // could forge watch time on courses they never paid for.
+    const enrollment = await prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId: user.id,
+          courseId: lesson.courseId,
+        },
+      },
+      select: { id: true },
+    });
+    if (!enrollment) throw new Error("Must be enrolled in this course to track progress");
+
+    // Persist the detected video duration on the lesson so the completion
+    // threshold stays stable even if the client reports again later.
+    const duration =
+      data.duration && data.duration > 0 ? Math.round(data.duration) : lesson.duration;
+    if (duration !== lesson.duration) {
+      await prisma.lesson.update({ where: { id: lesson.id }, data: { duration } });
+    }
+
+    const existing = await prisma.lessonProgress.findUnique({
+      where: {
+        userId_lessonId: {
+          userId: user.id,
+          lessonId: data.lessonId,
+        },
+      },
+      select: { completed: true, progressSeconds: true },
+    });
+
+    const progressSeconds = Math.max(
+      existing ? existing.progressSeconds : 0,
+      Math.round(data.watchedSeconds),
+    );
+    const threshold = duration && duration > 0 ? Math.ceil(duration * 0.9) : null;
+    const completed =
+      existing?.completed === true || (threshold !== null && progressSeconds >= threshold);
+
+    const row = await prisma.lessonProgress.upsert({
+      where: {
+        userId_lessonId: {
+          userId: user.id,
+          lessonId: data.lessonId,
+        },
+      },
+      update: {
+        progressSeconds,
+        completed,
+        completedAt: completed && !existing?.completed ? new Date() : undefined,
+      },
+      create: {
+        userId: user.id,
+        lessonId: data.lessonId,
+        progressSeconds,
+        completed,
+        completedAt: completed ? new Date() : null,
+      },
+    });
+
+    return { progressSeconds: row.progressSeconds, completed: row.completed };
+  });
+
 export const getEnrolledCoursesFn = createServerFn({ method: "GET" }).handler(async () => {
   const user = await getCurrentUserFn();
   if (!user) return [];
@@ -184,42 +269,170 @@ export const getEnrolledCoursesFn = createServerFn({ method: "GET" }).handler(as
     include: {
       course: {
         include: {
-          lessons: { select: { id: true } },
+          lessons: {
+            select: { id: true, duration: true },
+            orderBy: { order: "asc" },
+          },
         },
       },
     },
   });
 
-  // Map course -> lesson ids for the enrolled courses, then fetch which of
-  // those lessons this user has actually completed so the dashboard can show
-  // real progress instead of hardcoded placeholders.
-  const courseToLessonIds = new Map<string, string[]>();
-  enrollments.forEach(({ course }) => {
-    courseToLessonIds.set(
-      course.id,
-      course.lessons.map((l) => l.id),
-    );
-  });
   const lessonIds = enrollments.flatMap(({ course }) => course.lessons.map((l) => l.id));
 
   const progressRows = await prisma.lessonProgress.findMany({
-    where: { userId: user.id, completed: true, lessonId: { in: lessonIds } },
-    select: { lessonId: true },
+    where: { userId: user.id, lessonId: { in: lessonIds } },
+    select: { lessonId: true, progressSeconds: true, completed: true },
   });
-  const completedLessonIds = new Set(progressRows.map((p) => p.lessonId));
+  const progressByLesson = new Map(progressRows.map((p) => [p.lessonId, p]));
 
   return enrollments.map(({ course }) => {
-    const lessons = courseToLessonIds.get(course.id) || [];
+    const lessons = course.lessons;
     const { lessons: _lessons, ...rest } = course;
-    const completed = lessons.filter((id) => completedLessonIds.has(id)).length;
     const total = lessons.length;
+    const completed = lessons.filter((l) => progressByLesson.get(l.id)?.completed).length;
+
+    // Progress is driven by real watch time: watched seconds vs total duration.
+    // Falls back to completed-lesson count only when no durations are known yet.
+    const totalDuration = lessons.reduce((sum, l) => sum + (l.duration || 0), 0);
+    const watchedDuration = lessons.reduce(
+      (sum, l) => sum + Math.min(progressByLesson.get(l.id)?.progressSeconds || 0, l.duration || 0),
+      0,
+    );
+
+    let progress = 0;
+    if (totalDuration > 0) {
+      progress = Math.round((watchedDuration / totalDuration) * 100);
+    } else if (total > 0) {
+      progress = Math.round((completed / total) * 100);
+    }
+
     return {
       ...rest,
       totalLessons: total,
       completedLessons: completed,
-      progress: total ? Math.round((completed / total) * 100) : 0,
+      progress: Math.min(progress, 100),
     };
   });
+});
+
+const ranks = [
+  { letter: "E", name: "Novice Hunter", floor: 0, next: 1000 },
+  { letter: "D", name: "Initiate Hunter", floor: 1000, next: 3000 },
+  { letter: "C", name: "Adept Hunter", floor: 3000, next: 7000 },
+  { letter: "B", name: "Elite Hunter", floor: 7000, next: 15000 },
+  { letter: "A", name: "Veteran Hunter", floor: 15000, next: 30000 },
+  { letter: "S", name: "Legendary Hunter", floor: 30000, next: null },
+];
+
+// Hunter dashboard stats, derived from real activity:
+//  - EXP:  +50 per course taken, +25 per lesson completed, +200 per course completed
+//  - Rank: tier of total EXP (E -> D -> C -> B -> A -> S)
+//  - HP/Focus: % of total course video watched (weighted by duration)
+//  - MP/Streak: consecutive active days ending today or yesterday (7 days = 100%)
+export const getHunterStatsFn = createServerFn({ method: "GET" }).handler(async () => {
+  const user = await getCurrentUserFn();
+  if (!user) {
+    return {
+      rankLetter: "E",
+      rankName: ranks[0].name,
+      expTotal: 0,
+      expCurrent: 0,
+      expMax: 1000,
+      focusPct: 0,
+      mpPercent: 0,
+      streak: 0,
+      coursesTaken: 0,
+      coursesCompleted: 0,
+      lessonsCompleted: 0,
+    };
+  }
+
+  const enrollments = await prisma.enrollment.findMany({
+    where: { userId: user.id },
+    include: {
+      course: {
+        include: {
+          lessons: { select: { id: true, duration: true } },
+        },
+      },
+    },
+  });
+
+  const lessonIds = enrollments.flatMap((e) => e.course.lessons.map((l) => l.id));
+
+  const progressRows = await prisma.lessonProgress.findMany({
+    where: { userId: user.id, lessonId: { in: lessonIds } },
+    select: { lessonId: true, progressSeconds: true, completed: true, completedAt: true },
+  });
+  const progressByLesson = new Map(progressRows.map((p) => [p.lessonId, p]));
+
+  const coursesTaken = enrollments.length;
+  let coursesCompleted = 0;
+  let lessonsCompleted = 0;
+  let totalDuration = 0;
+  let watchedDuration = 0;
+
+  for (const { course } of enrollments) {
+    const done = course.lessons.filter((l) => progressByLesson.get(l.id)?.completed).length;
+    lessonsCompleted += done;
+    if (course.lessons.length > 0 && done >= course.lessons.length) coursesCompleted++;
+    for (const l of course.lessons) {
+      if (l.duration) {
+        totalDuration += l.duration;
+        watchedDuration += Math.min(progressByLesson.get(l.id)?.progressSeconds || 0, l.duration);
+      }
+    }
+  }
+
+  const expTotal = coursesTaken * 50 + lessonsCompleted * 25 + coursesCompleted * 200;
+  const rank = ranks.find((r) => r.next === null || expTotal < r.next) || ranks[0];
+  const tierFloor = rank.floor;
+  const tierCeiling = rank.next ?? tierFloor + 10000;
+  const expCurrent = expTotal - tierFloor;
+  const expMax = tierCeiling - tierFloor;
+
+  const totalLessons = lessonIds.length;
+  const focusPct =
+    totalDuration > 0
+      ? Math.min(Math.round((watchedDuration / totalDuration) * 100), 100)
+      : totalLessons > 0
+        ? Math.min(Math.round((lessonsCompleted / totalLessons) * 100), 100)
+        : 0;
+
+  // Streak: consecutive days (local time) with at least one lesson completed,
+  // anchored at today or yesterday so an in-progress day does not reset it.
+  const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+  const days = new Set(
+    progressRows
+      .filter((p) => p.completed && p.completedAt)
+      .map((p) => dayKey(new Date(p.completedAt as Date))),
+  );
+  let streak = 0;
+  const cursor = new Date();
+  cursor.setHours(0, 0, 0, 0);
+  if (!days.has(dayKey(cursor))) {
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  while (days.has(dayKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  const mpPercent = Math.min(Math.round((streak / 7) * 100), 100);
+
+  return {
+    rankLetter: rank.letter,
+    rankName: rank.name,
+    expTotal,
+    expCurrent,
+    expMax,
+    focusPct,
+    mpPercent,
+    streak,
+    coursesTaken,
+    coursesCompleted,
+    lessonsCompleted,
+  };
 });
 
 // Backfill: enrollments created before the mock-checkout recorded a Payment
@@ -410,6 +623,33 @@ export const getCourseReviewsFn = createServerFn({ method: "GET" })
     });
     return reviews;
   });
+
+export const getCourseFaqsFn = createServerFn({ method: "GET" })
+  .validator((data: { courseId: string }) => data)
+  .handler(async ({ data }) => {
+    const courseFaqs = await prisma.faqItem.findMany({
+      where: { courseId: data.courseId },
+      orderBy: { order: "asc" },
+    });
+
+    // Fall back to the global FAQ list managed in the admin FAQ section when
+    // the course/module has no FAQs of its own.
+    if (courseFaqs.length > 0) return { faqs: courseFaqs };
+
+    const globalFaqs = await prisma.faqItem.findMany({
+      where: { courseId: null },
+      orderBy: { order: "asc" },
+    });
+    return { faqs: globalFaqs };
+  });
+
+export const getPublicFaqsFn = createServerFn({ method: "GET" }).handler(async () => {
+  const faqs = await prisma.faqItem.findMany({
+    where: { courseId: null },
+    orderBy: { order: "asc" },
+  });
+  return { faqs };
+});
 
 export const getStudentNotificationsFn = createServerFn({ method: "GET" }).handler(async () => {
   const user = await getCurrentUserFn();

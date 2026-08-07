@@ -3,14 +3,14 @@ import { getAdminPaymentsFn } from "@/server/admin";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Coins, CheckCircle2, Circle, XCircle, type LucideIcon } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/admin/payments")({
+export const Route = createFileRoute("/_admin/admin/academy/reports")({
   loader: async () => {
     return await getAdminPaymentsFn();
   },
-  component: AdminPayments,
+  component: AdminReports,
 });
 
-function AdminPayments() {
+function AdminReports() {
   const { payments, totalRevenue, paidCount, pendingCount, failedCount } = Route.useLoaderData();
 
   const statusTone = (status: string) =>
@@ -37,15 +37,15 @@ function AdminPayments() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Transactions</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">Financial Reports</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          All payment activity across the academy.
+          View academy revenue and transaction history.
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {card(
-          "Collected",
+          "Total Revenue",
           `₹${totalRevenue.toLocaleString("en-IN")}`,
           "text-neon-amber border-neon-amber/50",
           Coins,
@@ -56,13 +56,12 @@ function AdminPayments() {
       </div>
 
       <Panel className="p-0 overflow-hidden">
-        <PanelTitle className="px-6 pt-5">Payment History</PanelTitle>
+        <PanelTitle className="px-6 pt-5">Revenue Analytics</PanelTitle>
         <table className="w-full text-left text-sm">
           <thead className="bg-surface-2/50 font-display text-xs uppercase tracking-widest text-muted-foreground">
             <tr>
               <th className="px-6 py-4 font-medium">Customer</th>
-              <th className="px-6 py-4 font-medium">Order ID</th>
-              <th className="px-6 py-4 font-medium">Payment ID</th>
+              <th className="px-6 py-4 font-medium">Order</th>
               <th className="px-6 py-4 font-medium">Amount</th>
               <th className="px-6 py-4 font-medium">Status</th>
               <th className="px-6 py-4 font-medium">Date</th>
@@ -80,16 +79,7 @@ function AdminPayments() {
                     {p.razorpayOrderId}
                   </code>
                 </td>
-                <td className="px-6 py-4">
-                  {p.razorpayPaymentId ? (
-                    <code className="rounded bg-surface-2 px-2 py-0.5 text-xs text-muted-foreground">
-                      {p.razorpayPaymentId}
-                    </code>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </td>
-                <td className="px-6 py-4 font-display text-neon-cyan glow-text">
+                <td className="px-6 py-4 font-display text-neon-amber glow-text">
                   ₹{p.amount.toLocaleString("en-IN")}
                 </td>
                 <td className="px-6 py-4">
@@ -110,7 +100,7 @@ function AdminPayments() {
             ))}
             {payments.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                   No transactions recorded yet.
                 </td>
               </tr>

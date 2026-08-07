@@ -4,7 +4,7 @@ import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, Trash2, UserPlus } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/admin/users/staff")({
+export const Route = createFileRoute("/_admin/admin/academy/users/staff")({
   loader: async () => {
     return await getAdminUsersFn({ data: { role: "ALL" } });
   },

@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
 import { z } from "zod";
 import { getCurrentUserFn } from "./auth";
+import { getPresignedUploadUrl, uploadBufferToS3 } from "./s3";
 
 async function ensureAdmin() {
   const user = await getCurrentUserFn();
@@ -36,9 +37,23 @@ export const saveCmsPageFn = createServerFn({ method: "POST" })
 
 export const getFaqItemsFn = createServerFn({ method: "GET" }).handler(async () => {
   await ensureAdmin();
-  const faqs = await prisma.faqItem.findMany({ orderBy: { order: "asc" } });
+  const faqs = await prisma.faqItem.findMany({
+    where: { courseId: null },
+    orderBy: { order: "asc" },
+  });
   return { faqs };
 });
+
+export const getCourseFaqsFn = createServerFn({ method: "GET" })
+  .validator(z.object({ courseId: z.string() }))
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+    const faqs = await prisma.faqItem.findMany({
+      where: { courseId: data.courseId },
+      orderBy: { order: "asc" },
+    });
+    return { faqs };
+  });
 
 export const saveFaqItemFn = createServerFn({ method: "POST" })
   .validator(
@@ -47,6 +62,7 @@ export const saveFaqItemFn = createServerFn({ method: "POST" })
       question: z.string().min(1),
       answer: z.string().min(1),
       order: z.number().optional(),
+      courseId: z.string().nullish(),
     }),
   )
   .handler(async ({ data }) => {
@@ -55,7 +71,12 @@ export const saveFaqItemFn = createServerFn({ method: "POST" })
     if (data.id) {
       return await prisma.faqItem.update({
         where: { id: data.id },
-        data: { question: data.question, answer: data.answer, order: data.order ?? 0 },
+        data: {
+          question: data.question,
+          answer: data.answer,
+          order: data.order ?? 0,
+          courseId: data.courseId ?? null,
+        },
       });
     }
 
@@ -65,6 +86,7 @@ export const saveFaqItemFn = createServerFn({ method: "POST" })
         question: data.question,
         answer: data.answer,
         order: data.order ?? (maxOrder._max.order ?? 0) + 1,
+        courseId: data.courseId ?? null,
       },
     });
   });
@@ -131,6 +153,112 @@ export const deleteSliderFn = createServerFn({ method: "POST" })
     await ensureAdmin();
     await prisma.slider.delete({ where: { id: data.id } });
     return { success: true };
+  });
+
+// ---------- Intro Videos ----------
+
+export const getIntroVideosFn = createServerFn({ method: "GET" }).handler(async () => {
+  await ensureAdmin();
+  const videos = await prisma.introVideo.findMany({ orderBy: { order: "asc" } });
+  return { videos };
+});
+
+export const getActiveIntroVideoFn = createServerFn({ method: "GET" }).handler(async () => {
+  const video = await prisma.introVideo.findFirst({
+    where: { active: true },
+    orderBy: { order: "asc" },
+  });
+  return { video };
+});
+
+export const saveIntroVideoFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      id: z.string().optional(),
+      title: z.string().min(1),
+      videoUrl: z.string().url(),
+      thumbnail: z.string().optional(),
+      active: z.boolean().optional(),
+      order: z.number().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+
+    if (data.id) {
+      return await prisma.introVideo.update({
+        where: { id: data.id },
+        data: {
+          title: data.title,
+          videoUrl: data.videoUrl,
+          thumbnail: data.thumbnail ?? null,
+          active: data.active ?? true,
+          order: data.order,
+        },
+      });
+    }
+
+    const maxOrder = await prisma.introVideo.aggregate({ _max: { order: true } });
+    return await prisma.introVideo.create({
+      data: {
+        title: data.title,
+        videoUrl: data.videoUrl,
+        thumbnail: data.thumbnail ?? null,
+        active: data.active ?? true,
+        order: data.order ?? (maxOrder._max.order ?? 0) + 1,
+      },
+    });
+  });
+
+export const deleteIntroVideoFn = createServerFn({ method: "POST" })
+  .validator(z.object({ id: z.string() }))
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+    await prisma.introVideo.delete({ where: { id: data.id } });
+    return { success: true };
+  });
+
+export const getPresignedUrlFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      filename: z.string().min(1),
+      contentType: z.string().min(1),
+      folder: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+    const ext = data.filename.split(".").pop() || "file";
+    const folderName = data.folder || "intro-videos";
+    const key = `${folderName}/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+    const uploadUrl = await getPresignedUploadUrl(key, data.contentType);
+
+    const bucket = process.env.AWS_S3_BUCKET_NAME || "";
+    const region = process.env.AWS_REGION || "ap-south-1";
+    const publicUrl = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+
+    return { uploadUrl, publicUrl };
+  });
+
+export const uploadFileToS3Fn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      filename: z.string().min(1),
+      base64Data: z.string().min(1),
+      contentType: z.string().min(1),
+      folder: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+    const ext = data.filename.split(".").pop() || "file";
+    const folderName = data.folder || "intro-videos";
+    const key = `${folderName}/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+
+    const buffer = Buffer.from(data.base64Data, "base64");
+    const publicUrl = await uploadBufferToS3(key, buffer, data.contentType);
+
+    return { publicUrl };
   });
 
 // ---------- Settings ----------

@@ -4,7 +4,7 @@ import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Star, Trash2, MessageSquare } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/admin/reviews")({
+export const Route = createFileRoute("/_admin/admin/academy/reviews")({
   loader: async () => {
     return await getAdminReviewsFn();
   },

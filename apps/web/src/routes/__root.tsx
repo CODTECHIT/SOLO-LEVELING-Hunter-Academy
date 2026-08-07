@@ -8,9 +8,23 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import { type ReactNode } from "react";
+import { Toaster } from "@/components/ui/sonner";
 
 import appCss from "../styles.css?url";
 import { DiagonalSplashIntro } from "@/components/site/DiagonalSplashIntro";
+
+if (typeof window !== "undefined") {
+  const originalRemoveChild = Node.prototype.removeChild;
+  Node.prototype.removeChild = function <T extends Node>(child: T): T {
+    if (child.parentNode !== this) {
+      if (child.parentNode) {
+        return child.parentNode.removeChild(child) as T;
+      }
+      return child;
+    }
+    return originalRemoveChild.call(this, child) as T;
+  };
+}
 
 function NotFoundComponent() {
   return (
@@ -94,7 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&display=swap",
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/logo.png", type: "image/png" },
     ],
   }),
 
@@ -106,11 +120,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>
@@ -126,6 +140,7 @@ function RootComponent() {
       <DiagonalSplashIntro />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <Toaster />
     </QueryClientProvider>
   );
 }

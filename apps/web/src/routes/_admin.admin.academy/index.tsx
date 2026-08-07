@@ -3,7 +3,7 @@ import { getAdminStatsFn } from "@/server/admin";
 import { Panel } from "@/components/site/ui-bits";
 import { Users, BookOpen, GraduationCap, Coins, type LucideIcon } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/admin/")({
+export const Route = createFileRoute("/_admin/admin/academy/")({
   loader: async () => {
     return await getAdminStatsFn();
   },

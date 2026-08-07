@@ -4,6 +4,7 @@ import { AuthLayout, Panel } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { loginUserFn } from "@/server/auth";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -94,6 +95,25 @@ function Login() {
 
           <Button type="submit" disabled={isLoading} variant="hero" size="xl" className="w-full">
             {isLoading ? <Loader2 className="animate-spin" /> : <Swords />} {isLoading ? 'Authenticating...' : 'Arise & Login'}
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border/60"></div>
+            </div>
+            <div className="relative flex justify-center text-[10px] uppercase tracking-widest text-muted-foreground">
+              <span className="bg-zinc-900 px-2">Or continue with</span>
+            </div>
+          </div>
+          
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="xl" 
+            className="w-full border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800"
+            onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })}
+          >
+            Google
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">

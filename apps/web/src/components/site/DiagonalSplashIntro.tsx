@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 
 export function DiagonalSplashIntro() {
+  const [mounted, setMounted] = useState(false);
   const [stage, setStage] = useState<"meteor" | "impact" | "crack" | "split" | "done">("meteor");
 
   useEffect(() => {
+    setMounted(true);
     // 1. Meteor falling from space (0 - 750ms)
     const t1 = setTimeout(() => {
       setStage("impact");
@@ -32,8 +34,8 @@ export function DiagonalSplashIntro() {
     };
   }, []);
 
-  if (stage === "done") {
-    return null;
+  if (!mounted || stage === "done") {
+    return <div className="hidden" aria-hidden="true" />;
   }
 
   // Exact matching diagonal coordinates: from (0%, 58%) to (100%, 42%)
@@ -47,12 +49,14 @@ export function DiagonalSplashIntro() {
       }`}
     >
       {/* Meteor Shockwave Rings */}
-      {(stage === "impact" || stage === "crack") && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
-          <div className="w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full border-4 border-neon-cyan/80 animate-shockwave shadow-[0_0_80px_#00f3ff]" />
-          <div className="w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full border-4 border-neon-purple/80 animate-shockwave delay-100 shadow-[0_0_80px_#a855f7]" />
-        </div>
-      )}
+      <div
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-0 transition-opacity duration-300 ${
+          stage === "impact" || stage === "crack" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full border-4 border-neon-cyan/80 animate-shockwave shadow-[0_0_80px_#00f3ff]" />
+        <div className="w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full border-4 border-neon-purple/80 animate-shockwave delay-100 shadow-[0_0_80px_#a855f7]" />
+      </div>
 
       {/* Top-Right Half (Background + Top Half Logo) */}
       <div
@@ -129,62 +133,66 @@ export function DiagonalSplashIntro() {
       </div>
 
       {/* 100% Mathematically Matched SVG Light Ray Beam */}
-      {(stage === "impact" || stage === "crack" || stage === "split") && (
-        <svg className="absolute inset-0 h-full w-full pointer-events-none z-30 overflow-visible">
-          <defs>
-            <linearGradient id="crackBeam" x1="0%" y1="58%" x2="100%" y2="42%">
-              <stop offset="0%" stopColor="#00f3ff" stopOpacity="0" />
-              <stop offset="15%" stopColor="#00f3ff" stopOpacity="1" />
-              <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-              <stop offset="85%" stopColor="#a855f7" stopOpacity="1" />
-              <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
-            </linearGradient>
-            <filter id="neonGlowBlur" x="-30%" y="-30%" width="160%" height="160%">
-              <feGaussianBlur stdDeviation="8" result="blur1" />
-              <feGaussianBlur stdDeviation="18" result="blur2" />
-              <feMerge>
-                <feMergeNode in="blur2" />
-                <feMergeNode in="blur1" />
-                <feMergeNode in="SourceGraphic" />
-              </feMerge>
-            </filter>
-          </defs>
+      <svg
+        className={`absolute inset-0 h-full w-full pointer-events-none z-30 overflow-visible transition-opacity duration-300 ${
+          stage === "impact" || stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <defs>
+          <linearGradient id="crackBeam" x1="0%" y1="58%" x2="100%" y2="42%">
+            <stop offset="0%" stopColor="#00f3ff" stopOpacity="0" />
+            <stop offset="15%" stopColor="#00f3ff" stopOpacity="1" />
+            <stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
+            <stop offset="85%" stopColor="#a855f7" stopOpacity="1" />
+            <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
+          </linearGradient>
+          <filter id="neonGlowBlur" x="-30%" y="-30%" width="160%" height="160%">
+            <feGaussianBlur stdDeviation="8" result="blur1" />
+            <feGaussianBlur stdDeviation="18" result="blur2" />
+            <feMerge>
+              <feMergeNode in="blur2" />
+              <feMergeNode in="blur1" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
 
-          {/* Outer Neon Glow Light Ray */}
-          <line
-            x1="0%"
-            y1="58%"
-            x2="100%"
-            y2="42%"
-            stroke="url(#crackBeam)"
-            strokeWidth="14"
-            filter="url(#neonGlowBlur)"
-            className={`transition-opacity duration-300 ${
-              stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
-            }`}
-          />
+        {/* Outer Neon Glow Light Ray */}
+        <line
+          x1="0%"
+          y1="58%"
+          x2="100%"
+          y2="42%"
+          stroke="url(#crackBeam)"
+          strokeWidth="14"
+          filter="url(#neonGlowBlur)"
+          className={`transition-opacity duration-300 ${
+            stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
+          }`}
+        />
 
-          {/* Core White Laser Streak */}
-          <line
-            x1="0%"
-            y1="58%"
-            x2="100%"
-            y2="42%"
-            stroke="#ffffff"
-            strokeWidth="4"
-            className={`transition-opacity duration-300 ${
-              stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
-            }`}
-          />
-        </svg>
-      )}
+        {/* Core White Laser Streak */}
+        <line
+          x1="0%"
+          y1="58%"
+          x2="100%"
+          y2="42%"
+          stroke="#ffffff"
+          strokeWidth="4"
+          className={`transition-opacity duration-300 ${
+            stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
+          }`}
+        />
+      </svg>
 
       {/* Impact Sparks & Flash */}
-      {stage === "impact" && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-          <div className="w-full h-full bg-white/25 blur-2xl animate-ping" />
-        </div>
-      )}
+      <div
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-20 transition-opacity duration-300 ${
+          stage === "impact" ? "opacity-100" : "opacity-0"
+        }`}
+      >
+        <div className="w-full h-full bg-white/25 blur-2xl animate-ping" />
+      </div>
 
       {/* System Status Text */}
       <div
@@ -203,3 +211,4 @@ export function DiagonalSplashIntro() {
     </div>
   );
 }
+

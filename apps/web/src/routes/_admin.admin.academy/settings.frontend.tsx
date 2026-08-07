@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_admin/admin/settings/frontend")({
+export const Route = createFileRoute("/_admin/admin/academy/settings/frontend")({
   loader: async () => {
     return await getSiteSettingsFn();
   },

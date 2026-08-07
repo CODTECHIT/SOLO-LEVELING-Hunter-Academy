@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Settings, Search, Globe, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_admin/admin/settings/site")({
+export const Route = createFileRoute("/_admin/admin/academy/settings/site")({
   loader: async () => {
     return await getSiteSettingsFn();
   },

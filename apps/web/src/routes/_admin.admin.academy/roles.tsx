@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Shield, ShieldCheck, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_admin/admin/roles")({
+export const Route = createFileRoute("/_admin/admin/academy/roles")({
   loader: async () => {
     return await getAdminRolesFn();
   },

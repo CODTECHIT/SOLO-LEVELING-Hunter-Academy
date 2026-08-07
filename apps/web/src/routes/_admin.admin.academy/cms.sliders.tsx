@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ImageIcon, Plus, Pencil, Trash2, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_admin/admin/cms/sliders")({
+export const Route = createFileRoute("/_admin/admin/academy/cms/sliders")({
   loader: async () => {
     return await getSlidersFn();
   },

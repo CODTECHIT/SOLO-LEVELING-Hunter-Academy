@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { HelpCircle, Plus, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_admin/admin/cms/faq")({
+export const Route = createFileRoute("/_admin/admin/academy/cms/faq")({
   loader: async () => {
     return await getFaqItemsFn();
   },

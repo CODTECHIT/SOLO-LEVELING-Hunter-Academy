@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 
-export const Route = createFileRoute("/_admin/admin/courses/new")({
+export const Route = createFileRoute("/_admin/admin/academy/courses/new")({
   component: AdminCourseNew,
 });
 

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/_admin'
 import { Route as StudentRouteImport } from './routes/_student'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
@@ -23,32 +24,34 @@ import { Route as StudentMyCoursesRouteImport } from './routes/_student.my-cours
 import { Route as StudentProfileRouteImport } from './routes/_student.profile'
 import { Route as StudentPurchasesRouteImport } from './routes/_student.purchases'
 import { Route as StudentRefundsRouteImport } from './routes/_student.refunds'
-import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AuthCallbackRouteImport } from './routes/auth.callback'
 import { Route as CoursesIndexRouteImport } from './routes/courses.index'
 import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as FeaturesInstructorRouteImport } from './routes/features.instructor'
 import { Route as FeaturesStudentRouteImport } from './routes/features.student'
-import { Route as AdminAdminIndexRouteImport } from './routes/_admin.admin/index'
-import { Route as AdminAdminCategoriesRouteImport } from './routes/_admin.admin/categories'
-import { Route as AdminAdminCoursesRouteImport } from './routes/_admin.admin/courses'
-import { Route as AdminAdminPaymentsRouteImport } from './routes/_admin.admin/payments'
-import { Route as AdminAdminRefundsRouteImport } from './routes/_admin.admin/refunds'
-import { Route as AdminAdminReportsRouteImport } from './routes/_admin.admin/reports'
-import { Route as AdminAdminReviewsRouteImport } from './routes/_admin.admin/reviews'
-import { Route as AdminAdminRolesRouteImport } from './routes/_admin.admin/roles'
-import { Route as AdminAdminUsersRouteImport } from './routes/_admin.admin/users'
 import { Route as StudentLearnCourseIdRouteImport } from './routes/_student.learn.$courseId'
-import { Route as AdminAdminCmsFaqRouteImport } from './routes/_admin.admin/cms.faq'
-import { Route as AdminAdminCmsPagesRouteImport } from './routes/_admin.admin/cms.pages'
-import { Route as AdminAdminCmsSlidersRouteImport } from './routes/_admin.admin/cms.sliders'
-import { Route as AdminAdminCoursesNewRouteImport } from './routes/_admin.admin/courses.new'
-import { Route as AdminAdminCoursesCourseIdRouteImport } from './routes/_admin.admin/courses_.$courseId'
-import { Route as AdminAdminSettingsFrontendRouteImport } from './routes/_admin.admin/settings.frontend'
-import { Route as AdminAdminSettingsSiteRouteImport } from './routes/_admin.admin/settings.site'
-import { Route as AdminAdminUsersStaffRouteImport } from './routes/_admin.admin/users.staff'
-import { Route as AdminAdminUsersStudentsRouteImport } from './routes/_admin.admin/users.students'
-import { Route as AdminAdminCoursesCourseIdEditRouteImport } from './routes/_admin.admin/courses_.$courseId.edit'
-import { Route as AdminAdminCoursesCourseIdLessonsRouteImport } from './routes/_admin.admin/courses_.$courseId.lessons'
+import { Route as AdminAcademyLoginRouteImport } from './routes/admin.academy.login'
+import { Route as AdminAdminAcademyIndexRouteImport } from './routes/_admin.admin.academy/index'
+import { Route as AdminAdminAcademyCategoriesRouteImport } from './routes/_admin.admin.academy/categories'
+import { Route as AdminAdminAcademyCoursesRouteImport } from './routes/_admin.admin.academy/courses'
+import { Route as AdminAdminAcademyPaymentsRouteImport } from './routes/_admin.admin.academy/payments'
+import { Route as AdminAdminAcademyRefundsRouteImport } from './routes/_admin.admin.academy/refunds'
+import { Route as AdminAdminAcademyReportsRouteImport } from './routes/_admin.admin.academy/reports'
+import { Route as AdminAdminAcademyReviewsRouteImport } from './routes/_admin.admin.academy/reviews'
+import { Route as AdminAdminAcademyRolesRouteImport } from './routes/_admin.admin.academy/roles'
+import { Route as AdminAdminAcademyUsersRouteImport } from './routes/_admin.admin.academy/users'
+import { Route as AdminAdminAcademyCmsFaqRouteImport } from './routes/_admin.admin.academy/cms.faq'
+import { Route as AdminAdminAcademyCmsIntroVideoRouteImport } from './routes/_admin.admin.academy.cms.intro-video'
+import { Route as AdminAdminAcademyCmsPagesRouteImport } from './routes/_admin.admin.academy/cms.pages'
+import { Route as AdminAdminAcademyCmsSlidersRouteImport } from './routes/_admin.admin.academy/cms.sliders'
+import { Route as AdminAdminAcademyCoursesNewRouteImport } from './routes/_admin.admin.academy/courses.new'
+import { Route as AdminAdminAcademyCoursesCourseIdRouteImport } from './routes/_admin.admin.academy/courses_.$courseId'
+import { Route as AdminAdminAcademySettingsFrontendRouteImport } from './routes/_admin.admin.academy/settings.frontend'
+import { Route as AdminAdminAcademySettingsSiteRouteImport } from './routes/_admin.admin.academy/settings.site'
+import { Route as AdminAdminAcademyUsersStaffRouteImport } from './routes/_admin.admin.academy/users.staff'
+import { Route as AdminAdminAcademyUsersStudentsRouteImport } from './routes/_admin.admin.academy/users.students'
+import { Route as AdminAdminAcademyCoursesCourseIdEditRouteImport } from './routes/_admin.admin.academy/courses_.$courseId.edit'
+import { Route as AdminAdminAcademyCoursesCourseIdLessonsRouteImport } from './routes/_admin.admin.academy/courses_.$courseId.lessons'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -61,6 +64,11 @@ const AdminRoute = AdminRouteImport.update({
 } as any)
 const StudentRoute = StudentRouteImport.update({
   id: '/_student',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -118,9 +126,9 @@ const StudentRefundsRoute = StudentRefundsRouteImport.update({
   path: '/refunds',
   getParentRoute: () => StudentRoute,
 } as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/admin/login',
-  path: '/admin/login',
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CoursesIndexRoute = CoursesIndexRouteImport.update({
@@ -143,118 +151,142 @@ const FeaturesStudentRoute = FeaturesStudentRouteImport.update({
   path: '/features/student',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AdminAdminIndexRoute = AdminAdminIndexRouteImport.update({
-  id: '/admin/',
-  path: '/admin/',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminCategoriesRoute = AdminAdminCategoriesRouteImport.update({
-  id: '/admin/categories',
-  path: '/admin/categories',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminCoursesRoute = AdminAdminCoursesRouteImport.update({
-  id: '/admin/courses',
-  path: '/admin/courses',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminPaymentsRoute = AdminAdminPaymentsRouteImport.update({
-  id: '/admin/payments',
-  path: '/admin/payments',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminRefundsRoute = AdminAdminRefundsRouteImport.update({
-  id: '/admin/refunds',
-  path: '/admin/refunds',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminReportsRoute = AdminAdminReportsRouteImport.update({
-  id: '/admin/reports',
-  path: '/admin/reports',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminReviewsRoute = AdminAdminReviewsRouteImport.update({
-  id: '/admin/reviews',
-  path: '/admin/reviews',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminRolesRoute = AdminAdminRolesRouteImport.update({
-  id: '/admin/roles',
-  path: '/admin/roles',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminUsersRoute = AdminAdminUsersRouteImport.update({
-  id: '/admin/users',
-  path: '/admin/users',
-  getParentRoute: () => AdminRoute,
-} as any)
 const StudentLearnCourseIdRoute = StudentLearnCourseIdRouteImport.update({
   id: '/learn/$courseId',
   path: '/learn/$courseId',
   getParentRoute: () => StudentRoute,
 } as any)
-const AdminAdminCmsFaqRoute = AdminAdminCmsFaqRouteImport.update({
-  id: '/admin/cms/faq',
-  path: '/admin/cms/faq',
+const AdminAcademyLoginRoute = AdminAcademyLoginRouteImport.update({
+  id: '/admin/academy/login',
+  path: '/admin/academy/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAdminAcademyIndexRoute = AdminAdminAcademyIndexRouteImport.update({
+  id: '/admin/academy/',
+  path: '/admin/academy/',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAdminCmsPagesRoute = AdminAdminCmsPagesRouteImport.update({
-  id: '/admin/cms/pages',
-  path: '/admin/cms/pages',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminCmsSlidersRoute = AdminAdminCmsSlidersRouteImport.update({
-  id: '/admin/cms/sliders',
-  path: '/admin/cms/sliders',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminAdminCoursesNewRoute = AdminAdminCoursesNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => AdminAdminCoursesRoute,
-} as any)
-const AdminAdminCoursesCourseIdRoute =
-  AdminAdminCoursesCourseIdRouteImport.update({
-    id: '/admin/courses_/$courseId',
-    path: '/admin/courses/$courseId',
+const AdminAdminAcademyCategoriesRoute =
+  AdminAdminAcademyCategoriesRouteImport.update({
+    id: '/admin/academy/categories',
+    path: '/admin/academy/categories',
     getParentRoute: () => AdminRoute,
   } as any)
-const AdminAdminSettingsFrontendRoute =
-  AdminAdminSettingsFrontendRouteImport.update({
-    id: '/admin/settings/frontend',
-    path: '/admin/settings/frontend',
+const AdminAdminAcademyCoursesRoute =
+  AdminAdminAcademyCoursesRouteImport.update({
+    id: '/admin/academy/courses',
+    path: '/admin/academy/courses',
     getParentRoute: () => AdminRoute,
   } as any)
-const AdminAdminSettingsSiteRoute = AdminAdminSettingsSiteRouteImport.update({
-  id: '/admin/settings/site',
-  path: '/admin/settings/site',
+const AdminAdminAcademyPaymentsRoute =
+  AdminAdminAcademyPaymentsRouteImport.update({
+    id: '/admin/academy/payments',
+    path: '/admin/academy/payments',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyRefundsRoute =
+  AdminAdminAcademyRefundsRouteImport.update({
+    id: '/admin/academy/refunds',
+    path: '/admin/academy/refunds',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyReportsRoute =
+  AdminAdminAcademyReportsRouteImport.update({
+    id: '/admin/academy/reports',
+    path: '/admin/academy/reports',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyReviewsRoute =
+  AdminAdminAcademyReviewsRouteImport.update({
+    id: '/admin/academy/reviews',
+    path: '/admin/academy/reviews',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyRolesRoute = AdminAdminAcademyRolesRouteImport.update({
+  id: '/admin/academy/roles',
+  path: '/admin/academy/roles',
   getParentRoute: () => AdminRoute,
 } as any)
-const AdminAdminUsersStaffRoute = AdminAdminUsersStaffRouteImport.update({
-  id: '/staff',
-  path: '/staff',
-  getParentRoute: () => AdminAdminUsersRoute,
+const AdminAdminAcademyUsersRoute = AdminAdminAcademyUsersRouteImport.update({
+  id: '/admin/academy/users',
+  path: '/admin/academy/users',
+  getParentRoute: () => AdminRoute,
 } as any)
-const AdminAdminUsersStudentsRoute = AdminAdminUsersStudentsRouteImport.update({
-  id: '/students',
-  path: '/students',
-  getParentRoute: () => AdminAdminUsersRoute,
+const AdminAdminAcademyCmsFaqRoute = AdminAdminAcademyCmsFaqRouteImport.update({
+  id: '/admin/academy/cms/faq',
+  path: '/admin/academy/cms/faq',
+  getParentRoute: () => AdminRoute,
 } as any)
-const AdminAdminCoursesCourseIdEditRoute =
-  AdminAdminCoursesCourseIdEditRouteImport.update({
+const AdminAdminAcademyCmsIntroVideoRoute =
+  AdminAdminAcademyCmsIntroVideoRouteImport.update({
+    id: '/admin/academy/cms/intro-video',
+    path: '/admin/academy/cms/intro-video',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyCmsPagesRoute =
+  AdminAdminAcademyCmsPagesRouteImport.update({
+    id: '/admin/academy/cms/pages',
+    path: '/admin/academy/cms/pages',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyCmsSlidersRoute =
+  AdminAdminAcademyCmsSlidersRouteImport.update({
+    id: '/admin/academy/cms/sliders',
+    path: '/admin/academy/cms/sliders',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyCoursesNewRoute =
+  AdminAdminAcademyCoursesNewRouteImport.update({
+    id: '/new',
+    path: '/new',
+    getParentRoute: () => AdminAdminAcademyCoursesRoute,
+  } as any)
+const AdminAdminAcademyCoursesCourseIdRoute =
+  AdminAdminAcademyCoursesCourseIdRouteImport.update({
+    id: '/admin/academy/courses_/$courseId',
+    path: '/admin/academy/courses/$courseId',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademySettingsFrontendRoute =
+  AdminAdminAcademySettingsFrontendRouteImport.update({
+    id: '/admin/academy/settings/frontend',
+    path: '/admin/academy/settings/frontend',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademySettingsSiteRoute =
+  AdminAdminAcademySettingsSiteRouteImport.update({
+    id: '/admin/academy/settings/site',
+    path: '/admin/academy/settings/site',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyUsersStaffRoute =
+  AdminAdminAcademyUsersStaffRouteImport.update({
+    id: '/staff',
+    path: '/staff',
+    getParentRoute: () => AdminAdminAcademyUsersRoute,
+  } as any)
+const AdminAdminAcademyUsersStudentsRoute =
+  AdminAdminAcademyUsersStudentsRouteImport.update({
+    id: '/students',
+    path: '/students',
+    getParentRoute: () => AdminAdminAcademyUsersRoute,
+  } as any)
+const AdminAdminAcademyCoursesCourseIdEditRoute =
+  AdminAdminAcademyCoursesCourseIdEditRouteImport.update({
     id: '/edit',
     path: '/edit',
-    getParentRoute: () => AdminAdminCoursesCourseIdRoute,
+    getParentRoute: () => AdminAdminAcademyCoursesCourseIdRoute,
   } as any)
-const AdminAdminCoursesCourseIdLessonsRoute =
-  AdminAdminCoursesCourseIdLessonsRouteImport.update({
+const AdminAdminAcademyCoursesCourseIdLessonsRoute =
+  AdminAdminAcademyCoursesCourseIdLessonsRouteImport.update({
     id: '/lessons',
     path: '/lessons',
-    getParentRoute: () => AdminAdminCoursesCourseIdRoute,
+    getParentRoute: () => AdminAdminAcademyCoursesCourseIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -266,35 +298,38 @@ export interface FileRoutesByFullPath {
   '/profile': typeof StudentProfileRoute
   '/purchases': typeof StudentPurchasesRoute
   '/refunds': typeof StudentRefundsRoute
-  '/admin/login': typeof AdminLoginRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/features/instructor': typeof FeaturesInstructorRoute
   '/features/student': typeof FeaturesStudentRoute
   '/courses/': typeof CoursesIndexRoute
-  '/admin/categories': typeof AdminAdminCategoriesRoute
-  '/admin/courses': typeof AdminAdminCoursesRouteWithChildren
-  '/admin/payments': typeof AdminAdminPaymentsRoute
-  '/admin/refunds': typeof AdminAdminRefundsRoute
-  '/admin/reports': typeof AdminAdminReportsRoute
-  '/admin/reviews': typeof AdminAdminReviewsRoute
-  '/admin/roles': typeof AdminAdminRolesRoute
-  '/admin/users': typeof AdminAdminUsersRouteWithChildren
   '/learn/$courseId': typeof StudentLearnCourseIdRoute
-  '/admin/': typeof AdminAdminIndexRoute
-  '/admin/cms/faq': typeof AdminAdminCmsFaqRoute
-  '/admin/cms/pages': typeof AdminAdminCmsPagesRoute
-  '/admin/cms/sliders': typeof AdminAdminCmsSlidersRoute
-  '/admin/courses/new': typeof AdminAdminCoursesNewRoute
-  '/admin/courses/$courseId': typeof AdminAdminCoursesCourseIdRouteWithChildren
-  '/admin/settings/frontend': typeof AdminAdminSettingsFrontendRoute
-  '/admin/settings/site': typeof AdminAdminSettingsSiteRoute
-  '/admin/users/staff': typeof AdminAdminUsersStaffRoute
-  '/admin/users/students': typeof AdminAdminUsersStudentsRoute
-  '/admin/courses/$courseId/edit': typeof AdminAdminCoursesCourseIdEditRoute
-  '/admin/courses/$courseId/lessons': typeof AdminAdminCoursesCourseIdLessonsRoute
+  '/admin/academy/login': typeof AdminAcademyLoginRoute
+  '/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
+  '/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
+  '/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
+  '/admin/academy/refunds': typeof AdminAdminAcademyRefundsRoute
+  '/admin/academy/reports': typeof AdminAdminAcademyReportsRoute
+  '/admin/academy/reviews': typeof AdminAdminAcademyReviewsRoute
+  '/admin/academy/roles': typeof AdminAdminAcademyRolesRoute
+  '/admin/academy/users': typeof AdminAdminAcademyUsersRouteWithChildren
+  '/admin/academy/': typeof AdminAdminAcademyIndexRoute
+  '/admin/academy/cms/faq': typeof AdminAdminAcademyCmsFaqRoute
+  '/admin/academy/cms/intro-video': typeof AdminAdminAcademyCmsIntroVideoRoute
+  '/admin/academy/cms/pages': typeof AdminAdminAcademyCmsPagesRoute
+  '/admin/academy/cms/sliders': typeof AdminAdminAcademyCmsSlidersRoute
+  '/admin/academy/courses/new': typeof AdminAdminAcademyCoursesNewRoute
+  '/admin/academy/courses/$courseId': typeof AdminAdminAcademyCoursesCourseIdRouteWithChildren
+  '/admin/academy/settings/frontend': typeof AdminAdminAcademySettingsFrontendRoute
+  '/admin/academy/settings/site': typeof AdminAdminAcademySettingsSiteRoute
+  '/admin/academy/users/staff': typeof AdminAdminAcademyUsersStaffRoute
+  '/admin/academy/users/students': typeof AdminAdminAcademyUsersStudentsRoute
+  '/admin/academy/courses/$courseId/edit': typeof AdminAdminAcademyCoursesCourseIdEditRoute
+  '/admin/academy/courses/$courseId/lessons': typeof AdminAdminAcademyCoursesCourseIdLessonsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -306,38 +341,41 @@ export interface FileRoutesByTo {
   '/profile': typeof StudentProfileRoute
   '/purchases': typeof StudentPurchasesRoute
   '/refunds': typeof StudentRefundsRoute
-  '/admin/login': typeof AdminLoginRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/features/instructor': typeof FeaturesInstructorRoute
   '/features/student': typeof FeaturesStudentRoute
   '/courses': typeof CoursesIndexRoute
-  '/admin/categories': typeof AdminAdminCategoriesRoute
-  '/admin/courses': typeof AdminAdminCoursesRouteWithChildren
-  '/admin/payments': typeof AdminAdminPaymentsRoute
-  '/admin/refunds': typeof AdminAdminRefundsRoute
-  '/admin/reports': typeof AdminAdminReportsRoute
-  '/admin/reviews': typeof AdminAdminReviewsRoute
-  '/admin/roles': typeof AdminAdminRolesRoute
-  '/admin/users': typeof AdminAdminUsersRouteWithChildren
   '/learn/$courseId': typeof StudentLearnCourseIdRoute
-  '/admin': typeof AdminAdminIndexRoute
-  '/admin/cms/faq': typeof AdminAdminCmsFaqRoute
-  '/admin/cms/pages': typeof AdminAdminCmsPagesRoute
-  '/admin/cms/sliders': typeof AdminAdminCmsSlidersRoute
-  '/admin/courses/new': typeof AdminAdminCoursesNewRoute
-  '/admin/courses/$courseId': typeof AdminAdminCoursesCourseIdRouteWithChildren
-  '/admin/settings/frontend': typeof AdminAdminSettingsFrontendRoute
-  '/admin/settings/site': typeof AdminAdminSettingsSiteRoute
-  '/admin/users/staff': typeof AdminAdminUsersStaffRoute
-  '/admin/users/students': typeof AdminAdminUsersStudentsRoute
-  '/admin/courses/$courseId/edit': typeof AdminAdminCoursesCourseIdEditRoute
-  '/admin/courses/$courseId/lessons': typeof AdminAdminCoursesCourseIdLessonsRoute
+  '/admin/academy/login': typeof AdminAcademyLoginRoute
+  '/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
+  '/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
+  '/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
+  '/admin/academy/refunds': typeof AdminAdminAcademyRefundsRoute
+  '/admin/academy/reports': typeof AdminAdminAcademyReportsRoute
+  '/admin/academy/reviews': typeof AdminAdminAcademyReviewsRoute
+  '/admin/academy/roles': typeof AdminAdminAcademyRolesRoute
+  '/admin/academy/users': typeof AdminAdminAcademyUsersRouteWithChildren
+  '/admin/academy': typeof AdminAdminAcademyIndexRoute
+  '/admin/academy/cms/faq': typeof AdminAdminAcademyCmsFaqRoute
+  '/admin/academy/cms/intro-video': typeof AdminAdminAcademyCmsIntroVideoRoute
+  '/admin/academy/cms/pages': typeof AdminAdminAcademyCmsPagesRoute
+  '/admin/academy/cms/sliders': typeof AdminAdminAcademyCmsSlidersRoute
+  '/admin/academy/courses/new': typeof AdminAdminAcademyCoursesNewRoute
+  '/admin/academy/courses/$courseId': typeof AdminAdminAcademyCoursesCourseIdRouteWithChildren
+  '/admin/academy/settings/frontend': typeof AdminAdminAcademySettingsFrontendRoute
+  '/admin/academy/settings/site': typeof AdminAdminAcademySettingsSiteRoute
+  '/admin/academy/users/staff': typeof AdminAdminAcademyUsersStaffRoute
+  '/admin/academy/users/students': typeof AdminAdminAcademyUsersStudentsRoute
+  '/admin/academy/courses/$courseId/edit': typeof AdminAdminAcademyCoursesCourseIdEditRoute
+  '/admin/academy/courses/$courseId/lessons': typeof AdminAdminAcademyCoursesCourseIdLessonsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_admin': typeof AdminRouteWithChildren
   '/_student': typeof StudentRouteWithChildren
+  '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
   '/reset-password': typeof ResetPasswordRoute
@@ -349,37 +387,40 @@ export interface FileRoutesById {
   '/_student/profile': typeof StudentProfileRoute
   '/_student/purchases': typeof StudentPurchasesRoute
   '/_student/refunds': typeof StudentRefundsRoute
-  '/admin/login': typeof AdminLoginRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/courses/$slug': typeof CoursesSlugRoute
   '/features/instructor': typeof FeaturesInstructorRoute
   '/features/student': typeof FeaturesStudentRoute
   '/courses/': typeof CoursesIndexRoute
-  '/_admin/admin/categories': typeof AdminAdminCategoriesRoute
-  '/_admin/admin/courses': typeof AdminAdminCoursesRouteWithChildren
-  '/_admin/admin/payments': typeof AdminAdminPaymentsRoute
-  '/_admin/admin/refunds': typeof AdminAdminRefundsRoute
-  '/_admin/admin/reports': typeof AdminAdminReportsRoute
-  '/_admin/admin/reviews': typeof AdminAdminReviewsRoute
-  '/_admin/admin/roles': typeof AdminAdminRolesRoute
-  '/_admin/admin/users': typeof AdminAdminUsersRouteWithChildren
   '/_student/learn/$courseId': typeof StudentLearnCourseIdRoute
-  '/_admin/admin/': typeof AdminAdminIndexRoute
-  '/_admin/admin/cms/faq': typeof AdminAdminCmsFaqRoute
-  '/_admin/admin/cms/pages': typeof AdminAdminCmsPagesRoute
-  '/_admin/admin/cms/sliders': typeof AdminAdminCmsSlidersRoute
-  '/_admin/admin/courses/new': typeof AdminAdminCoursesNewRoute
-  '/_admin/admin/courses_/$courseId': typeof AdminAdminCoursesCourseIdRouteWithChildren
-  '/_admin/admin/settings/frontend': typeof AdminAdminSettingsFrontendRoute
-  '/_admin/admin/settings/site': typeof AdminAdminSettingsSiteRoute
-  '/_admin/admin/users/staff': typeof AdminAdminUsersStaffRoute
-  '/_admin/admin/users/students': typeof AdminAdminUsersStudentsRoute
-  '/_admin/admin/courses_/$courseId/edit': typeof AdminAdminCoursesCourseIdEditRoute
-  '/_admin/admin/courses_/$courseId/lessons': typeof AdminAdminCoursesCourseIdLessonsRoute
+  '/admin/academy/login': typeof AdminAcademyLoginRoute
+  '/_admin/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
+  '/_admin/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
+  '/_admin/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
+  '/_admin/admin/academy/refunds': typeof AdminAdminAcademyRefundsRoute
+  '/_admin/admin/academy/reports': typeof AdminAdminAcademyReportsRoute
+  '/_admin/admin/academy/reviews': typeof AdminAdminAcademyReviewsRoute
+  '/_admin/admin/academy/roles': typeof AdminAdminAcademyRolesRoute
+  '/_admin/admin/academy/users': typeof AdminAdminAcademyUsersRouteWithChildren
+  '/_admin/admin/academy/': typeof AdminAdminAcademyIndexRoute
+  '/_admin/admin/academy/cms/faq': typeof AdminAdminAcademyCmsFaqRoute
+  '/_admin/admin/academy/cms/intro-video': typeof AdminAdminAcademyCmsIntroVideoRoute
+  '/_admin/admin/academy/cms/pages': typeof AdminAdminAcademyCmsPagesRoute
+  '/_admin/admin/academy/cms/sliders': typeof AdminAdminAcademyCmsSlidersRoute
+  '/_admin/admin/academy/courses/new': typeof AdminAdminAcademyCoursesNewRoute
+  '/_admin/admin/academy/courses_/$courseId': typeof AdminAdminAcademyCoursesCourseIdRouteWithChildren
+  '/_admin/admin/academy/settings/frontend': typeof AdminAdminAcademySettingsFrontendRoute
+  '/_admin/admin/academy/settings/site': typeof AdminAdminAcademySettingsSiteRoute
+  '/_admin/admin/academy/users/staff': typeof AdminAdminAcademyUsersStaffRoute
+  '/_admin/admin/academy/users/students': typeof AdminAdminAcademyUsersStudentsRoute
+  '/_admin/admin/academy/courses_/$courseId/edit': typeof AdminAdminAcademyCoursesCourseIdEditRoute
+  '/_admin/admin/academy/courses_/$courseId/lessons': typeof AdminAdminAcademyCoursesCourseIdLessonsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/faq'
     | '/login'
     | '/pricing'
     | '/reset-password'
@@ -391,35 +432,38 @@ export interface FileRouteTypes {
     | '/profile'
     | '/purchases'
     | '/refunds'
-    | '/admin/login'
+    | '/auth/callback'
     | '/courses/$slug'
     | '/features/instructor'
     | '/features/student'
     | '/courses/'
-    | '/admin/categories'
-    | '/admin/courses'
-    | '/admin/payments'
-    | '/admin/refunds'
-    | '/admin/reports'
-    | '/admin/reviews'
-    | '/admin/roles'
-    | '/admin/users'
     | '/learn/$courseId'
-    | '/admin/'
-    | '/admin/cms/faq'
-    | '/admin/cms/pages'
-    | '/admin/cms/sliders'
-    | '/admin/courses/new'
-    | '/admin/courses/$courseId'
-    | '/admin/settings/frontend'
-    | '/admin/settings/site'
-    | '/admin/users/staff'
-    | '/admin/users/students'
-    | '/admin/courses/$courseId/edit'
-    | '/admin/courses/$courseId/lessons'
+    | '/admin/academy/login'
+    | '/admin/academy/categories'
+    | '/admin/academy/courses'
+    | '/admin/academy/payments'
+    | '/admin/academy/refunds'
+    | '/admin/academy/reports'
+    | '/admin/academy/reviews'
+    | '/admin/academy/roles'
+    | '/admin/academy/users'
+    | '/admin/academy/'
+    | '/admin/academy/cms/faq'
+    | '/admin/academy/cms/intro-video'
+    | '/admin/academy/cms/pages'
+    | '/admin/academy/cms/sliders'
+    | '/admin/academy/courses/new'
+    | '/admin/academy/courses/$courseId'
+    | '/admin/academy/settings/frontend'
+    | '/admin/academy/settings/site'
+    | '/admin/academy/users/staff'
+    | '/admin/academy/users/students'
+    | '/admin/academy/courses/$courseId/edit'
+    | '/admin/academy/courses/$courseId/lessons'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/faq'
     | '/login'
     | '/pricing'
     | '/reset-password'
@@ -431,37 +475,40 @@ export interface FileRouteTypes {
     | '/profile'
     | '/purchases'
     | '/refunds'
-    | '/admin/login'
+    | '/auth/callback'
     | '/courses/$slug'
     | '/features/instructor'
     | '/features/student'
     | '/courses'
-    | '/admin/categories'
-    | '/admin/courses'
-    | '/admin/payments'
-    | '/admin/refunds'
-    | '/admin/reports'
-    | '/admin/reviews'
-    | '/admin/roles'
-    | '/admin/users'
     | '/learn/$courseId'
-    | '/admin'
-    | '/admin/cms/faq'
-    | '/admin/cms/pages'
-    | '/admin/cms/sliders'
-    | '/admin/courses/new'
-    | '/admin/courses/$courseId'
-    | '/admin/settings/frontend'
-    | '/admin/settings/site'
-    | '/admin/users/staff'
-    | '/admin/users/students'
-    | '/admin/courses/$courseId/edit'
-    | '/admin/courses/$courseId/lessons'
+    | '/admin/academy/login'
+    | '/admin/academy/categories'
+    | '/admin/academy/courses'
+    | '/admin/academy/payments'
+    | '/admin/academy/refunds'
+    | '/admin/academy/reports'
+    | '/admin/academy/reviews'
+    | '/admin/academy/roles'
+    | '/admin/academy/users'
+    | '/admin/academy'
+    | '/admin/academy/cms/faq'
+    | '/admin/academy/cms/intro-video'
+    | '/admin/academy/cms/pages'
+    | '/admin/academy/cms/sliders'
+    | '/admin/academy/courses/new'
+    | '/admin/academy/courses/$courseId'
+    | '/admin/academy/settings/frontend'
+    | '/admin/academy/settings/site'
+    | '/admin/academy/users/staff'
+    | '/admin/academy/users/students'
+    | '/admin/academy/courses/$courseId/edit'
+    | '/admin/academy/courses/$courseId/lessons'
   id:
     | '__root__'
     | '/'
     | '/_admin'
     | '/_student'
+    | '/faq'
     | '/login'
     | '/pricing'
     | '/reset-password'
@@ -473,49 +520,53 @@ export interface FileRouteTypes {
     | '/_student/profile'
     | '/_student/purchases'
     | '/_student/refunds'
-    | '/admin/login'
+    | '/auth/callback'
     | '/courses/$slug'
     | '/features/instructor'
     | '/features/student'
     | '/courses/'
-    | '/_admin/admin/categories'
-    | '/_admin/admin/courses'
-    | '/_admin/admin/payments'
-    | '/_admin/admin/refunds'
-    | '/_admin/admin/reports'
-    | '/_admin/admin/reviews'
-    | '/_admin/admin/roles'
-    | '/_admin/admin/users'
     | '/_student/learn/$courseId'
-    | '/_admin/admin/'
-    | '/_admin/admin/cms/faq'
-    | '/_admin/admin/cms/pages'
-    | '/_admin/admin/cms/sliders'
-    | '/_admin/admin/courses/new'
-    | '/_admin/admin/courses_/$courseId'
-    | '/_admin/admin/settings/frontend'
-    | '/_admin/admin/settings/site'
-    | '/_admin/admin/users/staff'
-    | '/_admin/admin/users/students'
-    | '/_admin/admin/courses_/$courseId/edit'
-    | '/_admin/admin/courses_/$courseId/lessons'
+    | '/admin/academy/login'
+    | '/_admin/admin/academy/categories'
+    | '/_admin/admin/academy/courses'
+    | '/_admin/admin/academy/payments'
+    | '/_admin/admin/academy/refunds'
+    | '/_admin/admin/academy/reports'
+    | '/_admin/admin/academy/reviews'
+    | '/_admin/admin/academy/roles'
+    | '/_admin/admin/academy/users'
+    | '/_admin/admin/academy/'
+    | '/_admin/admin/academy/cms/faq'
+    | '/_admin/admin/academy/cms/intro-video'
+    | '/_admin/admin/academy/cms/pages'
+    | '/_admin/admin/academy/cms/sliders'
+    | '/_admin/admin/academy/courses/new'
+    | '/_admin/admin/academy/courses_/$courseId'
+    | '/_admin/admin/academy/settings/frontend'
+    | '/_admin/admin/academy/settings/site'
+    | '/_admin/admin/academy/users/staff'
+    | '/_admin/admin/academy/users/students'
+    | '/_admin/admin/academy/courses_/$courseId/edit'
+    | '/_admin/admin/academy/courses_/$courseId/lessons'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   StudentRoute: typeof StudentRouteWithChildren
+  FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   SupportRoute: typeof SupportRoute
-  AdminLoginRoute: typeof AdminLoginRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   CoursesSlugRoute: typeof CoursesSlugRoute
   FeaturesInstructorRoute: typeof FeaturesInstructorRoute
   FeaturesStudentRoute: typeof FeaturesStudentRoute
   CoursesIndexRoute: typeof CoursesIndexRoute
+  AdminAcademyLoginRoute: typeof AdminAcademyLoginRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -539,6 +590,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof StudentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -618,11 +676,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentRefundsRouteImport
       parentRoute: typeof StudentRoute
     }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/admin/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/courses/': {
@@ -653,69 +711,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FeaturesStudentRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_admin/admin/': {
-      id: '/_admin/admin/'
-      path: '/admin'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminAdminIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/admin/categories': {
-      id: '/_admin/admin/categories'
-      path: '/admin/categories'
-      fullPath: '/admin/categories'
-      preLoaderRoute: typeof AdminAdminCategoriesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/admin/courses': {
-      id: '/_admin/admin/courses'
-      path: '/admin/courses'
-      fullPath: '/admin/courses'
-      preLoaderRoute: typeof AdminAdminCoursesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/admin/payments': {
-      id: '/_admin/admin/payments'
-      path: '/admin/payments'
-      fullPath: '/admin/payments'
-      preLoaderRoute: typeof AdminAdminPaymentsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/admin/refunds': {
-      id: '/_admin/admin/refunds'
-      path: '/admin/refunds'
-      fullPath: '/admin/refunds'
-      preLoaderRoute: typeof AdminAdminRefundsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/admin/reports': {
-      id: '/_admin/admin/reports'
-      path: '/admin/reports'
-      fullPath: '/admin/reports'
-      preLoaderRoute: typeof AdminAdminReportsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/admin/reviews': {
-      id: '/_admin/admin/reviews'
-      path: '/admin/reviews'
-      fullPath: '/admin/reviews'
-      preLoaderRoute: typeof AdminAdminReviewsRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/admin/roles': {
-      id: '/_admin/admin/roles'
-      path: '/admin/roles'
-      fullPath: '/admin/roles'
-      preLoaderRoute: typeof AdminAdminRolesRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/_admin/admin/users': {
-      id: '/_admin/admin/users'
-      path: '/admin/users'
-      fullPath: '/admin/users'
-      preLoaderRoute: typeof AdminAdminUsersRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/_student/learn/$courseId': {
       id: '/_student/learn/$courseId'
       path: '/learn/$courseId'
@@ -723,162 +718,249 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentLearnCourseIdRouteImport
       parentRoute: typeof StudentRoute
     }
-    '/_admin/admin/cms/faq': {
-      id: '/_admin/admin/cms/faq'
-      path: '/admin/cms/faq'
-      fullPath: '/admin/cms/faq'
-      preLoaderRoute: typeof AdminAdminCmsFaqRouteImport
+    '/admin/academy/login': {
+      id: '/admin/academy/login'
+      path: '/admin/academy/login'
+      fullPath: '/admin/academy/login'
+      preLoaderRoute: typeof AdminAcademyLoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_admin/admin/academy/': {
+      id: '/_admin/admin/academy/'
+      path: '/admin/academy'
+      fullPath: '/admin/academy/'
+      preLoaderRoute: typeof AdminAdminAcademyIndexRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_admin/admin/cms/pages': {
-      id: '/_admin/admin/cms/pages'
-      path: '/admin/cms/pages'
-      fullPath: '/admin/cms/pages'
-      preLoaderRoute: typeof AdminAdminCmsPagesRouteImport
+    '/_admin/admin/academy/categories': {
+      id: '/_admin/admin/academy/categories'
+      path: '/admin/academy/categories'
+      fullPath: '/admin/academy/categories'
+      preLoaderRoute: typeof AdminAdminAcademyCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_admin/admin/cms/sliders': {
-      id: '/_admin/admin/cms/sliders'
-      path: '/admin/cms/sliders'
-      fullPath: '/admin/cms/sliders'
-      preLoaderRoute: typeof AdminAdminCmsSlidersRouteImport
+    '/_admin/admin/academy/courses': {
+      id: '/_admin/admin/academy/courses'
+      path: '/admin/academy/courses'
+      fullPath: '/admin/academy/courses'
+      preLoaderRoute: typeof AdminAdminAcademyCoursesRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_admin/admin/courses/new': {
-      id: '/_admin/admin/courses/new'
+    '/_admin/admin/academy/payments': {
+      id: '/_admin/admin/academy/payments'
+      path: '/admin/academy/payments'
+      fullPath: '/admin/academy/payments'
+      preLoaderRoute: typeof AdminAdminAcademyPaymentsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/refunds': {
+      id: '/_admin/admin/academy/refunds'
+      path: '/admin/academy/refunds'
+      fullPath: '/admin/academy/refunds'
+      preLoaderRoute: typeof AdminAdminAcademyRefundsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/reports': {
+      id: '/_admin/admin/academy/reports'
+      path: '/admin/academy/reports'
+      fullPath: '/admin/academy/reports'
+      preLoaderRoute: typeof AdminAdminAcademyReportsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/reviews': {
+      id: '/_admin/admin/academy/reviews'
+      path: '/admin/academy/reviews'
+      fullPath: '/admin/academy/reviews'
+      preLoaderRoute: typeof AdminAdminAcademyReviewsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/roles': {
+      id: '/_admin/admin/academy/roles'
+      path: '/admin/academy/roles'
+      fullPath: '/admin/academy/roles'
+      preLoaderRoute: typeof AdminAdminAcademyRolesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/users': {
+      id: '/_admin/admin/academy/users'
+      path: '/admin/academy/users'
+      fullPath: '/admin/academy/users'
+      preLoaderRoute: typeof AdminAdminAcademyUsersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/cms/faq': {
+      id: '/_admin/admin/academy/cms/faq'
+      path: '/admin/academy/cms/faq'
+      fullPath: '/admin/academy/cms/faq'
+      preLoaderRoute: typeof AdminAdminAcademyCmsFaqRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/cms/intro-video': {
+      id: '/_admin/admin/academy/cms/intro-video'
+      path: '/admin/academy/cms/intro-video'
+      fullPath: '/admin/academy/cms/intro-video'
+      preLoaderRoute: typeof AdminAdminAcademyCmsIntroVideoRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/cms/pages': {
+      id: '/_admin/admin/academy/cms/pages'
+      path: '/admin/academy/cms/pages'
+      fullPath: '/admin/academy/cms/pages'
+      preLoaderRoute: typeof AdminAdminAcademyCmsPagesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/cms/sliders': {
+      id: '/_admin/admin/academy/cms/sliders'
+      path: '/admin/academy/cms/sliders'
+      fullPath: '/admin/academy/cms/sliders'
+      preLoaderRoute: typeof AdminAdminAcademyCmsSlidersRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/courses/new': {
+      id: '/_admin/admin/academy/courses/new'
       path: '/new'
-      fullPath: '/admin/courses/new'
-      preLoaderRoute: typeof AdminAdminCoursesNewRouteImport
-      parentRoute: typeof AdminAdminCoursesRoute
+      fullPath: '/admin/academy/courses/new'
+      preLoaderRoute: typeof AdminAdminAcademyCoursesNewRouteImport
+      parentRoute: typeof AdminAdminAcademyCoursesRoute
     }
-    '/_admin/admin/courses_/$courseId': {
-      id: '/_admin/admin/courses_/$courseId'
-      path: '/admin/courses/$courseId'
-      fullPath: '/admin/courses/$courseId'
-      preLoaderRoute: typeof AdminAdminCoursesCourseIdRouteImport
+    '/_admin/admin/academy/courses_/$courseId': {
+      id: '/_admin/admin/academy/courses_/$courseId'
+      path: '/admin/academy/courses/$courseId'
+      fullPath: '/admin/academy/courses/$courseId'
+      preLoaderRoute: typeof AdminAdminAcademyCoursesCourseIdRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_admin/admin/settings/frontend': {
-      id: '/_admin/admin/settings/frontend'
-      path: '/admin/settings/frontend'
-      fullPath: '/admin/settings/frontend'
-      preLoaderRoute: typeof AdminAdminSettingsFrontendRouteImport
+    '/_admin/admin/academy/settings/frontend': {
+      id: '/_admin/admin/academy/settings/frontend'
+      path: '/admin/academy/settings/frontend'
+      fullPath: '/admin/academy/settings/frontend'
+      preLoaderRoute: typeof AdminAdminAcademySettingsFrontendRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_admin/admin/settings/site': {
-      id: '/_admin/admin/settings/site'
-      path: '/admin/settings/site'
-      fullPath: '/admin/settings/site'
-      preLoaderRoute: typeof AdminAdminSettingsSiteRouteImport
+    '/_admin/admin/academy/settings/site': {
+      id: '/_admin/admin/academy/settings/site'
+      path: '/admin/academy/settings/site'
+      fullPath: '/admin/academy/settings/site'
+      preLoaderRoute: typeof AdminAdminAcademySettingsSiteRouteImport
       parentRoute: typeof AdminRoute
     }
-    '/_admin/admin/users/staff': {
-      id: '/_admin/admin/users/staff'
+    '/_admin/admin/academy/users/staff': {
+      id: '/_admin/admin/academy/users/staff'
       path: '/staff'
-      fullPath: '/admin/users/staff'
-      preLoaderRoute: typeof AdminAdminUsersStaffRouteImport
-      parentRoute: typeof AdminAdminUsersRoute
+      fullPath: '/admin/academy/users/staff'
+      preLoaderRoute: typeof AdminAdminAcademyUsersStaffRouteImport
+      parentRoute: typeof AdminAdminAcademyUsersRoute
     }
-    '/_admin/admin/users/students': {
-      id: '/_admin/admin/users/students'
+    '/_admin/admin/academy/users/students': {
+      id: '/_admin/admin/academy/users/students'
       path: '/students'
-      fullPath: '/admin/users/students'
-      preLoaderRoute: typeof AdminAdminUsersStudentsRouteImport
-      parentRoute: typeof AdminAdminUsersRoute
+      fullPath: '/admin/academy/users/students'
+      preLoaderRoute: typeof AdminAdminAcademyUsersStudentsRouteImport
+      parentRoute: typeof AdminAdminAcademyUsersRoute
     }
-    '/_admin/admin/courses_/$courseId/edit': {
-      id: '/_admin/admin/courses_/$courseId/edit'
+    '/_admin/admin/academy/courses_/$courseId/edit': {
+      id: '/_admin/admin/academy/courses_/$courseId/edit'
       path: '/edit'
-      fullPath: '/admin/courses/$courseId/edit'
-      preLoaderRoute: typeof AdminAdminCoursesCourseIdEditRouteImport
-      parentRoute: typeof AdminAdminCoursesCourseIdRoute
+      fullPath: '/admin/academy/courses/$courseId/edit'
+      preLoaderRoute: typeof AdminAdminAcademyCoursesCourseIdEditRouteImport
+      parentRoute: typeof AdminAdminAcademyCoursesCourseIdRoute
     }
-    '/_admin/admin/courses_/$courseId/lessons': {
-      id: '/_admin/admin/courses_/$courseId/lessons'
+    '/_admin/admin/academy/courses_/$courseId/lessons': {
+      id: '/_admin/admin/academy/courses_/$courseId/lessons'
       path: '/lessons'
-      fullPath: '/admin/courses/$courseId/lessons'
-      preLoaderRoute: typeof AdminAdminCoursesCourseIdLessonsRouteImport
-      parentRoute: typeof AdminAdminCoursesCourseIdRoute
+      fullPath: '/admin/academy/courses/$courseId/lessons'
+      preLoaderRoute: typeof AdminAdminAcademyCoursesCourseIdLessonsRouteImport
+      parentRoute: typeof AdminAdminAcademyCoursesCourseIdRoute
     }
   }
 }
 
-interface AdminAdminCoursesRouteChildren {
-  AdminAdminCoursesNewRoute: typeof AdminAdminCoursesNewRoute
+interface AdminAdminAcademyCoursesRouteChildren {
+  AdminAdminAcademyCoursesNewRoute: typeof AdminAdminAcademyCoursesNewRoute
 }
 
-const AdminAdminCoursesRouteChildren: AdminAdminCoursesRouteChildren = {
-  AdminAdminCoursesNewRoute: AdminAdminCoursesNewRoute,
-}
-
-const AdminAdminCoursesRouteWithChildren =
-  AdminAdminCoursesRoute._addFileChildren(AdminAdminCoursesRouteChildren)
-
-interface AdminAdminUsersRouteChildren {
-  AdminAdminUsersStaffRoute: typeof AdminAdminUsersStaffRoute
-  AdminAdminUsersStudentsRoute: typeof AdminAdminUsersStudentsRoute
-}
-
-const AdminAdminUsersRouteChildren: AdminAdminUsersRouteChildren = {
-  AdminAdminUsersStaffRoute: AdminAdminUsersStaffRoute,
-  AdminAdminUsersStudentsRoute: AdminAdminUsersStudentsRoute,
-}
-
-const AdminAdminUsersRouteWithChildren = AdminAdminUsersRoute._addFileChildren(
-  AdminAdminUsersRouteChildren,
-)
-
-interface AdminAdminCoursesCourseIdRouteChildren {
-  AdminAdminCoursesCourseIdEditRoute: typeof AdminAdminCoursesCourseIdEditRoute
-  AdminAdminCoursesCourseIdLessonsRoute: typeof AdminAdminCoursesCourseIdLessonsRoute
-}
-
-const AdminAdminCoursesCourseIdRouteChildren: AdminAdminCoursesCourseIdRouteChildren =
+const AdminAdminAcademyCoursesRouteChildren: AdminAdminAcademyCoursesRouteChildren =
   {
-    AdminAdminCoursesCourseIdEditRoute: AdminAdminCoursesCourseIdEditRoute,
-    AdminAdminCoursesCourseIdLessonsRoute:
-      AdminAdminCoursesCourseIdLessonsRoute,
+    AdminAdminAcademyCoursesNewRoute: AdminAdminAcademyCoursesNewRoute,
   }
 
-const AdminAdminCoursesCourseIdRouteWithChildren =
-  AdminAdminCoursesCourseIdRoute._addFileChildren(
-    AdminAdminCoursesCourseIdRouteChildren,
+const AdminAdminAcademyCoursesRouteWithChildren =
+  AdminAdminAcademyCoursesRoute._addFileChildren(
+    AdminAdminAcademyCoursesRouteChildren,
+  )
+
+interface AdminAdminAcademyUsersRouteChildren {
+  AdminAdminAcademyUsersStaffRoute: typeof AdminAdminAcademyUsersStaffRoute
+  AdminAdminAcademyUsersStudentsRoute: typeof AdminAdminAcademyUsersStudentsRoute
+}
+
+const AdminAdminAcademyUsersRouteChildren: AdminAdminAcademyUsersRouteChildren =
+  {
+    AdminAdminAcademyUsersStaffRoute: AdminAdminAcademyUsersStaffRoute,
+    AdminAdminAcademyUsersStudentsRoute: AdminAdminAcademyUsersStudentsRoute,
+  }
+
+const AdminAdminAcademyUsersRouteWithChildren =
+  AdminAdminAcademyUsersRoute._addFileChildren(
+    AdminAdminAcademyUsersRouteChildren,
+  )
+
+interface AdminAdminAcademyCoursesCourseIdRouteChildren {
+  AdminAdminAcademyCoursesCourseIdEditRoute: typeof AdminAdminAcademyCoursesCourseIdEditRoute
+  AdminAdminAcademyCoursesCourseIdLessonsRoute: typeof AdminAdminAcademyCoursesCourseIdLessonsRoute
+}
+
+const AdminAdminAcademyCoursesCourseIdRouteChildren: AdminAdminAcademyCoursesCourseIdRouteChildren =
+  {
+    AdminAdminAcademyCoursesCourseIdEditRoute:
+      AdminAdminAcademyCoursesCourseIdEditRoute,
+    AdminAdminAcademyCoursesCourseIdLessonsRoute:
+      AdminAdminAcademyCoursesCourseIdLessonsRoute,
+  }
+
+const AdminAdminAcademyCoursesCourseIdRouteWithChildren =
+  AdminAdminAcademyCoursesCourseIdRoute._addFileChildren(
+    AdminAdminAcademyCoursesCourseIdRouteChildren,
   )
 
 interface AdminRouteChildren {
-  AdminAdminCategoriesRoute: typeof AdminAdminCategoriesRoute
-  AdminAdminCoursesRoute: typeof AdminAdminCoursesRouteWithChildren
-  AdminAdminPaymentsRoute: typeof AdminAdminPaymentsRoute
-  AdminAdminRefundsRoute: typeof AdminAdminRefundsRoute
-  AdminAdminReportsRoute: typeof AdminAdminReportsRoute
-  AdminAdminReviewsRoute: typeof AdminAdminReviewsRoute
-  AdminAdminRolesRoute: typeof AdminAdminRolesRoute
-  AdminAdminUsersRoute: typeof AdminAdminUsersRouteWithChildren
-  AdminAdminIndexRoute: typeof AdminAdminIndexRoute
-  AdminAdminCmsFaqRoute: typeof AdminAdminCmsFaqRoute
-  AdminAdminCmsPagesRoute: typeof AdminAdminCmsPagesRoute
-  AdminAdminCmsSlidersRoute: typeof AdminAdminCmsSlidersRoute
-  AdminAdminCoursesCourseIdRoute: typeof AdminAdminCoursesCourseIdRouteWithChildren
-  AdminAdminSettingsFrontendRoute: typeof AdminAdminSettingsFrontendRoute
-  AdminAdminSettingsSiteRoute: typeof AdminAdminSettingsSiteRoute
+  AdminAdminAcademyCategoriesRoute: typeof AdminAdminAcademyCategoriesRoute
+  AdminAdminAcademyCoursesRoute: typeof AdminAdminAcademyCoursesRouteWithChildren
+  AdminAdminAcademyPaymentsRoute: typeof AdminAdminAcademyPaymentsRoute
+  AdminAdminAcademyRefundsRoute: typeof AdminAdminAcademyRefundsRoute
+  AdminAdminAcademyReportsRoute: typeof AdminAdminAcademyReportsRoute
+  AdminAdminAcademyReviewsRoute: typeof AdminAdminAcademyReviewsRoute
+  AdminAdminAcademyRolesRoute: typeof AdminAdminAcademyRolesRoute
+  AdminAdminAcademyUsersRoute: typeof AdminAdminAcademyUsersRouteWithChildren
+  AdminAdminAcademyIndexRoute: typeof AdminAdminAcademyIndexRoute
+  AdminAdminAcademyCmsFaqRoute: typeof AdminAdminAcademyCmsFaqRoute
+  AdminAdminAcademyCmsIntroVideoRoute: typeof AdminAdminAcademyCmsIntroVideoRoute
+  AdminAdminAcademyCmsPagesRoute: typeof AdminAdminAcademyCmsPagesRoute
+  AdminAdminAcademyCmsSlidersRoute: typeof AdminAdminAcademyCmsSlidersRoute
+  AdminAdminAcademyCoursesCourseIdRoute: typeof AdminAdminAcademyCoursesCourseIdRouteWithChildren
+  AdminAdminAcademySettingsFrontendRoute: typeof AdminAdminAcademySettingsFrontendRoute
+  AdminAdminAcademySettingsSiteRoute: typeof AdminAdminAcademySettingsSiteRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminAdminCategoriesRoute: AdminAdminCategoriesRoute,
-  AdminAdminCoursesRoute: AdminAdminCoursesRouteWithChildren,
-  AdminAdminPaymentsRoute: AdminAdminPaymentsRoute,
-  AdminAdminRefundsRoute: AdminAdminRefundsRoute,
-  AdminAdminReportsRoute: AdminAdminReportsRoute,
-  AdminAdminReviewsRoute: AdminAdminReviewsRoute,
-  AdminAdminRolesRoute: AdminAdminRolesRoute,
-  AdminAdminUsersRoute: AdminAdminUsersRouteWithChildren,
-  AdminAdminIndexRoute: AdminAdminIndexRoute,
-  AdminAdminCmsFaqRoute: AdminAdminCmsFaqRoute,
-  AdminAdminCmsPagesRoute: AdminAdminCmsPagesRoute,
-  AdminAdminCmsSlidersRoute: AdminAdminCmsSlidersRoute,
-  AdminAdminCoursesCourseIdRoute: AdminAdminCoursesCourseIdRouteWithChildren,
-  AdminAdminSettingsFrontendRoute: AdminAdminSettingsFrontendRoute,
-  AdminAdminSettingsSiteRoute: AdminAdminSettingsSiteRoute,
+  AdminAdminAcademyCategoriesRoute: AdminAdminAcademyCategoriesRoute,
+  AdminAdminAcademyCoursesRoute: AdminAdminAcademyCoursesRouteWithChildren,
+  AdminAdminAcademyPaymentsRoute: AdminAdminAcademyPaymentsRoute,
+  AdminAdminAcademyRefundsRoute: AdminAdminAcademyRefundsRoute,
+  AdminAdminAcademyReportsRoute: AdminAdminAcademyReportsRoute,
+  AdminAdminAcademyReviewsRoute: AdminAdminAcademyReviewsRoute,
+  AdminAdminAcademyRolesRoute: AdminAdminAcademyRolesRoute,
+  AdminAdminAcademyUsersRoute: AdminAdminAcademyUsersRouteWithChildren,
+  AdminAdminAcademyIndexRoute: AdminAdminAcademyIndexRoute,
+  AdminAdminAcademyCmsFaqRoute: AdminAdminAcademyCmsFaqRoute,
+  AdminAdminAcademyCmsIntroVideoRoute: AdminAdminAcademyCmsIntroVideoRoute,
+  AdminAdminAcademyCmsPagesRoute: AdminAdminAcademyCmsPagesRoute,
+  AdminAdminAcademyCmsSlidersRoute: AdminAdminAcademyCmsSlidersRoute,
+  AdminAdminAcademyCoursesCourseIdRoute:
+    AdminAdminAcademyCoursesCourseIdRouteWithChildren,
+  AdminAdminAcademySettingsFrontendRoute:
+    AdminAdminAcademySettingsFrontendRoute,
+  AdminAdminAcademySettingsSiteRoute: AdminAdminAcademySettingsSiteRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -908,17 +990,19 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   StudentRoute: StudentRouteWithChildren,
+  FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   SupportRoute: SupportRoute,
-  AdminLoginRoute: AdminLoginRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   CoursesSlugRoute: CoursesSlugRoute,
   FeaturesInstructorRoute: FeaturesInstructorRoute,
   FeaturesStudentRoute: FeaturesStudentRoute,
   CoursesIndexRoute: CoursesIndexRoute,
+  AdminAcademyLoginRoute: AdminAcademyLoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

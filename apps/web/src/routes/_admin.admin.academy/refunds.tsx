@@ -4,7 +4,7 @@ import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { ReceiptText, Check, X } from "lucide-react";
 
-export const Route = createFileRoute("/_admin/admin/refunds")({
+export const Route = createFileRoute("/_admin/admin/academy/refunds")({
   loader: async () => {
     return await getAdminRefundsFn();
   },

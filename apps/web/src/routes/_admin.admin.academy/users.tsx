@@ -2,10 +2,10 @@ import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import { getAdminUsersFn, updateUserRoleFn, deleteUserFn } from "@/server/admin";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { Users as UsersIcon, GraduationCap, ShieldCheck, Trash2 } from "lucide-react";
+import { Users as UsersIcon, GraduationCap, ShieldCheck, Trash2, Search, X } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_admin/admin/users")({
+export const Route = createFileRoute("/_admin/admin/academy/users")({
   loader: async () => {
     return await getAdminUsersFn({ data: { role: "ALL" } });
   },
@@ -27,11 +27,29 @@ function RoleBadge({ role }: { role: "ADMIN" | "SUB_ADMIN" | "STUDENT" }) {
 }
 
 function AdminUsers() {
-  const { users, total, studentCount, staffCount } = Route.useLoaderData();
+  const { users, categories, total, studentCount, staffCount } = Route.useLoaderData();
   const router = useRouter();
 
   const [roleFilter, setRoleFilter] = useState<"ALL" | "ADMIN" | "SUB_ADMIN" | "STUDENT">("ALL");
-  const filtered = roleFilter === "ALL" ? users : users.filter((u) => u.role === roleFilter);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
+
+  const query = search.trim().toLowerCase();
+  const filtered = users.filter((u) => {
+    if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
+    if (categoryFilter !== "ALL" && !u.categories.some((c) => c.id === categoryFilter))
+      return false;
+    if (query && ![u.name, u.email, u.id].some((v) => v.toLowerCase().includes(query)))
+      return false;
+    return true;
+  });
+
+  const isFiltering = query.length > 0 || categoryFilter !== "ALL";
+
+  const resetFilters = () => {
+    setSearch("");
+    setCategoryFilter("ALL");
+  };
 
   const handleChangeRole = async (id: string, role: "ADMIN" | "SUB_ADMIN" | "STUDENT") => {
     await updateUserRoleFn({ data: { id, role } });
@@ -113,7 +131,7 @@ function AdminUsers() {
         {filterBtn("SUB_ADMIN", "Sub Admins")}
         {filterBtn("ADMIN", "Admins")}
         <div className="ml-auto flex gap-2">
-          <Link to="/admin/users/students">
+          <Link to="/admin/academy/users/students">
             <Button
               variant="ghost"
               size="sm"
@@ -122,7 +140,7 @@ function AdminUsers() {
               Students
             </Button>
           </Link>
-          <Link to="/admin/users/staff">
+          <Link to="/admin/academy/users/staff">
             <Button
               variant="ghost"
               size="sm"
@@ -136,6 +154,51 @@ function AdminUsers() {
 
       <Panel className="p-0 overflow-hidden">
         <PanelTitle className="px-6 pt-5">Registered Hunters</PanelTitle>
+
+        <div className="flex flex-col gap-3 px-6 pb-4 sm:flex-row sm:items-center">
+          <div className="relative flex-1 sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name, email, or user ID..."
+              className="w-full rounded-md border border-border bg-background/50 py-2 pl-9 pr-8 text-sm text-foreground placeholder:text-muted-foreground focus:border-neon-cyan focus:outline-none"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                aria-label="Clear search"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:border-neon-cyan focus:outline-none sm:w-56"
+          >
+            <option value="ALL">All Categories</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          {isFiltering && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetFilters}
+              className="self-start sm:self-auto"
+            >
+              Reset filters
+            </Button>
+          )}
+        </div>
+
         <table className="w-full text-left text-sm">
           <thead className="bg-surface-2/50 font-display text-xs uppercase tracking-widest text-muted-foreground">
             <tr>

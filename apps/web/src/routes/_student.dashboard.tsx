@@ -3,7 +3,7 @@ import { Lock, PlayCircle } from "lucide-react";
 import { Panel, PanelTitle, RankBadge, StatusTag } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { getCurrentUserFn } from "@/server/auth";
-import { getEnrolledCoursesFn } from "@/server/courses";
+import { getEnrolledCoursesFn, getHunterStatsFn } from "@/server/courses";
 import { HunterStatsBar } from "@/components/site/HunterStatsBar";
 
 export const Route = createFileRoute("/_student/dashboard")({
@@ -15,8 +15,11 @@ export const Route = createFileRoute("/_student/dashboard")({
     return { user };
   },
   loader: async ({ context }) => {
-    const enrolledCourses = await getEnrolledCoursesFn();
-    return { user: context.user, enrolledCourses };
+    const [enrolledCourses, stats] = await Promise.all([
+      getEnrolledCoursesFn(),
+      getHunterStatsFn(),
+    ]);
+    return { user: context.user, enrolledCourses, stats };
   },
   head: () => ({
     meta: [{ title: "Hunter Dashboard — Cyber Tech Academy" }],
@@ -25,7 +28,7 @@ export const Route = createFileRoute("/_student/dashboard")({
 });
 
 function Dashboard() {
-  const { user, enrolledCourses } = Route.useLoaderData();
+  const { user, enrolledCourses, stats } = Route.useLoaderData();
   const completedCourses = enrolledCourses.filter(
     (c) => c.totalLessons > 0 && c.completedLessons >= c.totalLessons,
   ).length;
@@ -40,10 +43,16 @@ function Dashboard() {
             Current Rank
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-4xl font-display font-bold text-neon-cyan glow-text">E</span>
-            <span className="text-sm text-muted-foreground border border-border px-2 py-0.5 rounded-full">
-              Novice Hunter
+            <span className="text-4xl font-display font-bold text-neon-cyan glow-text">
+              {stats.rankLetter}
             </span>
+            <span className="text-sm text-muted-foreground border border-border px-2 py-0.5 rounded-full">
+              {stats.rankName}
+            </span>
+          </div>
+          <div className="mt-3 text-xs text-muted-foreground">
+            {stats.coursesTaken} course{stats.coursesTaken === 1 ? "" : "s"} taken ·{" "}
+            {stats.coursesCompleted} completed
           </div>
         </Panel>
 
@@ -55,7 +64,12 @@ function Dashboard() {
         </Panel>
 
         <div className="sm:col-span-2 lg:col-span-1">
-          <HunterStatsBar expCurrent={150} expMax={1000} hpPercent={88} mpPercent={75} />
+          <HunterStatsBar
+            expCurrent={stats.expCurrent}
+            expMax={stats.expMax}
+            hpPercent={stats.focusPct}
+            mpPercent={stats.mpPercent}
+          />
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { Prisma } from "@prisma/client";
 import { prisma } from "./db";
 import { z } from "zod";
 import { getCurrentUserFn } from "./auth";
@@ -10,6 +11,18 @@ async function ensureAdmin() {
     throw new Error("Unauthorized: Admin access required");
   }
   return user;
+}
+
+// Turns raw Prisma/DB errors into a short, human-friendly message instead of
+// leaking the full query engine dump to the admin UI.
+function throwFriendlyError(err: unknown, fallback: string): never {
+  const isPrismaError =
+    err instanceof Error &&
+    /(Invalid `prisma\.|Unknown argument|PrismaClient(Validation|KnownRequest)Error)/.test(
+      err.message,
+    );
+  if (isPrismaError) throw new Error(fallback);
+  throw err;
 }
 
 export const promoteToAdminFn = createServerFn({ method: "POST" }).handler(async () => {
@@ -111,6 +124,26 @@ export const createLessonFn = createServerFn({ method: "POST" })
     return lesson;
   });
 
+export const updateLessonFn = createServerFn({ method: "POST" })
+  .validator((d: { lessonId: string; title: string; description?: string; videoUrl: string }) => d)
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+
+    try {
+      const updated = await prisma.lesson.update({
+        where: { id: data.lessonId },
+        data: {
+          title: data.title,
+          description: data.description?.trim() ? data.description.trim() : null,
+          videoUrl: data.videoUrl,
+        },
+      });
+      return updated;
+    } catch (err) {
+      throwFriendlyError(err, "Failed to update lesson. Please try again.");
+    }
+  });
+
 export const deleteLessonFn = createServerFn({ method: "POST" })
   .validator((d: { lessonId: string }) => d)
   .handler(async ({ data }) => {
@@ -131,26 +164,66 @@ export const createCourseFn = createServerFn({ method: "POST" })
       price: z.number().min(0),
       categoryId: z.string(),
       type: z.enum(["FULL", "MODULE"]).default("FULL"),
+      thumbnail: z.string().optional(),
     }),
   )
   .handler(async ({ data }) => {
     await ensureAdmin();
 
-    const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
+    try {
+      const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
 
-    const newCourse = await prisma.course.create({
-      data: {
-        title: data.title,
-        slug,
-        description: data.description,
-        price: data.price,
-        categoryId: data.categoryId,
-        type: data.type,
-        published: false,
-      },
-    });
+      const newCourse = await prisma.course.create({
+        data: {
+          title: data.title,
+          slug,
+          description: data.description,
+          price: data.price,
+          categoryId: data.categoryId,
+          type: data.type,
+          thumbnail: data.thumbnail?.trim() ? data.thumbnail.trim() : null,
+          published: false,
+        },
+      });
 
-    return newCourse;
+      return newCourse;
+    } catch (err) {
+      throwFriendlyError(err, "Failed to create course. Please try again.");
+    }
+  });
+
+export const updateCourseFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      courseId: z.string(),
+      title: z.string().min(1),
+      description: z.string(),
+      price: z.number().min(0),
+      categoryId: z.string(),
+      type: z.enum(["FULL", "MODULE"]),
+      thumbnail: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+
+    try {
+      const updatedCourse = await prisma.course.update({
+        where: { id: data.courseId },
+        data: {
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          categoryId: data.categoryId,
+          type: data.type,
+          thumbnail: data.thumbnail?.trim() ? data.thumbnail.trim() : null,
+        },
+      });
+
+      return updatedCourse;
+    } catch (err) {
+      throwFriendlyError(err, "Failed to update course. Please try again.");
+    }
   });
 
 export const toggleCoursePublishedFn = createServerFn({ method: "POST" })
@@ -171,6 +244,37 @@ export const toggleCoursePublishedFn = createServerFn({ method: "POST" })
     return updatedCourse;
   });
 
+export const deleteCourseFn = createServerFn({ method: "POST" })
+  .validator(z.object({ courseId: z.string() }))
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+
+    await prisma.$transaction(async (tx) => {
+      // Progress is keyed to lessons of this course
+      await tx.lessonProgress.deleteMany({
+        where: { lesson: { courseId: data.courseId } },
+      });
+      await tx.lesson.deleteMany({ where: { courseId: data.courseId } });
+
+      // Payments referencing the course, plus their refunds
+      const payments = await tx.payment.findMany({
+        where: { courseId: data.courseId },
+        select: { id: true },
+      });
+      const paymentIds = payments.map((p) => p.id);
+      await tx.refund.deleteMany({ where: { paymentId: { in: paymentIds } } });
+      await tx.payment.deleteMany({ where: { courseId: data.courseId } });
+
+      await tx.enrollment.deleteMany({ where: { courseId: data.courseId } });
+      await tx.review.deleteMany({ where: { courseId: data.courseId } });
+      await tx.faqItem.deleteMany({ where: { courseId: data.courseId } });
+
+      await tx.course.delete({ where: { id: data.courseId } });
+    });
+
+    return { success: true };
+  });
+
 // ---------- Categories ----------
 
 export const getAdminCategoriesFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -187,40 +291,70 @@ export const getAdminCategoriesFn = createServerFn({ method: "GET" }).handler(as
 });
 
 export const createCategoryFn = createServerFn({ method: "POST" })
-  .validator(z.object({ name: z.string().min(1) }))
+  .validator(z.object({ name: z.string().trim().min(1), image: z.string().optional() }))
   .handler(async ({ data }) => {
     await ensureAdmin();
 
-    const slug =
-      data.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "") +
-      "-" +
-      Date.now();
+    try {
+      const existing = await prisma.category.findFirst({
+        where: { name: { equals: data.name, mode: "insensitive" } },
+      });
+      if (existing) throw new Error("Category already exists.");
 
-    const category = await prisma.category.create({ data: { name: data.name, slug } });
-    return category;
+      const slug =
+        data.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "") +
+        "-" +
+        Date.now();
+
+      const category = await prisma.category.create({
+        data: {
+          name: data.name,
+          slug,
+          image: data.image?.trim() ? data.image.trim() : null,
+        },
+      });
+      return category;
+    } catch (err) {
+      throwFriendlyError(err, "Failed to create category. Please try again.");
+    }
   });
 
 export const updateCategoryFn = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string(), name: z.string().min(1) }))
+  .validator(
+    z.object({ id: z.string(), name: z.string().trim().min(1), image: z.string().optional() }),
+  )
   .handler(async ({ data }) => {
     await ensureAdmin();
 
-    const slug =
-      data.name
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "") +
-      "-" +
-      Date.now();
+    try {
+      const existing = await prisma.category.findFirst({
+        where: { name: { equals: data.name, mode: "insensitive" }, id: { not: data.id } },
+      });
+      if (existing) throw new Error("Category already exists.");
 
-    const category = await prisma.category.update({
-      where: { id: data.id },
-      data: { name: data.name, slug },
-    });
-    return category;
+      const slug =
+        data.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "") +
+        "-" +
+        Date.now();
+
+      const category = await prisma.category.update({
+        where: { id: data.id },
+        data: {
+          name: data.name,
+          slug,
+          image: data.image?.trim() ? data.image.trim() : null,
+        },
+      });
+      return category;
+    } catch (err) {
+      throwFriendlyError(err, "Failed to update category. Please try again.");
+    }
   });
 
 export const deleteCategoryFn = createServerFn({ method: "POST" })
@@ -259,14 +393,33 @@ export const getAdminUsersFn = createServerFn({ method: "GET" })
         role: true,
         createdAt: true,
         _count: { select: { enrollments: true } },
+        enrollments: {
+          select: {
+            course: {
+              select: { category: { select: { id: true, name: true } } },
+            },
+          },
+        },
       },
+    });
+
+    const mappedUsers = users.map(({ enrollments, ...user }) => ({
+      ...user,
+      categories: Array.from(
+        new Map(enrollments.map((e) => [e.course.category.id, e.course.category])).values(),
+      ),
+    }));
+
+    const categories = await prisma.category.findMany({
+      orderBy: { name: "asc" },
+      select: { id: true, name: true },
     });
 
     const total = await prisma.user.count();
     const studentCount = await prisma.user.count({ where: { role: "STUDENT" } });
     const staffCount = await prisma.user.count({ where: { role: { in: ["ADMIN", "SUB_ADMIN"] } } });
 
-    return { users, total, studentCount, staffCount };
+    return { users: mappedUsers, categories, total, studentCount, staffCount };
   });
 
 export const updateUserRoleFn = createServerFn({ method: "POST" })
@@ -293,6 +446,135 @@ export const deleteUserFn = createServerFn({ method: "POST" })
       await tx.payment.deleteMany({ where: { userId: data.id } });
       await tx.user.delete({ where: { id: data.id } });
     });
+    return { success: true };
+  });
+
+// ---------- Students ----------
+
+export const getAdminStudentsFn = createServerFn({ method: "GET" })
+  .validator(
+    z
+      .object({
+        search: z.string().trim().optional(),
+        categoryId: z.string().optional(),
+        page: z.number().int().min(1).default(1),
+        pageSize: z.number().int().min(1).max(100).default(10),
+      })
+      .optional(),
+  )
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+
+    const search = data?.search?.trim();
+    const categoryId = data?.categoryId;
+    const page = data?.page ?? 1;
+    const pageSize = data?.pageSize ?? 10;
+
+    // Students only — staff (ADMIN/SUB_ADMIN) are managed on the Staff page.
+    const where: Prisma.UserWhereInput = { role: "STUDENT" };
+    if (search) {
+      where.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+      ];
+    }
+    if (categoryId) {
+      where.enrollments = { some: { course: { categoryId } } };
+    }
+
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const [
+      total,
+      students,
+      categories,
+      totalStudents,
+      activeStudents,
+      newThisMonth,
+      totalEnrollments,
+    ] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        orderBy: { createdAt: "desc" },
+        skip: (page - 1) * pageSize,
+        take: pageSize,
+        include: {
+          enrollments: {
+            include: {
+              course: {
+                select: {
+                  id: true,
+                  title: true,
+                  categoryId: true,
+                  category: { select: { name: true } },
+                  lessons: { select: { id: true } },
+                },
+              },
+            },
+          },
+          progress: { select: { progressSeconds: true, completed: true } },
+        },
+      }),
+      prisma.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+      prisma.user.count({ where: { role: "STUDENT" } }),
+      prisma.user.count({
+        where: { role: "STUDENT", progress: { some: { progressSeconds: { gt: 0 } } } },
+      }),
+      prisma.user.count({ where: { role: "STUDENT", createdAt: { gte: startOfMonth } } }),
+      prisma.enrollment.count({ where: { user: { role: "STUDENT" } } }),
+    ]);
+
+    const mappedStudents = students.map(({ enrollments, progress, ...user }) => {
+      const totalLessons = enrollments.reduce((sum, e) => sum + e.course.lessons.length, 0);
+      const completedLessons = progress.filter((p) => p.completed).length;
+      return {
+        ...user,
+        enrolledCount: enrollments.length,
+        progressPercent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
+        active: progress.some((p) => p.progressSeconds > 0),
+        courses: enrollments.map((e) => ({
+          id: e.course.id,
+          title: e.course.title,
+          category: e.course.category.name,
+        })),
+      };
+    });
+
+    return {
+      students: mappedStudents,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.max(1, Math.ceil(total / pageSize)),
+      categories,
+      metrics: { totalStudents, activeStudents, newThisMonth, totalEnrollments },
+    };
+  });
+
+export const updateStudentFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      id: z.string(),
+      name: z.string().trim().min(2).optional(),
+      phone: z.string().optional(),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+
+    const student = await prisma.user.findFirst({ where: { id: data.id, role: "STUDENT" } });
+    if (!student) throw new Error("Student not found");
+
+    await prisma.user.update({
+      where: { id: data.id },
+      data: {
+        ...(data.name ? { name: data.name } : {}),
+        ...(data.phone !== undefined ? { phone: data.phone.trim() || null } : {}),
+      },
+    });
+
     return { success: true };
   });
 

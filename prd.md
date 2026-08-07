@@ -2,7 +2,7 @@
 ## LMS Portal — Web + Mobile Application
 
 **Version:** 1.0 (Draft for review)
-**Prepared for:** Mahajan IT Solution — Client LMS Project
+**Prepared for:** codetechitsolutions — Client LMS Project
 **Platforms:** Web (React + Next.js), Mobile (React Native — Android & iOS)
 
 ---

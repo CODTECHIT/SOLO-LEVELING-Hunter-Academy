@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 
-export const Route = createFileRoute("/_admin/admin/cms/pages")({
+export const Route = createFileRoute("/_admin/admin/academy/cms/pages")({
   loader: async () => {
     return await getCmsPagesFn();
   },

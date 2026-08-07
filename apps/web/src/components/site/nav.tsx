@@ -1,5 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { Bell, CalendarDays, Menu, Shield, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  Menu,
+  Shield,
+  ChevronLeft,
+  ChevronRight,
+  HelpCircle,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { format, getDaysInMonth } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -116,6 +124,11 @@ export function TopNav() {
 
         {/* Right Side: Action Buttons */}
         <div className="flex-1 flex items-center justify-end gap-2">
+          <Link to="/faq" aria-label="FAQ" title="Frequently Asked Questions">
+            <Button variant="ghost" size="icon">
+              <HelpCircle className="h-5 w-5 text-muted-foreground hover:text-neon-cyan" />
+            </Button>
+          </Link>
           <div ref={calRef} className="relative hidden sm:inline-flex">
             <Button
               variant="ghost"
@@ -287,6 +300,20 @@ export function TopNav() {
 export function SiteFooter() {
   return (
     <footer className="mt-16 border-t border-neon-purple/20 py-8 text-center text-xs text-muted-foreground">
+      <nav className="mb-4 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+        <Link to="/courses" className="hover:text-neon-cyan transition-colors">
+          Courses
+        </Link>
+        <Link to="/pricing" className="hover:text-neon-cyan transition-colors">
+          Hunter Pass
+        </Link>
+        <Link to="/faq" className="hover:text-neon-cyan transition-colors">
+          FAQ
+        </Link>
+        <Link to="/support" className="hover:text-neon-cyan transition-colors">
+          Support
+        </Link>
+      </nav>
       © {new Date().getFullYear()} Cyber Tech Academy — Arise, Hunter.
     </footer>
   );

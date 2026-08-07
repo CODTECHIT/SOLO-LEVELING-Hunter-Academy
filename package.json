@@ -4,8 +4,9 @@
   "private": true,
   "packageManager": "npm@10.8.2",
   "scripts": {
-    "build": "npm run build --workspace=apps/web",
-    "dev": "npm run dev --workspace=apps/web"
+    "build": "cd apps/web && npm run build",
+    "dev": "cd apps/web && npm run dev",
+    "build:web": "cd apps/web && npm run build"
   },
   "workspaces": [
     "apps/*",
