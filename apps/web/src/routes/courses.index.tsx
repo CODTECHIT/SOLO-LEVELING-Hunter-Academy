@@ -5,7 +5,7 @@ import { HunterHero } from "@/components/site/catalog-hero";
 import { CourseCard } from "@/components/site/course-card";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { getCatalogFn } from "@/server/courses";
+import { getCatalogFn, getEnrolledCoursesFn } from "@/server/courses";
 import { getCurrentUserFn } from "@/server/auth";
 import { HeroCtas } from "@/components/site/hero-ctas";
 import { useState, useMemo } from "react";
@@ -15,7 +15,8 @@ export const Route = createFileRoute("/courses/")({
   loader: async () => {
     const data = await getCatalogFn();
     const user = await getCurrentUserFn();
-    return { ...data, user };
+    const enrolledCourses = user ? await getEnrolledCoursesFn() : [];
+    return { ...data, user, enrolledCourses };
   },
   head: () => ({
     meta: [
@@ -27,10 +28,12 @@ export const Route = createFileRoute("/courses/")({
 });
 
 function Catalog() {
-  const { categories, fullCourses, user } = Route.useLoaderData();
+  const { categories, fullCourses, user, enrolledCourses } = Route.useLoaderData();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
+
+  const enrolledIds = useMemo(() => new Set(enrolledCourses.map((c) => c.id)), [enrolledCourses]);
 
   const toggleCategory = (catId: string) => {
     setSelectedCategories((prev) =>
@@ -239,6 +242,7 @@ function Catalog() {
                   course={course}
                   tone="cyan"
                   ctaLabel="Start Your Awakening"
+                  enrolled={enrolledIds.has(course.id)}
                 />
               ))}
               {filteredCourses.length === 0 && (

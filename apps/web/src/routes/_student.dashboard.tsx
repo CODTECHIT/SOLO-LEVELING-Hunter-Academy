@@ -4,7 +4,6 @@ import { Panel, PanelTitle, RankBadge, StatusTag } from "@/components/site/ui-bi
 import { Button } from "@/components/ui/button";
 import { getCurrentUserFn } from "@/server/auth";
 import { getEnrolledCoursesFn, getHunterStatsFn } from "@/server/courses";
-import { HunterStatsBar } from "@/components/site/HunterStatsBar";
 
 export const Route = createFileRoute("/_student/dashboard")({
   beforeLoad: async () => {
@@ -30,14 +29,14 @@ export const Route = createFileRoute("/_student/dashboard")({
 function Dashboard() {
   const { user, enrolledCourses, stats } = Route.useLoaderData();
   const completedCourses = enrolledCourses.filter(
-    (c) => c.totalLessons > 0 && c.completedLessons >= c.totalLessons,
+    (c) => !c.expired && c.totalLessons > 0 && c.completedLessons >= c.totalLessons,
   ).length;
 
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
       <h1 className="font-display text-2xl font-bold text-foreground">Welcome back, {user.name}</h1>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-center">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Panel accent="cyan" className="flex flex-col justify-center">
           <div className="text-sm text-muted-foreground mb-1 uppercase tracking-wider">
             Current Rank
@@ -63,14 +62,37 @@ function Dashboard() {
           <div className="text-4xl font-display font-bold text-foreground">{completedCourses}</div>
         </Panel>
 
-        <div className="sm:col-span-2 lg:col-span-1">
-          <HunterStatsBar
-            expCurrent={stats.expCurrent}
-            expMax={stats.expMax}
-            hpPercent={stats.focusPct}
-            mpPercent={stats.mpPercent}
-          />
-        </div>
+        <Panel accent="purple" className="flex flex-col justify-center">
+          <div className="text-sm text-muted-foreground mb-1 uppercase tracking-wider">EXP</div>
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-display font-bold text-neon-purple glow-text">
+              {stats.expCurrent.toLocaleString()}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              / {stats.expMax.toLocaleString()}
+            </span>
+          </div>
+          <div className="mt-4">
+            <div className="h-3 w-full bg-surface-2 rounded-full overflow-hidden border border-neon-purple/30 p-0.5">
+              <div
+                className="h-full bg-gradient-to-r from-neon-purple/70 via-neon-purple to-white rounded-full transition-all duration-1000"
+                style={{
+                  width: `${Math.min(100, Math.round((stats.expCurrent / stats.expMax) * 100))}%`,
+                }}
+              />
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-4 text-xs">
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-neon-lime" />
+                Focus {stats.focusPct}%
+              </span>
+              <span className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="h-1.5 w-1.5 rounded-full bg-neon-purple" />
+                Streak {stats.mpPercent}%
+              </span>
+            </div>
+          </div>
+        </Panel>
       </div>
 
       <Panel>
@@ -83,7 +105,14 @@ function Dashboard() {
             const completed = c.completedLessons || 0;
             const pct = c.progress || 0;
             const done = total > 0 && completed >= total;
-            const status = done ? "Completed" : pct > 0 ? "In Progress" : "Not Started";
+            const expired = c.expired;
+            const status = expired
+              ? "Expired"
+              : done
+                ? "Completed"
+                : pct > 0
+                  ? "In Progress"
+                  : "Not Started";
             return (
               <div
                 key={c.id}
@@ -127,16 +156,29 @@ function Dashboard() {
                     </div>
                   </div>
                   <div className="mt-auto pt-2 border-t border-border/50">
-                    <Link to="/learn/$courseId" params={{ courseId: c.slug }}>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="w-full justify-between group hover:text-neon-cyan hover:bg-neon-cyan/10"
-                      >
-                        {done ? "Review Course" : pct > 0 ? "Continue Learning" : "Start Learning"}
-                        <PlayCircle className="w-4 h-4 opacity-50 group-hover:opacity-100" />
-                      </Button>
-                    </Link>
+                    {expired ? (
+                      <Link to="/courses/$slug" params={{ slug: c.slug }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-between group hover:text-neon-cyan hover:bg-neon-cyan/10"
+                        >
+                          Renew Access
+                          <PlayCircle className="w-4 h-4 opacity-50 group-hover:opacity-100" />
+                        </Button>
+                      </Link>
+                    ) : (
+                      <Link to="/learn/$courseId" params={{ courseId: c.slug }}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="w-full justify-between group hover:text-neon-cyan hover:bg-neon-cyan/10"
+                        >
+                          {done ? "Review Course" : pct > 0 ? "Continue Learning" : "Start Learning"}
+                          <PlayCircle className="w-4 h-4 opacity-50 group-hover:opacity-100" />
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>

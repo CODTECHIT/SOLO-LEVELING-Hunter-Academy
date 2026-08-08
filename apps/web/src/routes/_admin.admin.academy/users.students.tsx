@@ -1,6 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { getAdminStudentsFn, updateStudentFn, deleteUserFn } from "@/server/admin";
-import { Panel, PanelTitle, StatusTag, XPBar } from "@/components/site/ui-bits";
+import { Panel, PanelTitle, StatusTag } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -29,7 +29,7 @@ import {
 import { useEffect, useState } from "react";
 
 type LoaderData = Awaited<ReturnType<typeof getAdminStudentsFn>>;
-type Student = LoaderData["students"][number];
+type EnrollmentRow = LoaderData["enrollments"][number];
 
 interface StudentsSearch {
   q?: string;
@@ -69,8 +69,23 @@ function initials(name: string) {
     .toUpperCase();
 }
 
+function formatDate(value: string | Date | null | undefined) {
+  if (!value) return "—";
+  return new Date(value).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function formatAmount(amount: number | null, currency: string | null) {
+  if (amount == null) return "—";
+  if (currency && currency !== "INR") return `${currency} ${amount}`;
+  return `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+}
+
 function AdminStudents() {
-  const { students, total, pageSize, totalPages, categories, metrics } = Route.useLoaderData();
+  const { enrollments, total, pageSize, totalPages, categories, metrics } = Route.useLoaderData();
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const router = useRouter();
@@ -80,8 +95,8 @@ function AdminStudents() {
   const page = search.page ?? 1;
 
   const [query, setQuery] = useState(q);
-  const [viewing, setViewing] = useState<Student | null>(null);
-  const [editing, setEditing] = useState<Student | null>(null);
+  const [viewing, setViewing] = useState<EnrollmentRow | null>(null);
+  const [editing, setEditing] = useState<EnrollmentRow | null>(null);
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [saving, setSaving] = useState(false);
@@ -131,7 +146,7 @@ function AdminStudents() {
     }
   };
 
-  const openEdit = (student: Student) => {
+  const openEdit = (student: EnrollmentRow) => {
     setEditing(student);
     setEditName(student.name);
     setEditPhone(student.phone ?? "");
@@ -141,7 +156,7 @@ function AdminStudents() {
     if (!editing) return;
     try {
       setSaving(true);
-      await updateStudentFn({ data: { id: editing.id, name: editName, phone: editPhone } });
+      await updateStudentFn({ data: { id: editing.studentId, name: editName, phone: editPhone } });
       toast.success("Student updated");
       setEditing(null);
       router.invalidate();
@@ -210,7 +225,7 @@ function AdminStudents() {
       </div>
 
       <Panel className="p-0 overflow-hidden">
-        <PanelTitle className="px-6 pt-5">Student Roster</PanelTitle>
+        <PanelTitle className="px-6 pt-5">Student Enrollments</PanelTitle>
 
         <div className="flex flex-col gap-3 px-6 pb-4 sm:flex-row sm:items-center">
           <div className="relative flex-1 sm:max-w-xs">
@@ -259,7 +274,7 @@ function AdminStudents() {
           )}
         </div>
 
-        {students.length === 0 ? (
+        {enrollments.length === 0 ? (
           <div className="px-6 pb-10 pt-4 text-center">
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-2xl border border-neon-purple/30 bg-surface-2 text-neon-purple">
               <GraduationCap className="h-7 w-7" />
@@ -291,56 +306,60 @@ function AdminStudents() {
                 <thead className="bg-surface-2/50 font-display text-xs uppercase tracking-widest text-muted-foreground">
                   <tr>
                     <th className="px-6 py-4 font-medium">Student</th>
-                    <th className="px-6 py-4 font-medium text-center">Enrolled Courses</th>
-                    <th className="px-6 py-4 font-medium">Learning Progress</th>
-                    <th className="px-6 py-4 font-medium text-center">Certificates</th>
-                    <th className="px-6 py-4 font-medium">Joined</th>
+                    <th className="px-6 py-4 font-medium">Gmail</th>
+                    <th className="px-6 py-4 font-medium">Phone</th>
+                    <th className="px-6 py-4 font-medium">Course Taken</th>
+                    <th className="px-6 py-4 font-medium">Enrolled Date</th>
+                    <th className="px-6 py-4 font-medium">Expiry Date</th>
+                    <th className="px-6 py-4 font-medium">Amount Paid</th>
                     <th className="px-6 py-4 font-medium">Status</th>
                     <th className="px-6 py-4 font-medium text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {students.map((student) => (
-                    <tr key={student.id} className="transition-colors hover:bg-surface-2/30">
+                  {enrollments.map((enrollment) => (
+                    <tr key={enrollment.id} className="transition-colors hover:bg-surface-2/30">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
                           <Avatar className="h-9 w-9 border border-neon-purple/40">
                             <AvatarFallback className="bg-surface-2 font-display text-xs text-neon-cyan">
-                              {initials(student.name)}
+                              {initials(enrollment.name)}
                             </AvatarFallback>
                           </Avatar>
-                          <div>
-                            <div className="font-medium text-foreground">{student.name}</div>
-                            <div className="text-xs text-muted-foreground">{student.email}</div>
-                          </div>
+                          <div className="font-medium text-foreground">{enrollment.name}</div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-center font-display text-neon-cyan">
-                        {student.enrolledCount}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="w-28 min-w-0">
-                          <XPBar value={student.progressPercent} accent="lime" label="Progress" />
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center text-xs text-muted-foreground">—</td>
                       <td className="px-6 py-4 text-xs text-muted-foreground">
-                        {new Date(student.createdAt).toLocaleDateString("en-IN", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {enrollment.email}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-muted-foreground">
+                        {enrollment.phone ?? "—"}
                       </td>
                       <td className="px-6 py-4">
-                        <StatusTag status={student.active ? "Active" : "Inactive"} />
+                        <div className="font-medium text-foreground">{enrollment.course.title}</div>
+                        <span className="rounded-full border border-neon-cyan/30 bg-neon-cyan/10 px-2 py-0.5 text-[10px] text-neon-cyan">
+                          {enrollment.course.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-xs text-muted-foreground">
+                        {formatDate(enrollment.enrolledAt)}
+                      </td>
+                      <td className="px-6 py-4 text-xs text-muted-foreground">
+                        {enrollment.expiresAt ? formatDate(enrollment.expiresAt) : "Lifetime"}
+                      </td>
+                      <td className="px-6 py-4 text-xs font-medium text-foreground">
+                        {formatAmount(enrollment.amount, enrollment.currency)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <StatusTag status={enrollment.status} />
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => setViewing(student)}
-                            aria-label="View profile"
+                            onClick={() => setViewing(enrollment)}
+                            aria-label="View details"
                             className="border border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10"
                           >
                             <Eye className="h-4 w-4" />
@@ -348,7 +367,7 @@ function AdminStudents() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => openEdit(student)}
+                            onClick={() => openEdit(enrollment)}
                             aria-label="Edit student"
                             className="border border-neon-purple/30 text-neon-purple hover:bg-neon-purple/10"
                           >
@@ -357,8 +376,8 @@ function AdminStudents() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(student.id)}
-                            disabled={deletingId === student.id}
+                            onClick={() => handleDelete(enrollment.studentId)}
+                            disabled={deletingId === enrollment.studentId}
                             aria-label="Delete student"
                             className="text-red-500 hover:bg-red-500/10"
                           >
@@ -374,7 +393,7 @@ function AdminStudents() {
 
             <div className="flex flex-col gap-3 border-t border-border px-6 py-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
               <span>
-                {total === 0 ? "No results" : `Showing ${start}–${end} of ${total} students`}
+                {total === 0 ? "No results" : `Showing ${start}–${end} of ${total} enrollments`}
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -405,8 +424,8 @@ function AdminStudents() {
       <Dialog open={viewing !== null} onOpenChange={(open) => !open && setViewing(null)}>
         <DialogContent className="border-neon-cyan/30 bg-background">
           <DialogHeader>
-            <DialogTitle className="font-display text-neon-cyan">Student Profile</DialogTitle>
-            <DialogDescription>Enrollment and progress details.</DialogDescription>
+            <DialogTitle className="font-display text-neon-cyan">Enrollment Details</DialogTitle>
+            <DialogDescription>Course access and payment details.</DialogDescription>
           </DialogHeader>
           {viewing && (
             <div className="space-y-4">
@@ -421,59 +440,53 @@ function AdminStudents() {
                     {viewing.name}
                   </div>
                   <div className="text-xs text-muted-foreground">{viewing.email}</div>
+                  {viewing.phone && (
+                    <div className="text-xs text-muted-foreground">Phone: {viewing.phone}</div>
+                  )}
                 </div>
                 <div className="ml-auto">
-                  <StatusTag status={viewing.active ? "Active" : "Inactive"} />
+                  <StatusTag status={viewing.status} />
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-3 text-center">
-                <div className="rounded-lg border border-border bg-surface-2/50 p-3">
-                  <p className="font-display text-xl font-bold text-neon-cyan">
-                    {viewing.enrolledCount}
-                  </p>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Courses
-                  </p>
+              <div className="space-y-2.5 rounded-lg border border-border bg-surface-2/50 p-4 text-sm">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Course Taken
+                  </span>
+                  <span className="text-right font-medium text-foreground">
+                    {viewing.course.title}
+                  </span>
                 </div>
-                <div className="rounded-lg border border-border bg-surface-2/50 p-3">
-                  <p className="font-display text-xl font-bold text-neon-lime">
-                    {viewing.progressPercent}%
-                  </p>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Progress
-                  </p>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Category
+                  </span>
+                  <span className="text-right text-neon-cyan">{viewing.course.category}</span>
                 </div>
-                <div className="rounded-lg border border-border bg-surface-2/50 p-3">
-                  <p className="font-display text-xl font-bold text-muted-foreground">—</p>
-                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    Certificates
-                  </p>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Enrolled Date
+                  </span>
+                  <span className="text-right text-foreground">
+                    {formatDate(viewing.enrolledAt)}
+                  </span>
                 </div>
-              </div>
-              {viewing.phone && (
-                <p className="text-xs text-muted-foreground">Phone: {viewing.phone}</p>
-              )}
-              <div>
-                <p className="mb-2 text-xs font-display uppercase tracking-widest text-muted-foreground">
-                  Enrolled Courses
-                </p>
-                {viewing.courses.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">No enrolled courses yet.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {viewing.courses.map((course) => (
-                      <li
-                        key={course.id}
-                        className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2 text-sm"
-                      >
-                        <span className="text-foreground">{course.title}</span>
-                        <span className="rounded-full border border-neon-cyan/30 bg-neon-cyan/10 px-2 py-0.5 text-[10px] text-neon-cyan">
-                          {course.category}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Expiry Date
+                  </span>
+                  <span className="text-right text-foreground">
+                    {viewing.expiresAt ? formatDate(viewing.expiresAt) : "Lifetime"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs uppercase tracking-widest text-muted-foreground">
+                    Amount Paid
+                  </span>
+                  <span className="text-right font-medium text-neon-lime">
+                    {formatAmount(viewing.amount, viewing.currency)}
+                  </span>
+                </div>
               </div>
             </div>
           )}

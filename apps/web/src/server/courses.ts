@@ -3,6 +3,12 @@ import { prisma } from "./db";
 import { z } from "zod";
 import { getCurrentUserFn } from "./auth";
 
+// A purchase grants access for 1 year from the date of purchase.
+const ENROLLMENT_DURATION_MS = 365 * 24 * 60 * 60 * 1000;
+const accessExpired = (expiresAt: Date | null | undefined) =>
+  !!expiresAt && expiresAt.getTime() <= Date.now();
+const accessExpiresAt = () => new Date(Date.now() + ENROLLMENT_DURATION_MS);
+
 export const getCatalogFn = createServerFn({ method: "GET" }).handler(async () => {
   const categories = await prisma.category.findMany({
     include: {
@@ -51,6 +57,7 @@ export const getCourseFn = createServerFn({ method: "GET" })
     // Check enrollment if logged in
     const user = await getCurrentUserFn();
     let isEnrolled = false;
+    let hasAccessExpired = false;
     let completedLessonIds: string[] = [];
     let lessonProgress: Record<string, number> = {};
 
@@ -62,8 +69,10 @@ export const getCourseFn = createServerFn({ method: "GET" })
             courseId: course.id,
           },
         },
+        select: { expiresAt: true },
       });
-      isEnrolled = !!enrollment;
+      hasAccessExpired = accessExpired(enrollment?.expiresAt);
+      isEnrolled = !!enrollment && !hasAccessExpired;
 
       const progress = await prisma.lessonProgress.findMany({
         where: {
@@ -76,7 +85,7 @@ export const getCourseFn = createServerFn({ method: "GET" })
       lessonProgress = Object.fromEntries(progress.map((p) => [p.lessonId, p.progressSeconds]));
     }
 
-    return { course, isEnrolled, completedLessonIds, lessonProgress };
+    return { course, isEnrolled, hasAccessExpired, completedLessonIds, lessonProgress };
   });
 
 export const enrollUserFn = createServerFn({ method: "POST" })
@@ -91,8 +100,9 @@ export const enrollUserFn = createServerFn({ method: "POST" })
     });
     if (!course) throw new Error("Course not found");
 
-    // Idempotent: if already enrolled (e.g. a re-visit), don't create a
-    // duplicate Payment or Enrollment record.
+    // Idempotent: if already enrolled with active access, don't create a
+    // duplicate Payment or Enrollment record. Expired enrollments go through
+    // the purchase flow again, which renews access for another year.
     const existing = await prisma.enrollment.findUnique({
       where: {
         userId_courseId: {
@@ -100,9 +110,9 @@ export const enrollUserFn = createServerFn({ method: "POST" })
           courseId: data.courseId,
         },
       },
-      select: { id: true, paymentId: true },
+      select: { id: true, paymentId: true, expiresAt: true },
     });
-    if (existing) return { success: true };
+    if (existing && !accessExpired(existing.expiresAt)) return { success: true };
 
     // Mock checkout: record a paid Payment so Purchase History and refund
     // eligibility reflect real data, then link it to the enrollment.
@@ -118,13 +128,21 @@ export const enrollUserFn = createServerFn({ method: "POST" })
       },
     });
 
-    await prisma.enrollment.create({
-      data: {
-        userId: user.id,
-        courseId: data.courseId,
-        paymentId: payment.id,
-      },
-    });
+    if (existing) {
+      await prisma.enrollment.update({
+        where: { id: existing.id },
+        data: { paymentId: payment.id, expiresAt: accessExpiresAt() },
+      });
+    } else {
+      await prisma.enrollment.create({
+        data: {
+          userId: user.id,
+          courseId: data.courseId,
+          paymentId: payment.id,
+          expiresAt: accessExpiresAt(),
+        },
+      });
+    }
 
     return { success: true };
   });
@@ -150,9 +168,12 @@ export const markLessonCompletedFn = createServerFn({ method: "POST" })
           courseId: lesson.courseId,
         },
       },
-      select: { id: true },
+      select: { id: true, expiresAt: true },
     });
     if (!enrollment) throw new Error("Must be enrolled in this course to mark lessons complete");
+    if (accessExpired(enrollment.expiresAt)) {
+      throw new Error("Your access to this course has expired. Renew it to continue.");
+    }
 
     await prisma.lessonProgress.upsert({
       where: {
@@ -206,9 +227,12 @@ export const updateLessonProgressFn = createServerFn({ method: "POST" })
           courseId: lesson.courseId,
         },
       },
-      select: { id: true },
+      select: { id: true, expiresAt: true },
     });
     if (!enrollment) throw new Error("Must be enrolled in this course to track progress");
+    if (accessExpired(enrollment.expiresAt)) {
+      throw new Error("Your access to this course has expired. Renew it to continue.");
+    }
 
     // Persist the detected video duration on the lesson so the completion
     // threshold stays stable even if the client reports again later.
@@ -286,25 +310,30 @@ export const getEnrolledCoursesFn = createServerFn({ method: "GET" }).handler(as
   });
   const progressByLesson = new Map(progressRows.map((p) => [p.lessonId, p]));
 
-  return enrollments.map(({ course }) => {
+  return enrollments.map((enrollment) => {
+    const { course } = enrollment;
     const lessons = course.lessons;
     const { lessons: _lessons, ...rest } = course;
     const total = lessons.length;
     const completed = lessons.filter((l) => progressByLesson.get(l.id)?.completed).length;
 
     // Progress is driven by real watch time: watched seconds vs total duration.
-    // Falls back to completed-lesson count only when no durations are known yet.
     const totalDuration = lessons.reduce((sum, l) => sum + (l.duration || 0), 0);
-    const watchedDuration = lessons.reduce(
-      (sum, l) => sum + Math.min(progressByLesson.get(l.id)?.progressSeconds || 0, l.duration || 0),
-      0,
-    );
+    const watchedDuration = lessons.reduce((sum, l) => {
+      const p = progressByLesson.get(l.id);
+      if (p?.completed) return sum + (l.duration || 0);
+      return sum + Math.min(p?.progressSeconds || 0, l.duration || 0);
+    }, 0);
 
     let progress = 0;
     if (totalDuration > 0) {
       progress = Math.round((watchedDuration / totalDuration) * 100);
-    } else if (total > 0) {
-      progress = Math.round((completed / total) * 100);
+    }
+    // Completed lessons are a hard floor: marking a lesson complete must always
+    // move the bar, even when that lesson's duration is tiny next to the rest
+    // of the course.
+    if (total > 0) {
+      progress = Math.max(progress, Math.round((completed / total) * 100));
     }
 
     return {
@@ -312,6 +341,8 @@ export const getEnrolledCoursesFn = createServerFn({ method: "GET" }).handler(as
       totalLessons: total,
       completedLessons: completed,
       progress: Math.min(progress, 100),
+      expiresAt: enrollment.expiresAt,
+      expired: accessExpired(enrollment.expiresAt),
     };
   });
 });
@@ -380,7 +411,8 @@ export const getHunterStatsFn = createServerFn({ method: "GET" }).handler(async 
     for (const l of course.lessons) {
       if (l.duration) {
         totalDuration += l.duration;
-        watchedDuration += Math.min(progressByLesson.get(l.id)?.progressSeconds || 0, l.duration);
+        const p = progressByLesson.get(l.id);
+        watchedDuration += p?.completed ? l.duration : Math.min(p?.progressSeconds || 0, l.duration);
       }
     }
   }

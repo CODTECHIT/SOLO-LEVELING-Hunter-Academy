@@ -471,15 +471,20 @@ export const getAdminStudentsFn = createServerFn({ method: "GET" })
     const pageSize = data?.pageSize ?? 10;
 
     // Students only — staff (ADMIN/SUB_ADMIN) are managed on the Staff page.
-    const where: Prisma.UserWhereInput = { role: "STUDENT" };
+    // One row per enrollment, so each course a student has taken gets its own
+    // Enrolled/Expiry/Amount/Status values.
+    const where: Prisma.EnrollmentWhereInput = { user: { role: "STUDENT" } };
     if (search) {
-      where.OR = [
-        { name: { contains: search, mode: "insensitive" } },
-        { email: { contains: search, mode: "insensitive" } },
-      ];
+      where.user = {
+        role: "STUDENT",
+        OR: [
+          { name: { contains: search, mode: "insensitive" } },
+          { email: { contains: search, mode: "insensitive" } },
+        ],
+      };
     }
     if (categoryId) {
-      where.enrollments = { some: { course: { categoryId } } };
+      where.course = { categoryId };
     }
 
     const now = new Date();
@@ -487,34 +492,30 @@ export const getAdminStudentsFn = createServerFn({ method: "GET" })
 
     const [
       total,
-      students,
+      enrollments,
       categories,
       totalStudents,
       activeStudents,
       newThisMonth,
       totalEnrollments,
     ] = await Promise.all([
-      prisma.user.count({ where }),
-      prisma.user.findMany({
+      prisma.enrollment.count({ where }),
+      prisma.enrollment.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: { enrolledAt: "desc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
-          enrollments: {
-            include: {
-              course: {
-                select: {
-                  id: true,
-                  title: true,
-                  categoryId: true,
-                  category: { select: { name: true } },
-                  lessons: { select: { id: true } },
-                },
-              },
+          user: { select: { id: true, name: true, email: true, phone: true } },
+          course: {
+            select: {
+              id: true,
+              title: true,
+              categoryId: true,
+              category: { select: { name: true } },
+              lessons: { select: { id: true } },
             },
           },
-          progress: { select: { progressSeconds: true, completed: true } },
         },
       }),
       prisma.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
@@ -526,24 +527,69 @@ export const getAdminStudentsFn = createServerFn({ method: "GET" })
       prisma.enrollment.count({ where: { user: { role: "STUDENT" } } }),
     ]);
 
-    const mappedStudents = students.map(({ enrollments, progress, ...user }) => {
-      const totalLessons = enrollments.reduce((sum, e) => sum + e.course.lessons.length, 0);
-      const completedLessons = progress.filter((p) => p.completed).length;
+    // Which student+course pairs have actually started watching (Active vs Inactive),
+    // and what they paid (Payment rows keyed by user+course).
+    const userIds = [...new Set(enrollments.map((e) => e.userId))];
+    const courseIds = [...new Set(enrollments.map((e) => e.courseId))];
+    const startedKeys = new Set<string>();
+    const paymentMap = new Map<string, { amount: number; currency: string; paid: boolean }>();
+    if (userIds.length > 0 && courseIds.length > 0) {
+      const [watched, payments] = await Promise.all([
+        prisma.lessonProgress.findMany({
+          where: { userId: { in: userIds }, lesson: { courseId: { in: courseIds } } },
+          select: { userId: true, progressSeconds: true, lesson: { select: { courseId: true } } },
+        }),
+        prisma.payment.findMany({
+          where: { userId: { in: userIds }, courseId: { in: courseIds } },
+          select: { userId: true, courseId: true, amount: true, currency: true, status: true },
+        }),
+      ]);
+      for (const p of watched) {
+        if (p.progressSeconds > 0) startedKeys.add(`${p.userId}:${p.lesson.courseId}`);
+      }
+      for (const p of payments) {
+        const key = `${p.userId}:${p.courseId}`;
+        const existing = paymentMap.get(key);
+        if (p.status === "PAID" || !existing || !existing.paid) {
+          paymentMap.set(key, {
+            amount: p.amount,
+            currency: p.currency,
+            paid: p.status === "PAID",
+          });
+        }
+      }
+    }
+
+    const enrollmentsData = enrollments.map((enrollment) => {
+      const { user, course } = enrollment;
+      let status: "Active" | "Inactive" | "Expired" | "Lifetime";
+      if (enrollment.expiresAt && enrollment.expiresAt <= now) {
+        status = "Expired";
+      } else if (!enrollment.expiresAt) {
+        status = "Lifetime";
+      } else if (startedKeys.has(`${user.id}:${course.id}`)) {
+        status = "Active";
+      } else {
+        status = "Inactive";
+      }
+      const payment = paymentMap.get(`${user.id}:${course.id}`);
       return {
-        ...user,
-        enrolledCount: enrollments.length,
-        progressPercent: totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0,
-        active: progress.some((p) => p.progressSeconds > 0),
-        courses: enrollments.map((e) => ({
-          id: e.course.id,
-          title: e.course.title,
-          category: e.course.category.name,
-        })),
+        id: enrollment.id,
+        studentId: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        course: { id: course.id, title: course.title, category: course.category.name },
+        enrolledAt: enrollment.enrolledAt,
+        expiresAt: enrollment.expiresAt,
+        amount: payment?.paid ? payment.amount : null,
+        currency: payment?.paid ? payment.currency : null,
+        status,
       };
     });
 
     return {
-      students: mappedStudents,
+      enrollments: enrollmentsData,
       total,
       page,
       pageSize,

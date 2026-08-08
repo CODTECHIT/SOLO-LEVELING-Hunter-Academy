@@ -25,7 +25,7 @@ export const Route = createFileRoute("/courses/$slug")({
 });
 
 function CourseDetail() {
-  const { course, isEnrolled, reviews, faqs, user } = Route.useLoaderData();
+  const { course, isEnrolled, hasAccessExpired, reviews, faqs, user } = Route.useLoaderData();
   const router = useRouter();
   const [isEnrolling, setIsEnrolling] = useState(false);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
@@ -138,7 +138,11 @@ function CourseDetail() {
                   onClick={handleEnroll}
                   disabled={isEnrolling}
                 >
-                  {isEnrolling ? "Processing..." : "Enroll Now (Mock Checkout)"}
+                  {isEnrolling
+                    ? "Processing..."
+                    : hasAccessExpired
+                      ? "Renew Access (1 Year)"
+                      : "Enroll Now (Mock Checkout)"}
                 </Button>
               )}
               <p className="text-center text-xs text-muted-foreground mt-4">

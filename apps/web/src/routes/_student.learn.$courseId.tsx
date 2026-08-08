@@ -126,6 +126,7 @@ function LearnCourse() {
   const {
     course,
     isEnrolled,
+    hasAccessExpired,
     completedLessonIds: initialCompleted,
     lessonProgress: initialProgress,
   } = Route.useLoaderData();
@@ -265,10 +266,12 @@ function LearnCourse() {
                 <div className="grid-runes absolute inset-0 opacity-40" />
                 <Lock className="relative z-10 mb-4 h-12 w-12 text-neon-amber" />
                 <h3 className="relative z-10 font-display text-xl text-foreground">
-                  Access Restricted
+                  {hasAccessExpired ? "Access Expired" : "Access Restricted"}
                 </h3>
                 <p className="relative z-10 mt-2 max-w-md text-sm text-muted-foreground">
-                  You must be enrolled in this course to view the restricted dungeon feeds.
+                  {hasAccessExpired
+                    ? "Your 1-year access to this course has ended. Renew it to continue where you left off."
+                    : "You must be enrolled in this course to view the restricted dungeon feeds."}
                 </p>
                 {!isEnrolled && (
                   <Button
@@ -277,7 +280,11 @@ function LearnCourse() {
                     onClick={handleEnroll}
                     disabled={isEnrolling}
                   >
-                    {isEnrolling ? "Unlocking..." : "Unlock Course (Mock Free)"}
+                    {isEnrolling
+                      ? "Unlocking..."
+                      : hasAccessExpired
+                        ? "Renew Access (1 Year)"
+                        : "Unlock Course (Mock Free)"}
                   </Button>
                 )}
               </div>

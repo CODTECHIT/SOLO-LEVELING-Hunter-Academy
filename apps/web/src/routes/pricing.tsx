@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Sparkles, Boxes, Search, X } from "lucide-react";
 import { TopNav, SiteFooter } from "@/components/site/nav";
@@ -6,7 +6,7 @@ import { HunterHero } from "@/components/site/catalog-hero";
 import { CourseCard, type CourseTone } from "@/components/site/course-card";
 import { Panel } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { getCatalogFn } from "@/server/courses";
+import { getCatalogFn, getEnrolledCoursesFn } from "@/server/courses";
 import { getCurrentUserFn } from "@/server/auth";
 import { HeroCtas } from "@/components/site/hero-ctas";
 
@@ -14,7 +14,8 @@ export const Route = createFileRoute("/pricing")({
   loader: async () => {
     const data = await getCatalogFn();
     const user = await getCurrentUserFn();
-    return { ...data, user };
+    const enrolledCourses = user ? await getEnrolledCoursesFn() : [];
+    return { ...data, user, enrolledCourses };
   },
   head: () => ({
     meta: [
@@ -28,13 +29,15 @@ export const Route = createFileRoute("/pricing")({
 const tones: CourseTone[] = ["amber", "cyan", "purple"];
 
 const moduleBenefits = [
-  "Lifetime access — unlock it once, keep it forever",
+  "1 year of access — renew anytime and keep your progress",
   "Self-paced — hunt on your own schedule",
   "Focused — master one topic fast",
 ];
 
 function PricingPage() {
-  const { categories, moduleCourses, user } = Route.useLoaderData();
+  const { categories, moduleCourses, user, enrolledCourses } = Route.useLoaderData();
+
+  const enrolledIds = useMemo(() => new Set(enrolledCourses.map((c) => c.id)), [enrolledCourses]);
 
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("ALL");
@@ -174,6 +177,7 @@ function PricingPage() {
                 tone={tones[i % tones.length]}
                 ctaLabel="Unlock This Module"
                 benefits={moduleBenefits}
+                enrolled={enrolledIds.has(course.id)}
               />
             ))}
             {filtered.length === 0 && (

@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
+import { cn } from "@/lib/utils";
 
 interface HunterStatsBarProps {
   expCurrent?: number;
   expMax?: number;
   hpPercent?: number;
   mpPercent?: number;
+  className?: string;
 }
 
 export function HunterStatsBar({
@@ -12,6 +14,7 @@ export function HunterStatsBar({
   expMax = 75000,
   hpPercent = 92,
   mpPercent = 68,
+  className,
 }: HunterStatsBarProps) {
   const [animated, setAnimated] = useState(false);
   const [displayExp, setDisplayExp] = useState(0);
@@ -49,7 +52,12 @@ export function HunterStatsBar({
   }, [expCurrent, hpPercent, mpPercent]);
 
   return (
-    <div className="flex flex-col gap-3 w-full md:w-[420px] rounded-2xl border border-neon-purple/40 bg-surface-2/60 p-4 backdrop-blur-xl shadow-[0_0_30px_rgba(168,85,247,0.18)] relative overflow-hidden group">
+    <div
+      className={cn(
+        "flex flex-col gap-3 w-full md:w-[420px] min-w-0 rounded-2xl border border-neon-purple/40 bg-surface-2/60 p-4 backdrop-blur-xl shadow-[0_0_30px_rgba(168,85,247,0.18)] relative overflow-hidden group",
+        className,
+      )}
+    >
       {/* Background Neon Pulse Glow */}
       <div className="absolute -top-16 -right-16 w-36 h-36 rounded-full bg-neon-cyan/15 blur-2xl pointer-events-none group-hover:bg-neon-cyan/25 transition-all duration-500" />
       <div className="absolute -bottom-16 -left-16 w-36 h-36 rounded-full bg-neon-purple/15 blur-2xl pointer-events-none group-hover:bg-neon-purple/25 transition-all duration-500" />
@@ -77,9 +85,9 @@ export function HunterStatsBar({
       </div>
 
       {/* 2. HP & MP Section */}
-      <div className="flex gap-4">
+      <div className="flex gap-4 min-w-0">
         {/* HP • FOCUS Bar */}
-        <div className="space-y-1.5 flex-1">
+        <div className="space-y-1.5 flex-1 min-w-0">
           <div className="flex justify-between text-[10px] font-display uppercase tracking-widest text-muted-foreground font-bold">
             <span className="flex items-center gap-1.5 text-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-neon-lime" />
@@ -98,7 +106,7 @@ export function HunterStatsBar({
         </div>
 
         {/* MP • STREAK Bar */}
-        <div className="space-y-1.5 flex-1">
+        <div className="space-y-1.5 flex-1 min-w-0">
           <div className="flex justify-between text-[10px] font-display uppercase tracking-widest text-muted-foreground font-bold">
             <span className="flex items-center gap-1.5 text-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-neon-purple" />

@@ -61,13 +61,14 @@ model Lesson {
 }
 
 model Enrollment {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   courseId    String
-  user        User     @relation(fields: [userId], references: [id])
-  course      Course   @relation(fields: [courseId], references: [id])
+  user        User      @relation(fields: [userId], references: [id])
+  course      Course    @relation(fields: [courseId], references: [id])
   paymentId   String?
-  enrolledAt  DateTime @default(now())
+  enrolledAt  DateTime  @default(now())
+  expiresAt   DateTime? // access expiry; null = lifetime
   @@unique([userId, courseId])
 }
 

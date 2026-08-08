@@ -53,11 +53,13 @@ export function CourseCard({
   tone = "cyan",
   ctaLabel,
   benefits,
+  enrolled,
 }: {
   course: CourseLike;
   tone?: CourseTone;
   ctaLabel?: string;
   benefits?: string[];
+  enrolled?: boolean;
 }) {
   const t = toneCss[tone];
   const isModule = course.type === "MODULE";
@@ -142,14 +144,21 @@ export function CourseCard({
         )}
 
         <div className="mt-auto space-y-3 pt-6">
-          <div className="flex items-baseline justify-between gap-3">
-            <div className={cn("font-display text-2xl font-bold", t.price)}>
-              ₹{course.price.toLocaleString("en-IN")}
+          {enrolled ? (
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-neon-lime/40 bg-neon-lime/10 px-2.5 py-1 font-display text-[10px] font-bold uppercase tracking-widest text-neon-lime">
+              <CheckCircle2 className="h-3 w-3" />
+              Enrolled
             </div>
-            <div className="text-right text-[10px] uppercase tracking-widest text-muted-foreground">
-              {isModule ? "one-time unlock" : "complete pathway"}
+          ) : (
+            <div className="flex items-baseline justify-between gap-3">
+              <div className={cn("font-display text-2xl font-bold", t.price)}>
+                ₹{course.price.toLocaleString("en-IN")}
+              </div>
+              <div className="text-right text-[10px] uppercase tracking-widest text-muted-foreground">
+                {isModule ? "one-time unlock" : "complete pathway"}
+              </div>
             </div>
-          </div>
+          )}
           <Button
             asChild
             variant="neon"
@@ -157,8 +166,11 @@ export function CourseCard({
             style={{ whiteSpace: "normal" }}
             className={cn("h-11 w-full text-center leading-tight", t.btn)}
           >
-            <Link to="/courses/$slug" params={{ slug: course.slug }}>
-              {ctaLabel ?? "Start Your Awakening"}
+            <Link
+              to={enrolled ? "/learn/$courseId" : "/courses/$slug"}
+              params={enrolled ? { courseId: course.slug } : { slug: course.slug }}
+            >
+              {enrolled ? "Continue Learning" : (ctaLabel ?? "Start Your Awakening")}
             </Link>
           </Button>
         </div>
