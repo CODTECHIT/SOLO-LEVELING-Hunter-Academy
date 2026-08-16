@@ -1,18 +1,18 @@
-﻿# Project Structure — LMS Portal
+# Project Structure — LMS Portal
 ## Web (Next.js) + Mobile (React Native) + Backend (NestJS)
 
 **Version:** 1.0
 **Project:** cyber tech — LMS Platform
-**Stack:** Next.js 14 (App Router) | React Native (Expo) | NestJS | PostgreSQL | Razorpay
+**Stack:** TanStack Start | React Native (Expo) | NestJS | PostgreSQL | Razorpay
 
 ---
 
 ## 1. Monorepo Root
 
-```
+```text
 lms-portal/
 ├── apps/
-│   ├── web/          ← Next.js 14 (App Router) — student + admin frontend
+│   ├── web/          ← TanStack Start — student + admin frontend
 │   ├── mobile/       ← React Native (Expo) — student app
 │   └── api/          ← NestJS — shared backend
 ├── packages/
@@ -31,99 +31,23 @@ lms-portal/
 
 ### Full Structure
 
-```
+```text
 apps/web/
 ├── public/
 │   ├── logo.svg
 │   ├── og-image.jpg
 │   └── favicon.ico
 ├── src/
-│   ├── app/                          ← Next.js App Router root
-│   │   ├── layout.tsx                ← Root layout (fonts, global styles, providers)
-│   │   ├── page.tsx                  ← Landing page (public home)
-│   │   ├── not-found.tsx
-│   │   ├── error.tsx
-│   │   │
-│   │   ├── (public)/                 ← Public route group (no auth required)
-│   │   │   ├── courses/
-│   │   │   │   ├── page.tsx          ← Course catalog / browse
-│   │   │   │   └── [slug]/
-│   │   │   │       └── page.tsx      ← Course detail page
-│   │   │   ├── about/
-│   │   │   │   └── page.tsx
-│   │   │   ├── blog/
-│   │   │   │   ├── page.tsx          ← Blog listing
-│   │   │   │   └── [slug]/
-│   │   │   │       └── page.tsx      ← Blog post
-│   │   │   ├── contact/
-│   │   │   │   └── page.tsx
-│   │   │   ├── faq/
-│   │   │   │   └── page.tsx
-│   │   │   ├── privacy-policy/
-│   │   │   │   └── page.tsx
-│   │   │   └── terms/
-│   │   │       └── page.tsx
-│   │   │
-│   │   ├── (auth)/                   ← Auth route group
-│   │   │   ├── layout.tsx            ← Centered card layout
-│   │   │   ├── login/
-│   │   │   │   └── page.tsx
-│   │   │   ├── signup/
-│   │   │   │   └── page.tsx
-│   │   │   └── reset-password/
-│   │   │       └── page.tsx
-│   │   │
-│   │   ├── (student)/                ← Protected student route group
-│   │   │   ├── layout.tsx            ← Student layout (nav + footer)
-│   │   │   ├── dashboard/
-│   │   │   │   └── page.tsx          ← Student dashboard (My Courses, Continue Learning)
-│   │   │   ├── my-courses/
-│   │   │   │   └── page.tsx
-│   │   │   ├── learn/
-│   │   │   │   └── [courseId]/
-│   │   │   │       ├── page.tsx      ← Course viewer (video player + lesson list)
-│   │   │   │       └── [lessonId]/
-│   │   │   │           └── page.tsx
-│   │   │   ├── profile/
-│   │   │   │   └── page.tsx
-│   │   │   └── support/
-│   │   │       └── page.tsx
-│   │   │
-│   │   └── (admin)/                  ← Protected admin route group
-│   │       ├── layout.tsx            ← Admin layout (sidebar + top bar)
-│   │       ├── admin/
-│   │       │   ├── page.tsx          ← Admin dashboard (KPIs, charts)
-│   │       │   ├── courses/
-│   │       │   │   ├── page.tsx      ← Course list/management
-│   │       │   │   ├── new/
-│   │       │   │   │   └── page.tsx  ← Create course form
-│   │       │   │   └── [id]/
-│   │       │   │       ├── page.tsx  ← Edit course
-│   │       │   │       └── lessons/
-│   │       │   │           └── page.tsx  ← Manage lessons
-│   │       │   ├── users/
-│   │       │   │   ├── page.tsx      ← User management
-│   │       │   │   └── [id]/
-│   │       │   │       └── page.tsx
-│   │       │   ├── roles/
-│   │       │   │   └── page.tsx      ← RBAC role management
-│   │       │   ├── payments/
-│   │       │   │   └── page.tsx      ← Transaction history + reports
-│   │       │   ├── refunds/
-│   │       │   │   └── page.tsx      ← Refund request management
-│   │       │   ├── cms/
-│   │       │   │   ├── blog/
-│   │       │   │   │   ├── page.tsx
-│   │       │   │   │   └── [id]/
-│   │       │   │   │       └── page.tsx
-│   │       │   │   ├── pages/
-│   │       │   │   │   └── page.tsx  ← Edit Home/About/Contact/Policy
-│   │       │   │   ├── faq/
-│   │       │   │   │   └── page.tsx
-│   │       │   │   └── banners/
-│   │       │   │       └── page.tsx  ← Slider/banner management
-│   │       │   └── settings/
-│   │       │       └── page.tsx      ← Site config (logo, colors, SEO)
+│   ├── routes/                       ← TanStack Start file-based routing
+│   │   ├── __root.tsx                ← Root layout and providers
+│   │   ├── index.tsx                 ← Landing page (public home)
+│   │   ├── login.tsx                 ← Auth routes
+│   │   ├── signup.tsx
+│   │   ├── _student.tsx              ← Student layout wrapper
+│   │   ├── _student.dashboard.tsx    ← Student dashboard
+│   │   ├── _student.learn.$courseId.tsx
+│   │   ├── _admin.tsx                ← Admin layout wrapper
+│   │   └── _admin.admin.academy/     ← Admin routes
 │   │
 │   ├── components/
 │   │   ├── ui/                       ← Base design system components
@@ -226,7 +150,7 @@ apps/web/
 
 ### Full Structure
 
-```
+```text
 apps/mobile/
 ├── assets/
 │   ├── fonts/                        ← Orbitron, Rajdhani, Inter (local fallback)
@@ -235,93 +159,55 @@ apps/mobile/
 │   │   └── icon.png
 │   └── icons/
 │
-├── src/
-│   ├── app/                          ← Expo Router (file-based routing)
-│   │   ├── _layout.tsx               ← Root layout (fonts, auth provider)
-│   │   ├── index.tsx                 ← Redirect to (tabs) or (auth)
-│   │   │
-│   │   ├── (auth)/
-│   │   │   ├── _layout.tsx
-│   │   │   ├── login.tsx
-│   │   │   ├── signup.tsx
-│   │   │   └── reset-password.tsx
-│   │   │
-│   │   └── (tabs)/                   ← Bottom tab navigator
-│   │       ├── _layout.tsx           ← Tab bar config (5 tabs)
-│   │       ├── index.tsx             ← Home / Landing
-│   │       ├── courses/
-│   │       │   ├── index.tsx         ← Course catalog
-│   │       │   └── [id].tsx          ← Course detail
-│   │       ├── my-learning/
-│   │       │   ├── index.tsx         ← My enrolled courses
-│   │       │   └── [courseId]/
-│   │       │       └── [lessonId].tsx ← Video player
-│   │       ├── notifications.tsx
-│   │       └── profile.tsx
+├── app/                              ← Expo Router (file-based routing)
+│   ├── _layout.tsx                   ← Root layout (fonts, auth provider)
+│   ├── index.tsx                     ← Redirect to (tabs) or (auth)
 │   │
-│   ├── components/
-│   │   ├── ui/
-│   │   │   ├── Button.tsx
-│   │   │   ├── Input.tsx
-│   │   │   ├── Card.tsx
-│   │   │   ├── Badge.tsx
-│   │   │   ├── ProgressBar.tsx
-│   │   │   ├── Skeleton.tsx
-│   │   │   ├── StarRating.tsx
-│   │   │   └── Toast.tsx
-│   │   │
-│   │   ├── layout/
-│   │   │   ├── ScreenHeader.tsx
-│   │   │   └── SafeScreen.tsx        ← SafeAreaView wrapper
-│   │   │
-│   │   ├── courses/
-│   │   │   ├── CourseCard.tsx
-│   │   │   ├── CourseList.tsx
-│   │   │   ├── FilterChips.tsx
-│   │   │   ├── LessonSheet.tsx       ← Bottom drawer lesson list
-│   │   │   └── VideoPlayer.tsx       ← expo-av player
-│   │   │
-│   │   ├── home/
-│   │   │   ├── HeroBanner.tsx
-│   │   │   ├── FeaturedStrip.tsx     ← Horizontal scroll course strip
-│   │   │   ├── WhyChooseUs.tsx
-│   │   │   └── CtaBanner.tsx
-│   │   │
-│   │   ├── dashboard/
-│   │   │   ├── GreetingHeader.tsx
-│   │   │   ├── ContinueLearning.tsx
-│   │   │   └── EnrolledCourseCard.tsx
-│   │   │
-│   │   └── shared/
-│   │       ├── WhatsAppFAB.tsx       ← Floating Action Button
-│   │       ├── SearchBar.tsx
-│   │       └── EmptyState.tsx
+│   ├── (auth)/
+│   │   ├── _layout.tsx
+│   │   ├── login.tsx
+│   │   ├── signup.tsx
+│   │   └── reset-password.tsx
 │   │
-│   ├── hooks/
-│   │   ├── useAuth.ts
-│   │   ├── useCourses.ts
-│   │   └── useProgress.ts
-│   │
-│   ├── lib/
-│   │   ├── api.ts
-│   │   ├── auth.ts                   ← SecureStore JWT management
-│   │   ├── razorpay.ts               ← react-native-razorpay integration
-│   │   └── utils.ts
-│   │
-│   ├── store/
-│   │   ├── authStore.ts              ← Zustand
-│   │   └── uiStore.ts
-│   │
-│   ├── theme/
-│   │   ├── colors.ts                 ← Hex tokens (matches web OKLCH values)
-│   │   ├── typography.ts             ← Font families + scale
-│   │   ├── spacing.ts
-│   │   └── shadows.ts
-│   │
-│   └── types/
-│       ├── course.ts
-│       ├── user.ts
-│       └── api.ts
+│   └── (tabs)/                       ← Bottom tab navigator
+│       ├── _layout.tsx               ← Tab bar config (4 tabs)
+│       ├── index.tsx                 ← Home / Landing
+│       ├── courses/
+│       │   ├── index.tsx             ← Course catalog
+│       │   └── [slug].tsx            ← Course detail
+│       ├── my-learning/
+│       │   ├── index.tsx             ← My enrolled courses
+│       │   └── [courseId].tsx        ← Video player
+│       └── profile.tsx
+│
+├── components/
+│   ├── ui/                           ← Basic UI elements
+│   ├── layout/
+│   ├── courses/
+│   ├── home/
+│   ├── dashboard/
+│   └── shared/
+│
+├── hooks/
+│   ├── useAuth.ts
+│   ├── useCourses.ts
+│   └── useProgress.ts
+│
+├── lib/
+│   ├── api.ts                        ← Axios/fetch client with interceptors
+│   ├── auth.ts                       ← SecureStore JWT management
+│   ├── razorpay.ts                   ← react-native-razorpay integration
+│   └── utils.ts
+│
+├── store/
+│   ├── authStore.ts                  ← Zustand
+│   └── uiStore.ts
+│
+├── theme/
+│   ├── colors.ts                     ← Hex tokens (matches web OKLCH values)
+│   ├── typography.ts                 ← Font families + scale
+│   ├── spacing.ts
+│   └── shadows.ts
 │
 ├── app.json                          ← Expo config
 ├── babel.config.js
@@ -750,7 +636,8 @@ NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_test_xxxx
 ### Web (apps/web)
 | Package | Purpose |
 |---|---|
-| next@14 | React framework |
+| @tanstack/react-start | React framework |
+| @tanstack/react-router | Routing |
 | react, react-dom | UI runtime |
 | tailwindcss | Styling |
 | lucide-react | Icons |

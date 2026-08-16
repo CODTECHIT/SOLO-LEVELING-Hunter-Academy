@@ -1,57 +1,94 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { getCourseFn, getCourseReviewsFn, getCourseFaqsFn, enrollUserFn } from "@/server/courses";
-import { getCurrentUserFn } from "@/server/auth";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getCourseBySlug } from "@/lib/api-courses";
+import { enrollInCourse, checkEnrollment } from "@/lib/api-enrollments";
+import { getAuthToken } from "@/lib/api";
 import { TopNav, SiteFooter } from "@/components/site/nav";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { Lock, PlayCircle, Star, ChevronDown, CheckCircle2 } from "lucide-react";
+import { Lock, PlayCircle, Star, ChevronDown, CheckCircle2, Loader2 } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/courses/$slug")({
-  loader: async ({ params }) => {
-    const data = await getCourseFn({ data: { slug: params.slug } });
-    const reviews = await getCourseReviewsFn({ data: { courseId: data.course.id } });
-    const { faqs } = await getCourseFaqsFn({ data: { courseId: data.course.id } });
-    const user = await getCurrentUserFn();
-    return { ...data, reviews, faqs, user };
-  },
-  head: ({ loaderData }) => ({
+  head: ({ params }) => ({
     meta: [
-      { title: `${loaderData?.course.title} — Cyber Tech Academy` },
-      { name: "description", content: loaderData?.course.description },
+      { title: `Course — Cyber Tech Academy` },
+      { name: "description", content: "View course details and lessons." },
     ],
   }),
   component: CourseDetail,
 });
 
 function CourseDetail() {
-  const { course, isEnrolled, hasAccessExpired, reviews, faqs, user } = Route.useLoaderData();
+  const { slug } = Route.useParams();
   const router = useRouter();
-  const [isEnrolling, setIsEnrolling] = useState(false);
+  const queryClient = useQueryClient();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  // Fetch course details
+  const {
+    data: course,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["course", slug],
+    queryFn: () => getCourseBySlug(slug),
+  });
+
+  const token = getAuthToken();
+
+  // Check if user is enrolled
+  const { data: enrollmentStatus } = useQuery({
+    queryKey: ["enrollment", course?.id],
+    queryFn: () => checkEnrollment(course!.id),
+    enabled: !!token && !!course?.id,
+  });
+
+  // Enrollment mutation
+  const enrollMutation = useMutation({
+    mutationFn: (courseId: string) => enrollInCourse(courseId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["enrollment"] });
+      router.navigate({ to: "/dashboard" });
+    },
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <Loader2 className="h-10 w-10 animate-spin text-neon-cyan" />
+        <p className="mt-4 text-muted-foreground">Loading course details...</p>
+      </div>
+    );
+  }
+
+  if (error || !course) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <h1 className="font-display text-2xl font-bold text-foreground">Course not found</h1>
+        <Link to="/courses">
+          <Button variant="neon" className="mt-6">
+            Back to Courses
+          </Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const reviews = course.reviews || [];
   const avgRating = reviews.length
     ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
     : "No ratings yet";
 
+  const isEnrolled = enrollmentStatus?.isEnrolled || false;
+
   const handleEnroll = async () => {
-    if (!user) {
+    if (!token) {
       router.navigate({ to: "/login" });
       return;
     }
 
-    // In a real app, this would trigger Razorpay
-    // For now, we mock the successful payment and enroll directly
-    try {
-      setIsEnrolling(true);
-      await enrollUserFn({ data: { courseId: course.id } });
-      router.navigate({ to: "/learn/$courseId", params: { courseId: course.slug } });
-    } catch (e) {
-      console.error(e);
-      alert("Failed to enroll");
-    } finally {
-      setIsEnrolling(false);
-    }
+    enrollMutation.mutate(course.id);
   };
 
   return (
@@ -136,13 +173,16 @@ function CourseDetail() {
                   variant="hero"
                   className="w-full py-6 text-lg"
                   onClick={handleEnroll}
-                  disabled={isEnrolling}
+                  disabled={enrollMutation.isPending}
                 >
-                  {isEnrolling
-                    ? "Processing..."
-                    : hasAccessExpired
-                      ? "Renew Access (1 Year)"
-                      : "Enroll Now (Mock Checkout)"}
+                  {enrollMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Enroll Now"
+                  )}
                 </Button>
               )}
               <p className="text-center text-xs text-muted-foreground mt-4">

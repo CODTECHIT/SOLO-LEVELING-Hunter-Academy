@@ -1,0 +1,459 @@
+import React from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  Image,
+  Dimensions,
+} from "react-native";
+import { useRouter } from "expo-router";
+import { Zap, Crown, BookOpen, ChevronRight, Swords, Shield } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from "react-native-reanimated";
+import { useEffect } from "react";
+import { useVideoPlayer, VideoView } from "expo-video";
+import { SafeScreen } from "@/components/layout/SafeScreen";
+import { Card } from "@/components/ui/Card";
+import { Badge } from "@/components/ui/Badge";
+import { ProgressBar } from "@/components/ui/ProgressBar";
+import { SkeletonCard } from "@/components/ui/Skeleton";
+import { useCatalog, useIntroVideo } from "@/hooks/useCourses";
+import { useHunterStats } from "@/hooks/useHunterStats";
+import { useAuthStore } from "@/store/authStore";
+import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
+
+const { width: SCREEN_W } = Dimensions.get("window");
+
+export default function HomeScreen() {
+  const router = useRouter();
+  const { user, isAuthenticated } = useAuthStore();
+  const { data: catalog, isLoading: catalogLoading } = useCatalog();
+  const { data: stats } = useHunterStats(isAuthenticated);
+  const { data: introVideo } = useIntroVideo();
+
+  const glowOpacity = useSharedValue(0.4);
+  const textScale = useSharedValue(1);
+
+  useEffect(() => {
+    glowOpacity.value = withRepeat(
+      withSequence(withTiming(1, { duration: 1500 }), withTiming(0.4, { duration: 1500 })),
+      -1,
+      true
+    );
+    textScale.value = withRepeat(
+      withSequence(withTiming(1.02, { duration: 2000 }), withTiming(1, { duration: 2000 })),
+      -1,
+      true
+    );
+  }, []);
+
+  const animatedHeroTitle = useAnimatedStyle(() => ({
+    transform: [{ scale: textScale.value }],
+    opacity: glowOpacity.value + 0.5,
+  }));
+
+  const player = useVideoPlayer(
+    introVideo?.videoUrl ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", 
+    player => {
+      player.loop = true;
+      player.muted = true;
+      player.play();
+    }
+  );
+
+  return (
+    <SafeScreen>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {/* ── Hero Banner ── */}
+        <View>
+          <LinearGradient
+            colors={[colors.surface2, colors.background]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.heroBanner}
+          >
+            {/* Decorative neon line */}
+            <View style={styles.neonLineTop} />
+
+            <View style={styles.heroTop}>
+              <View style={styles.heroIconBox}>
+                <Zap color={colors.neonCyan} size={28} />
+              </View>
+              <View style={styles.heroText}>
+                <Animated.Text style={[styles.heroTitle, animatedHeroTitle]}>
+                  UNLEASH YOUR INNER HUNTER
+                </Animated.Text>
+                <Text style={styles.heroSub}>
+                  {user ? `Welcome back, ${user.name.split(" ")[0]}` : "Dominate the digital realm"}
+                </Text>
+              </View>
+            </View>
+
+            {/* Intro Video */}
+            <View style={styles.videoContainer}>
+              <VideoView
+                style={styles.videoPlayer}
+                player={player}
+                allowsFullscreen
+                allowsPictureInPicture
+              />
+              <View style={styles.videoOverlay}>
+                <Text style={styles.videoTitle}>{introVideo?.title ?? "Welcome to the Academy"}</Text>
+              </View>
+            </View>
+
+            {/* Hunter Stats Bar — mirrors web HunterStatsBar exactly */}
+            {isAuthenticated && stats && (
+              <View style={styles.statsContainer}>
+                {/* Rank badge */}
+                <View style={styles.rankRow}>
+                  <View style={styles.rankBadge}>
+                    <Text style={styles.rankLetter}>{stats.rankLetter}</Text>
+                  </View>
+                  <View>
+                    <Text style={styles.rankName}>{stats.rankName}</Text>
+                    <Text style={styles.expLabel}>EXP: {stats.expTotal.toLocaleString()}</Text>
+                  </View>
+                  <View style={styles.streakBox}>
+                    <Swords color={colors.neonAmber} size={14} />
+                    <Text style={styles.streakText}>{stats.streak}d streak</Text>
+                  </View>
+                </View>
+
+                {/* EXP Bar */}
+                <ProgressBar
+                  value={(stats.expCurrent / stats.expMax) * 100}
+                  color={colors.neonPurple}
+                  label={`EXP  ${stats.expCurrent} / ${stats.expMax}`}
+                  height={8}
+                />
+                {/* HP / Focus */}
+                <ProgressBar
+                  value={stats.focusPct}
+                  color={colors.neonCyan}
+                  label={`HP  Focus ${stats.focusPct}%`}
+                  height={6}
+                />
+                {/* MP / Streak */}
+                <ProgressBar
+                  value={stats.mpPercent}
+                  color={colors.neonLime}
+                  label={`MP  Streak ${stats.mpPercent}%`}
+                  height={6}
+                />
+              </View>
+            )}
+
+            {!isAuthenticated && (
+              <TouchableOpacity
+                style={styles.ctaBtn}
+                onPress={() => router.push("/(auth)/login")}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.ctaBtnText}>⚡ Begin Your Journey</Text>
+              </TouchableOpacity>
+            )}
+          </LinearGradient>
+        </View>
+
+        {/* ── Full Courses ── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleRow}>
+              <Crown color={colors.neonAmber} size={18} />
+              <Text style={styles.sectionTitle}>Full Courses</Text>
+            </View>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/courses")} style={styles.seeAll}>
+              <Text style={styles.seeAllText}>See all</Text>
+              <ChevronRight color={colors.neonPurple} size={14} />
+            </TouchableOpacity>
+          </View>
+
+          {catalogLoading ? (
+            <FlatList
+              horizontal
+              data={[1, 2, 3]}
+              renderItem={() => <SkeletonCard style={styles.courseCardSkeleton} />}
+              keyExtractor={(i) => String(i)}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+            />
+          ) : (
+            <FlatList
+              horizontal
+              data={catalog?.fullCourses ?? []}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.courseCard}
+                  activeOpacity={0.85}
+                  onPress={() => router.push(`/(tabs)/courses/${item.slug}` as any)}
+                >
+                  <View style={styles.courseThumb}>
+                    {item.thumbnail ? (
+                      <Image source={{ uri: item.thumbnail }} style={styles.thumbImg} />
+                    ) : (
+                      <LinearGradient
+                        colors={[colors.neonPurple + "40", colors.neonCyan + "20"]}
+                        style={styles.thumbGrad}
+                      >
+                        <BookOpen color={colors.neonPurple} size={32} />
+                      </LinearGradient>
+                    )}
+                  </View>
+                  <View style={styles.courseInfo}>
+                    <Badge label={item.category.name} variant="purple" />
+                    <Text style={styles.courseTitle} numberOfLines={2}>{item.title}</Text>
+                    <View style={styles.courseMeta}>
+                      <Text style={styles.courseLessons}>{item.lessons.length} lessons</Text>
+                      <Text style={styles.coursePrice}>
+                        {item.price === 0 ? "Free" : `₹${item.price.toLocaleString()}`}
+                      </Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={(item) => item.id}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalList}
+              ListEmptyComponent={
+                <Text style={styles.emptyText}>No courses available yet.</Text>
+              }
+            />
+          )}
+        </View>
+
+        {/* ── Module Courses (Hunter Pass) ── */}
+        {((catalog?.moduleCourses?.length ?? 0) > 0) && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleRow}>
+                <Shield color={colors.neonCyan} size={18} />
+                <Text style={styles.sectionTitle}>Hunter Pass Modules</Text>
+              </View>
+            </View>
+            <View style={styles.moduleGrid}>
+              {catalog?.moduleCourses?.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.courseCard, styles.moduleCard]}
+                  activeOpacity={0.85}
+                  onPress={() => router.push(`/(tabs)/courses/${item.slug}` as any)}
+                >
+                  <View style={styles.courseThumb}>
+                    <LinearGradient
+                      colors={[colors.neonCyan + "30", colors.neonLime + "20"]}
+                      style={styles.thumbGrad}
+                    >
+                      <Swords color={colors.neonCyan} size={28} />
+                    </LinearGradient>
+                  </View>
+                  <View style={styles.courseInfo}>
+                    <Badge label="Module" variant="cyan" />
+                    <Text style={styles.courseTitle} numberOfLines={2}>{item.title}</Text>
+                    <Text style={styles.coursePrice}>
+                      {item.price === 0 ? "Free" : `₹${item.price.toLocaleString()}`}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Bottom spacer */}
+        <View style={{ height: spacing[8] }} />
+      </ScrollView>
+    </SafeScreen>
+  );
+}
+
+const CARD_W = SCREEN_W * 0.7;
+
+const styles = StyleSheet.create({
+  scroll: { paddingBottom: spacing[8] },
+
+  // Hero
+  heroBanner: {
+    margin: spacing[4],
+    borderRadius: radii["2xl"],
+    borderWidth: 1,
+    borderColor: colors.neonPurple + "40",
+    padding: spacing[5],
+    overflow: "hidden",
+    gap: spacing[4],
+  },
+  neonLineTop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: colors.neonPurple + "80",
+  },
+  heroTop: { flexDirection: "row", alignItems: "center", gap: spacing[4] },
+  heroIconBox: {
+    width: 52,
+    height: 52,
+    borderRadius: radii.lg,
+    backgroundColor: colors.neonCyanAlpha20,
+    borderWidth: 1,
+    borderColor: colors.neonCyan + "50",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  heroText: { flex: 1 },
+  heroTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.md,
+    color: colors.foreground,
+    letterSpacing: 1,
+  },
+  heroSub: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    textTransform: "uppercase",
+    letterSpacing: 2,
+    marginTop: 4,
+  },
+
+  // Video
+  videoContainer: {
+    width: "100%",
+    aspectRatio: 16 / 9,
+    borderRadius: radii.xl,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.neonCyan + "40",
+    marginTop: spacing[2],
+    backgroundColor: colors.surface2,
+  },
+  videoPlayer: {
+    width: "100%",
+    height: "100%",
+  },
+  videoOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: spacing[3],
+    backgroundColor: "rgba(0,0,0,0.6)",
+  },
+  videoTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.sm,
+    color: colors.white,
+    letterSpacing: 1,
+  },
+
+  // Stats
+  statsContainer: { gap: spacing[2] },
+  rankRow: { flexDirection: "row", alignItems: "center", gap: spacing[3], marginBottom: spacing[2] },
+  rankBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.lg,
+    backgroundColor: colors.neonPurpleAlpha20,
+    borderWidth: 1,
+    borderColor: colors.neonPurple,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  rankLetter: { fontFamily: fonts.display, fontSize: fontSizes.lg, color: colors.neonPurple },
+  rankName: { fontFamily: fonts.sans, fontSize: fontSizes.sm, color: colors.foreground, letterSpacing: 1 },
+  expLabel: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.mutedForeground },
+  streakBox: {
+    marginLeft: "auto",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.neonAmberAlpha20,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 4,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.neonAmber + "60",
+  },
+  streakText: { fontFamily: fonts.sans, fontSize: fontSizes.xs, color: colors.neonAmber },
+
+  // CTA
+  ctaBtn: {
+    backgroundColor: colors.neonPurple,
+    borderRadius: radii.lg,
+    paddingVertical: spacing[3],
+    alignItems: "center",
+    shadowColor: colors.neonPurple,
+    shadowOpacity: 0.6,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  ctaBtnText: { fontFamily: fonts.sans, fontSize: fontSizes.base, color: colors.white, letterSpacing: 2 },
+
+  // Sections
+  section: { marginTop: spacing[6] },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing[4],
+    marginBottom: spacing[3],
+  },
+  sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
+  sectionTitle: { fontFamily: fonts.display, fontSize: fontSizes.base, color: colors.foreground, letterSpacing: 2 },
+  seeAll: { flexDirection: "row", alignItems: "center", gap: 2 },
+  seeAllText: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.neonPurple },
+  horizontalList: { paddingHorizontal: spacing[4], gap: spacing[4] },
+
+  // Course Card
+  courseCard: {
+    width: CARD_W,
+    backgroundColor: colors.card,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    overflow: "hidden",
+    shadowColor: colors.neonPurple,
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 4,
+  },
+  moduleGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    paddingHorizontal: spacing[4],
+    gap: spacing[4],
+    justifyContent: "space-between",
+  },
+  moduleCard: {
+    width: "47%", // two columns
+    borderColor: colors.neonCyan + "40",
+    shadowColor: colors.neonCyan,
+  },
+  courseCardSkeleton: { width: CARD_W },
+  courseThumb: { height: 140 },
+  thumbImg: { width: "100%", height: "100%", resizeMode: "cover" },
+  thumbGrad: { flex: 1, alignItems: "center", justifyContent: "center" },
+  courseInfo: { padding: spacing[4], gap: spacing[2] },
+  courseTitle: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.base,
+    color: colors.foreground,
+    letterSpacing: 0.5,
+    lineHeight: 22,
+  },
+  courseMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  courseLessons: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.mutedForeground },
+  coursePrice: { fontFamily: fonts.sans, fontSize: fontSizes.sm, color: colors.neonAmber, letterSpacing: 1 },
+  emptyText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    color: colors.mutedForeground,
+    padding: spacing[4],
+  },
+});

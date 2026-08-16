@@ -3,7 +3,7 @@ import { Lock, Mail, Swords, Loader2 } from "lucide-react";
 import { AuthLayout, Panel } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
-import { loginUserFn } from "@/server/auth";
+import { signIn } from "@/lib/api-auth";
 import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/login")({
@@ -29,16 +29,11 @@ function Login() {
     setIsLoading(true);
 
     try {
-      await loginUserFn({ data: { email, password } });
-      router.navigate({ to: "/dashboard" });
+      await signIn({ email, password });
+      await router.navigate({ to: "/dashboard" });
     } catch (err: any) {
-      let msg = err.message || "Failed to login. Check your credentials.";
-      try {
-        const parsed = JSON.parse(msg);
-        if (Array.isArray(parsed) && parsed[0]?.message) {
-          msg = parsed[0].message;
-        }
-      } catch {}
+      const msg =
+        err.response?.data?.message || err.message || "Failed to login. Check your credentials.";
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -94,7 +89,8 @@ function Login() {
           </div>
 
           <Button type="submit" disabled={isLoading} variant="hero" size="xl" className="w-full">
-            {isLoading ? <Loader2 className="animate-spin" /> : <Swords />} {isLoading ? 'Authenticating...' : 'Arise & Login'}
+            {isLoading ? <Loader2 className="animate-spin" /> : <Swords />}{" "}
+            {isLoading ? "Authenticating..." : "Arise & Login"}
           </Button>
 
           <div className="relative my-4">
@@ -105,13 +101,18 @@ function Login() {
               <span className="bg-zinc-900 px-2">Or continue with</span>
             </div>
           </div>
-          
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="xl" 
+
+          <Button
+            type="button"
+            variant="outline"
+            size="xl"
             className="w-full border-zinc-700 bg-zinc-900/50 hover:bg-zinc-800"
-            onClick={() => supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + '/auth/callback' } })}
+            onClick={() =>
+              supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: { redirectTo: window.location.origin + "/auth/callback" },
+              })
+            }
           >
             Google
           </Button>

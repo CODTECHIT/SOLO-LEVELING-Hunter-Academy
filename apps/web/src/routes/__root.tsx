@@ -7,8 +7,9 @@ import {
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { type ReactNode, useEffect } from "react";
 import { Toaster } from "@/components/ui/sonner";
+import { loadAuthTokenFromStorage } from "@/lib/api";
 
 import appCss from "../styles.css?url";
 import { DiagonalSplashIntro } from "@/components/site/DiagonalSplashIntro";
@@ -134,6 +135,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    // Load auth token from localStorage on app startup
+    loadAuthTokenFromStorage();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,23 +1,19 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Search, Layers, SlidersHorizontal, Boxes, Check, BookOpen } from "lucide-react";
+import { Search, Layers, SlidersHorizontal, Boxes, Check, BookOpen, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 import { TopNav, SiteFooter } from "@/components/site/nav";
 import { HunterHero } from "@/components/site/catalog-hero";
 import { CourseCard } from "@/components/site/course-card";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { getCatalogFn, getEnrolledCoursesFn } from "@/server/courses";
-import { getCurrentUserFn } from "@/server/auth";
+import { getAllCourses, getCategories } from "@/lib/api-courses";
+import { getUserEnrollments } from "@/lib/api-users";
+import { getAuthToken } from "@/lib/api";
 import { HeroCtas } from "@/components/site/hero-ctas";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/courses/")({
-  loader: async () => {
-    const data = await getCatalogFn();
-    const user = await getCurrentUserFn();
-    const enrolledCourses = user ? await getEnrolledCoursesFn() : [];
-    return { ...data, user, enrolledCourses };
-  },
   head: () => ({
     meta: [
       { title: "Course Catalog — Cyber Tech Academy" },
@@ -28,12 +24,36 @@ export const Route = createFileRoute("/courses/")({
 });
 
 function Catalog() {
-  const { categories, fullCourses, user, enrolledCourses } = Route.useLoaderData();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const enrolledIds = useMemo(() => new Set(enrolledCourses.map((c) => c.id)), [enrolledCourses]);
+  // Fetch courses and categories
+  const { data: courses = [], isLoading: coursesLoading } = useQuery({
+    queryKey: ["courses"],
+    queryFn: () => getAllCourses(0, 100),
+  });
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ["categories"],
+    queryFn: getCategories,
+  });
+
+  // Only fetch enrollments if user is authenticated
+  const token = getAuthToken();
+  const { data: enrolledCourses = [] } = useQuery({
+    queryKey: ["enrollments"],
+    queryFn: getUserEnrollments,
+    enabled: !!token,
+  });
+
+  const isLoading = coursesLoading || categoriesLoading;
+  const user = token ? { id: "current", email: "user@example.com" } : null;
+
+  const enrolledIds = useMemo(
+    () => new Set(enrolledCourses.map((c: any) => c.courseId)),
+    [enrolledCourses],
+  );
 
   const toggleCategory = (catId: string) => {
     setSelectedCategories((prev) =>
@@ -42,7 +62,7 @@ function Catalog() {
   };
 
   const filteredCourses = useMemo(() => {
-    return fullCourses.filter((course) => {
+    return courses.filter((course: any) => {
       const matchesSearch =
         course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         course.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -50,24 +70,20 @@ function Catalog() {
         selectedCategories.length === 0 || selectedCategories.includes(course.categoryId);
       return matchesSearch && matchesCategory;
     });
-  }, [fullCourses, searchQuery, selectedCategories]);
+  }, [courses, searchQuery, selectedCategories]);
 
-  // All categories appear in the filter; counts reflect full courses only,
-  // and only FULL-type courses are shown on this page (modules live on /pricing).
-  const fullCourseCategories = useMemo(
+  // Category counts based on filtered courses
+  const categoriesWithCounts = useMemo(
     () =>
-      categories.map((c) => ({
+      categories.map((c: any) => ({
         ...c,
-        courseCount: c.courses.filter((course) => course.type === "FULL").length,
+        courseCount: courses.filter((course: any) => course.categoryId === c.id).length,
       })),
-    [categories],
+    [categories, courses],
   );
 
-  // If the selected categories contain no full courses, those are module
-  // courses — hint the visitor that the content lives in Hunter Pass.
   const selectionHasFullCourses = selectedCategories.some((id) => {
-    const cat = categories.find((c) => c.id === id);
-    return cat?.courses.some((course) => course.type === "FULL");
+    return courses.some((course: any) => course.categoryId === id);
   });
 
   const clearFilters = () => {
@@ -170,7 +186,7 @@ function Catalog() {
                 Filter by Category
               </PanelTitle>
               <ul className="mt-4 space-y-2">
-                {fullCourseCategories.map((c) => {
+                {categoriesWithCounts.map((c: any) => {
                   const checked = selectedCategories.includes(c.id);
                   return (
                     <li key={c.id}>
@@ -231,48 +247,59 @@ function Catalog() {
                 Available Pathways
               </h2>
               <span className="rounded-full border border-border bg-surface/60 px-3 py-1 text-xs font-display text-muted-foreground">
-                {filteredCourses.length} course{filteredCourses.length === 1 ? "" : "s"}
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin inline-block" />
+                ) : (
+                  `${filteredCourses.length} course${filteredCourses.length === 1 ? "" : "s"}`
+                )}
               </span>
             </div>
 
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-              {filteredCourses.map((course) => (
-                <CourseCard
-                  key={course.id}
-                  course={course}
-                  tone="cyan"
-                  ctaLabel="Start Your Awakening"
-                  enrolled={enrolledIds.has(course.id)}
-                />
-              ))}
-              {filteredCourses.length === 0 && (
-                <div className="col-span-full flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-surface/30 px-6 py-16 text-center">
-                  <Boxes className="h-10 w-10 text-muted-foreground/40" />
-                  <div>
-                    <p className="font-display text-base font-bold text-foreground">
-                      No pathways found matching your criteria
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      Adjust your search or clear the filters to see all available courses.
-                    </p>
-                    {selectedCategories.length > 0 && !selectionHasFullCourses && (
-                      <p className="mt-3 text-sm text-neon-amber">
-                        This content may be in Hunter Pass — short topic-wise modules.
-                        <Link
-                          to="/pricing"
-                          className="ml-1 font-display uppercase tracking-wider text-neon-amber underline underline-offset-4 transition-colors hover:text-foreground"
-                        >
-                          Browse Hunter Pass
-                        </Link>
+            {isLoading ? (
+              <div className="flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-surface/30 px-6 py-16">
+                <Loader2 className="h-10 w-10 animate-spin text-neon-cyan" />
+                <p className="font-display text-sm text-muted-foreground">Loading courses...</p>
+              </div>
+            ) : (
+              <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {filteredCourses.map((course: any) => (
+                  <CourseCard
+                    key={course.id}
+                    course={course}
+                    tone="cyan"
+                    ctaLabel="Start Your Awakening"
+                    enrolled={enrolledIds.has(course.id)}
+                  />
+                ))}
+                {filteredCourses.length === 0 && (
+                  <div className="col-span-full flex flex-col items-center gap-4 rounded-2xl border border-dashed border-border bg-surface/30 px-6 py-16 text-center">
+                    <Boxes className="h-10 w-10 text-muted-foreground/40" />
+                    <div>
+                      <p className="font-display text-base font-bold text-foreground">
+                        No pathways found matching your criteria
                       </p>
-                    )}
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Adjust your search or clear the filters to see all available courses.
+                      </p>
+                      {selectedCategories.length > 0 && !selectionHasFullCourses && (
+                        <p className="mt-3 text-sm text-neon-amber">
+                          This content may be in Hunter Pass — short topic-wise modules.
+                          <Link
+                            to="/pricing"
+                            className="ml-1 font-display uppercase tracking-wider text-neon-amber underline underline-offset-4 transition-colors hover:text-foreground"
+                          >
+                            Browse Hunter Pass
+                          </Link>
+                        </p>
+                      )}
+                    </div>
+                    <Button variant="neon" size="sm" className="h-10" onClick={clearFilters}>
+                      Clear Filters
+                    </Button>
                   </div>
-                  <Button variant="neon" size="sm" className="h-10" onClick={clearFilters}>
-                    Clear Filters
-                  </Button>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

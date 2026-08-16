@@ -1,0 +1,91 @@
+[33mThe plugin "vite-tsconfig-paths" is detected. Vite now supports tsconfig paths resolution natively via the [1mresolve.tsconfigPaths[22m option. You can remove the plugin and set [1mresolve.tsconfigPaths: true[22m in your Vite config instead.[39m
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/_helpers.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\-_helpers.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/profile.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\-profile.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/hunter-stats.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\-hunter-stats.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/auth/login.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\auth\-login.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/auth/me.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\auth\-me.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/auth/signup.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\auth\-signup.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/courses/$slug.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\courses\-$slug.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/progress/update.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\progress\-update.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/courses/index.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\courses\-index.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined
+Warning: Route file "C:/Users/MAHAJAN ASHOK/OneDrive/Desktop/lms-main/apps/web/src/routes/api/enrollments/index.ts" does not export a Route. This file will not be included in the route tree.
+
+If this file is not intended to be a route, you can exclude it using one of these options:
+  1. Rename the file to "C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\web\src\routes\api\enrollments\-index.ts" (prefix with "-")
+  2. Use 'routeFileIgnorePattern' in your config to match this file
+
+Current configuration:
+  routeFileIgnorePrefix: "-"
+  routeFileIgnorePattern: undefined

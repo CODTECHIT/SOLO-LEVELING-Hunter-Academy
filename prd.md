@@ -3,7 +3,7 @@
 
 **Version:** 1.0 (Draft for review)
 **Prepared for:** codetechitsolutions — Client LMS Project
-**Platforms:** Web (React + Next.js), Mobile (React Native — Android & iOS)
+**Platforms:** Web (TanStack Start), Mobile (React Native — Android & iOS)
 
 ---
 
@@ -132,7 +132,7 @@ Even though OTP/2FA-as-an-admin-configurable-module is excluded, the platform st
 
 | Layer | Technology |
 |---|---|
-| Web frontend | React + Next.js |
+| Web frontend | TanStack Start (React + Vite) |
 | Mobile app | React Native (Android + iOS) |
 | Backend | Node.js (NestJS recommended, matches your existing stack pattern) |
 | Database | PostgreSQL / MongoDB (to be finalized based on data model complexity) |
@@ -160,5 +160,5 @@ Even though OTP/2FA-as-an-admin-configurable-module is excluded, the platform st
 1. Finalize answers to Section 9 open questions
 2. Lock the **MVP scope** based on this document
 3. Produce **System Architecture Document** (API design, DB schema, folder structure, third-party integration list)
-4. Produce **Design Guide** (design tokens, component library plan shared between Next.js web and React Native app)
+4. Produce **Design Guide** (design tokens, component library plan shared between TanStack Start web and React Native app)
 5. Break down into Epics → User Stories → Sprint plan
