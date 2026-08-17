@@ -10,13 +10,15 @@ import { HunterStatsBar } from "@/components/site/HunterStatsBar";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
-    const catalog = await getCatalogFn();
-    const user = await getCurrentUserFn();
+    const [catalog, user, { video: activeVideo }] = await Promise.all([
+      getCatalogFn(),
+      getCurrentUserFn(),
+      getActiveIntroVideoFn(),
+    ]);
     let enrolledCourses: any[] = [];
     if (user) {
       enrolledCourses = await getEnrolledCoursesFn();
     }
-    const { video: activeVideo } = await getActiveIntroVideoFn();
     return { ...catalog, user, enrolledCourses, activeVideo };
   },
   head: () => ({
