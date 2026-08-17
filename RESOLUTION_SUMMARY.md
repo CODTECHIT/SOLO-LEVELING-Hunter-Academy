@@ -356,5 +356,5 @@ Refer to:
 ---
 
 **Generated:** 2026-08-14  
-**Project:** SOLO-LEVELING-Hunter-Academy (Cyber Tech Academy LMS)  
+**Project:** CyberTech (Cyber Tech Academy LMS)  
 **Status:** Core infrastructure ready for feature development

@@ -18,7 +18,7 @@ The connection is still failing because the backend server is currently only lis
 
 ### Mobile App Configuration
 
-#### [MODIFY] [.env](file:///C:/Users/MAHAJAN%20ASHOK/OneDrive/Desktop/lms-main/SOLO-LEVELING-Hunter-Academy/apps/mobile/.env)
+#### [MODIFY] [.env](file:///C:/Users/MAHAJAN%20ASHOK/OneDrive/Desktop/lms-main/CyberTech/apps/mobile/.env)
 We will keep the current IP but ensure it matches what the server reports when started with `--host 0.0.0.0`.
 
 ## Verification Plan

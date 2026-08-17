@@ -8,7 +8,9 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#1a1629",
     "icon": "./assets/icon.png",
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.cybertech.hunteracademy",
@@ -21,7 +23,9 @@
       },
       "package": "com.cybertech.hunteracademy",
       "versionCode": 1,
-      "permissions": ["android.permission.INTERNET"]
+      "permissions": [
+        "android.permission.INTERNET"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -44,7 +48,9 @@
             "deploymentTarget": "16.4"
           }
         }
-      ]
+      ],
+      "expo-image",
+      "expo-splash-screen"
     ],
     "experiments": {
       "typedRoutes": true
