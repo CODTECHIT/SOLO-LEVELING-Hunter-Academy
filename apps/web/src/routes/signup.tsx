@@ -4,8 +4,9 @@ import { AuthLayout, Panel } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { AuthField } from "./login";
 import { useState } from "react";
-import { signUp } from "@/lib/api-auth";
+import { signIn } from "@/lib/api-auth";
 import { supabase } from "@/lib/supabase";
+import { registerUserFn } from "@/server/auth";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -29,11 +30,26 @@ function Signup() {
     setIsLoading(true);
 
     try {
-      await signUp({ name, email, password, phone });
+      // 1. Register user and establish session cookie
+      await registerUserFn({ data: { name, email, password } });
+
+      // 2. Also sign in to the API server to get JWT token for localStorage
+      try {
+        await signIn({ email, password });
+      } catch (apiErr) {
+        console.warn("API sign-in warning:", apiErr);
+      }
+
       await router.navigate({ to: "/dashboard" });
     } catch (err: any) {
-      const msg =
+      let msg =
         err.response?.data?.message || err.message || "Failed to register. Please try again.";
+      try {
+        const parsed = JSON.parse(msg);
+        if (Array.isArray(parsed) && parsed[0]?.message) {
+          msg = parsed[0].message;
+        }
+      } catch {}
       setError(msg);
     } finally {
       setIsLoading(false);

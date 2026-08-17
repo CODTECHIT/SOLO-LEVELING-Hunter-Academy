@@ -1,5 +1,6 @@
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { getCurrentUserFn, updateProfileFn, logoutFn } from "@/server/auth";
+import { clearAuth } from "@/lib/api";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { UserCircle, Shield, LogOut, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,7 @@ function ProfilePage() {
     try {
       setIsLoggingOut(true);
       await logoutFn();
+      clearAuth();
       router.navigate({ to: "/" });
     } catch (error) {
       console.error(error);

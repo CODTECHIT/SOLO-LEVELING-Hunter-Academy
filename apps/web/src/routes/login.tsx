@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { signIn } from "@/lib/api-auth";
 import { supabase } from "@/lib/supabase";
+import { loginUserFn } from "@/server/auth";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -29,11 +30,26 @@ function Login() {
     setIsLoading(true);
 
     try {
-      await signIn({ email, password });
+      // 1. Establish session cookie for SSR/layout loaders
+      await loginUserFn({ data: { email, password } });
+
+      // 2. Also obtain API JWT token for client-side API calls
+      try {
+        await signIn({ email, password });
+      } catch (apiErr) {
+        console.warn("API sign-in optional warning:", apiErr);
+      }
+
       await router.navigate({ to: "/dashboard" });
     } catch (err: any) {
-      const msg =
+      let msg =
         err.response?.data?.message || err.message || "Failed to login. Check your credentials.";
+      try {
+        const parsed = JSON.parse(msg);
+        if (Array.isArray(parsed) && parsed[0]?.message) {
+          msg = parsed[0].message;
+        }
+      } catch {}
       setError(msg);
     } finally {
       setIsLoading(false);

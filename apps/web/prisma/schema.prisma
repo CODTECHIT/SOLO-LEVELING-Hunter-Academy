@@ -42,6 +42,7 @@ model Course {
   lessons     Lesson[]
   enrollments Enrollment[]
   reviews     Review[]
+  payments    Payment[]
   faqs        FaqItem[]
   published   Boolean  @default(false)
   type        CourseType @default(FULL)
@@ -89,12 +90,14 @@ model Payment {
   userId          String
   courseId        String
   user            User     @relation(fields: [userId], references: [id])
-  razorpayOrderId String   @unique
+  course          Course    @relation(fields: [courseId], references: [id])
+  razorpayOrderId String    @unique
   razorpayPaymentId String? @unique
   amount          Float
-  currency        String   @default("INR")
+  currency        String    @default("INR")
   status          PaymentStatus @default(PENDING)
-  createdAt       DateTime @default(now())
+  refunds         Refund[]
+  createdAt       DateTime  @default(now())
 }
 
 model Refund {
@@ -102,6 +105,7 @@ model Refund {
   userId      String
   paymentId   String
   user        User     @relation(fields: [userId], references: [id])
+  payment     Payment  @relation(fields: [paymentId], references: [id])
   reason      String
   status      RefundStatus @default(PENDING)
   createdAt   DateTime @default(now())
