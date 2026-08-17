@@ -1,4 +1,3 @@
 {
-  "buildCommand": "npm run build",
-  "regions": ["sin1", "bom1"]
+  "buildCommand": "npm run build"
 }
