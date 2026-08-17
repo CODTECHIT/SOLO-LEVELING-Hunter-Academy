@@ -146,10 +146,12 @@ function SupportPage() {
               <Mail className="mx-auto h-8 w-8 text-muted-foreground mb-3" />
               <p className="font-medium text-foreground">Email us directly</p>
               <a
-                href="mailto:support@sololeveling.academy"
+                href="mailto:cybertechacademy123@gmail.com"
+
                 className="text-neon-cyan hover:underline mt-1 block"
               >
-                support@sololeveling.academy
+                cybertechacademy123@gmail.com
+
               </a>
             </Panel>
           </div>

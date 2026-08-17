@@ -142,7 +142,7 @@ function Login() {
         </form>
 
         <p className="mt-7 border-t border-border/60 pt-4 text-center text-[10px] text-muted-foreground">
-          © Solo Learning Academy
+          © CyberTech Academy
         </p>
       </Panel>
     </AuthLayout>
