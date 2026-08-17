@@ -49,7 +49,7 @@ function Login() {
         if (Array.isArray(parsed) && parsed[0]?.message) {
           msg = parsed[0].message;
         }
-      } catch {}
+      } catch { }
       setError(msg);
     } finally {
       setIsLoading(false);
@@ -62,7 +62,7 @@ function Login() {
         <div className="text-center">
           <img
             src="/logo.png"
-            alt="Solo Leveling Logo"
+            alt="CyberTech Logo"
             className="mx-auto h-16 w-auto object-contain mb-3 drop-shadow-[0_0_15px_rgba(0,243,255,0.4)]"
           />
           <p className="font-display text-2xl font-bold tracking-widest text-neon">Cyber Tech</p>

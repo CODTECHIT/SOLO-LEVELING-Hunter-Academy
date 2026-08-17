@@ -44,15 +44,13 @@ export function DiagonalSplashIntro() {
 
   return (
     <div
-      className={`fixed inset-0 z-[99999] pointer-events-auto overflow-hidden bg-black select-none ${
-        stage === "impact" ? "animate-impact-shake" : ""
-      }`}
+      className={`fixed inset-0 z-[99999] pointer-events-auto overflow-hidden bg-black select-none ${stage === "impact" ? "animate-impact-shake" : ""
+        }`}
     >
       {/* Meteor Shockwave Rings */}
       <div
-        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-0 transition-opacity duration-300 ${
-          stage === "impact" || stage === "crack" ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-0 transition-opacity duration-300 ${stage === "impact" || stage === "crack" ? "opacity-100" : "opacity-0"
+          }`}
       >
         <div className="w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full border-4 border-neon-cyan/80 animate-shockwave shadow-[0_0_80px_#00f3ff]" />
         <div className="w-96 h-96 sm:w-[500px] sm:h-[500px] rounded-full border-4 border-neon-purple/80 animate-shockwave delay-100 shadow-[0_0_80px_#a855f7]" />
@@ -60,13 +58,12 @@ export function DiagonalSplashIntro() {
 
       {/* Top-Right Half (Background + Top Half Logo) */}
       <div
-        className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-          stage === "split"
+        className={`absolute inset-0 transition-all duration-700 ease-in-out ${stage === "split"
             ? "translate-x-[90vw] -translate-y-[90vh] rotate-3 opacity-0"
             : stage === "crack"
-            ? "-translate-x-2 -translate-y-2"
-            : "translate-x-0 translate-y-0"
-        }`}
+              ? "-translate-x-2 -translate-y-2"
+              : "translate-x-0 translate-y-0"
+          }`}
         style={{
           clipPath: topClip,
         }}
@@ -79,13 +76,13 @@ export function DiagonalSplashIntro() {
             <div className="relative">
               <img
                 src="/logo.png"
-                alt="Solo Leveling Logo"
+                alt="CyberTech Logo"
                 className="h-56 sm:h-72 md:h-80 lg:h-96 w-auto object-contain drop-shadow-[0_0_50px_rgba(0,243,255,0.85)]"
               />
             </div>
             <div className="text-center mt-4">
               <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black uppercase tracking-[0.25em] text-neon glow-text">
-                Solo Leveling
+                CyberTech
               </h1>
               <p className="font-display text-sm sm:text-base uppercase tracking-[0.45em] text-neon-cyan font-bold mt-2">
                 Hunter Academy
@@ -97,13 +94,12 @@ export function DiagonalSplashIntro() {
 
       {/* Bottom-Left Half (Background + Bottom Half Logo) */}
       <div
-        className={`absolute inset-0 transition-all duration-700 ease-in-out ${
-          stage === "split"
+        className={`absolute inset-0 transition-all duration-700 ease-in-out ${stage === "split"
             ? "-translate-x-[90vw] translate-y-[90vh] -rotate-3 opacity-0"
             : stage === "crack"
-            ? "translate-x-2 translate-y-2"
-            : "translate-x-0 translate-y-0"
-        }`}
+              ? "translate-x-2 translate-y-2"
+              : "translate-x-0 translate-y-0"
+          }`}
         style={{
           clipPath: bottomClip,
         }}
@@ -116,13 +112,13 @@ export function DiagonalSplashIntro() {
             <div className="relative">
               <img
                 src="/logo.png"
-                alt="Solo Leveling Logo"
+                alt="CyberTech Logo"
                 className="h-56 sm:h-72 md:h-80 lg:h-96 w-auto object-contain drop-shadow-[0_0_50px_rgba(168,85,247,0.85)]"
               />
             </div>
             <div className="text-center mt-4">
               <h1 className="font-display text-4xl sm:text-5xl lg:text-6xl font-black uppercase tracking-[0.25em] text-neon glow-text">
-                Solo Leveling
+                CyberTech
               </h1>
               <p className="font-display text-sm sm:text-base uppercase tracking-[0.45em] text-neon-cyan font-bold mt-2">
                 Hunter Academy
@@ -134,9 +130,8 @@ export function DiagonalSplashIntro() {
 
       {/* 100% Mathematically Matched SVG Light Ray Beam */}
       <svg
-        className={`absolute inset-0 h-full w-full pointer-events-none z-30 overflow-visible transition-opacity duration-300 ${
-          stage === "impact" || stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 h-full w-full pointer-events-none z-30 overflow-visible transition-opacity duration-300 ${stage === "impact" || stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
+          }`}
       >
         <defs>
           <linearGradient id="crackBeam" x1="0%" y1="58%" x2="100%" y2="42%">
@@ -166,9 +161,8 @@ export function DiagonalSplashIntro() {
           stroke="url(#crackBeam)"
           strokeWidth="14"
           filter="url(#neonGlowBlur)"
-          className={`transition-opacity duration-300 ${
-            stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
-          }`}
+          className={`transition-opacity duration-300 ${stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
+            }`}
         />
 
         {/* Core White Laser Streak */}
@@ -179,33 +173,30 @@ export function DiagonalSplashIntro() {
           y2="42%"
           stroke="#ffffff"
           strokeWidth="4"
-          className={`transition-opacity duration-300 ${
-            stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
-          }`}
+          className={`transition-opacity duration-300 ${stage === "crack" || stage === "split" ? "opacity-100" : "opacity-0"
+            }`}
         />
       </svg>
 
       {/* Impact Sparks & Flash */}
       <div
-        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-20 transition-opacity duration-300 ${
-          stage === "impact" ? "opacity-100" : "opacity-0"
-        }`}
+        className={`absolute inset-0 flex items-center justify-center pointer-events-none z-20 transition-opacity duration-300 ${stage === "impact" ? "opacity-100" : "opacity-0"
+          }`}
       >
         <div className="w-full h-full bg-white/25 blur-2xl animate-ping" />
       </div>
 
       {/* System Status Text */}
       <div
-        className={`absolute bottom-8 left-1/2 -translate-x-1/2 font-display text-sm tracking-[0.35em] uppercase text-neon-cyan transition-opacity duration-300 z-40 ${
-          stage === "split" ? "opacity-0" : "opacity-100"
-        }`}
+        className={`absolute bottom-8 left-1/2 -translate-x-1/2 font-display text-sm tracking-[0.35em] uppercase text-neon-cyan transition-opacity duration-300 z-40 ${stage === "split" ? "opacity-0" : "opacity-100"
+          }`}
       >
         <span className="inline-block animate-pulse font-bold">
           {stage === "meteor"
             ? "⚡ METEORIC GATE DESCENDING..."
             : stage === "impact" || stage === "crack"
-            ? "💥 FRACTURING SYSTEM BARRIER..."
-            : "🔓 ARISE, HUNTER..."}
+              ? "💥 FRACTURING SYSTEM BARRIER..."
+              : "🔓 ARISE, HUNTER..."}
         </span>
       </div>
     </div>

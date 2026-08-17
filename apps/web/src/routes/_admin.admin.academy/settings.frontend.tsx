@@ -46,7 +46,7 @@ function AdminSettingsFrontend() {
   const router = useRouter();
 
   const [form, setForm] = useState<Record<string, string>>({
-    hero: settings.hero ?? "Solo Leveling Hunter Academy",
+    hero: settings.hero ?? "CyberTech Hunter Academy",
     hero_subtitle: settings.hero_subtitle ?? "Awaken your potential.",
     hero_cta_label: settings.hero_cta_label ?? "Explore Courses",
     why_choose:

@@ -64,7 +64,7 @@ function AdminLayout() {
           <div className="mb-8 flex items-center gap-3">
             <img
               src="/logo.png"
-              alt="Solo Leveling Logo"
+              alt="CyberTech Logo"
               className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]"
             />
             <div>

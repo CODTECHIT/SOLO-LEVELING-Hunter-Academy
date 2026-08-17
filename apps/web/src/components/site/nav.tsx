@@ -108,7 +108,7 @@ export function TopNav() {
           <Link to="/" className="flex flex-col sm:flex-row items-center gap-2 group py-1">
             <img
               src="/logo.png"
-              alt="Solo Leveling Hunter Academy Logo"
+              alt="CyberTech Hunter Academy Logo"
               className="h-14 sm:h-18 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_0_16px_rgba(0,243,255,0.5)]"
             />
             <div className="text-center sm:text-left">
@@ -180,11 +180,10 @@ export function TopNav() {
                     ) : (
                       <span
                         key={day}
-                        className={`grid h-8 w-8 items-center justify-center rounded-lg text-xs transition-colors ${
-                          day === today.getDate()
+                        className={`grid h-8 w-8 items-center justify-center rounded-lg text-xs transition-colors ${day === today.getDate()
                             ? "bg-neon-cyan/20 font-bold text-neon-cyan ring-1 ring-inset ring-neon-cyan/40"
                             : "text-foreground hover:bg-neon-cyan/10"
-                        }`}
+                          }`}
                       >
                         {day}
                       </span>

@@ -46,10 +46,10 @@ function AdminSettingsSite() {
   const router = useRouter();
 
   const [form, setForm] = useState<Record<string, string>>({
-    site_name: settings.site_name ?? "Solo Leveling Hunter Academy",
+    site_name: settings.site_name ?? "CyberTech Hunter Academy",
     site_logo: settings.site_logo ?? "",
     primary_color: settings.primary_color ?? "#a855f7",
-    seo_title: settings.seo_title ?? "Solo Leveling Hunter Academy",
+    seo_title: settings.seo_title ?? "CyberTech Hunter Academy",
     seo_description: settings.seo_description ?? "Learn to rise through the ranks.",
     contact_email: settings.contact_email ?? "",
     whatsapp_number: settings.whatsapp_number ?? "",
