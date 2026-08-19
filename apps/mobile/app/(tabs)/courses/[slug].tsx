@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   thumbOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: "transparent",
   },
   body: { padding: spacing[5], gap: spacing[4] },

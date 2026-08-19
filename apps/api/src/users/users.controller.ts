@@ -25,6 +25,21 @@ export class UsersController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post("progress")
+  async updateProgress(
+    @Request() req,
+    @Body()
+    body: {
+      lessonId: string;
+      watchedSeconds: number;
+      duration?: number;
+      completed?: boolean;
+    },
+  ) {
+    return this.usersService.updateProgress(req.user.userId, body);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get("stats")
   async getHunterStats(@Request() req) {
     return this.usersService.getHunterStats(req.user.userId);

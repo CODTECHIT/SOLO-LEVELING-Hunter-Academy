@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,20 +8,39 @@ import {
   FlatList,
   Image,
   Dimensions,
+  Modal,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { Zap, Crown, BookOpen, ChevronRight, Swords, Shield } from "lucide-react-native";
+import {
+  Zap,
+  Crown,
+  BookOpen,
+  ChevronRight,
+  Swords,
+  Shield,
+  Bell,
+  X,
+  Flame,
+  CheckCircle2,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, withSequence } from "react-native-reanimated";
-import { useEffect } from "react";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withRepeat,
+  withSequence,
+} from "react-native-reanimated";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SkeletonCard } from "@/components/ui/Skeleton";
+import { CyberTechLogo } from "@/components/ui/CyberTechLogo";
 import { useCatalog, useIntroVideo } from "@/hooks/useCourses";
 import { useHunterStats } from "@/hooks/useHunterStats";
+import { useNotifications } from "@/hooks/useNotifications";
 import { useAuthStore } from "@/store/authStore";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
@@ -33,6 +52,12 @@ export default function HomeScreen() {
   const { data: catalog, isLoading: catalogLoading } = useCatalog();
   const { data: stats } = useHunterStats(isAuthenticated);
   const { data: introVideo } = useIntroVideo();
+  const {
+    notifications,
+    unreadCount,
+    markAllAsRead,
+  } = useNotifications(isAuthenticated);
+  const [notifModalVisible, setNotifModalVisible] = useState(false);
 
   const glowOpacity = useSharedValue(0.4);
   const textScale = useSharedValue(1);
@@ -80,7 +105,7 @@ export default function HomeScreen() {
 
             <View style={styles.heroTop}>
               <View style={styles.heroIconBox}>
-                <Zap color={colors.neonCyan} size={28} />
+                <CyberTechLogo size="sm" showText={false} />
               </View>
               <View style={styles.heroText}>
                 <Animated.Text style={[styles.heroTitle, animatedHeroTitle]}>
@@ -90,6 +115,24 @@ export default function HomeScreen() {
                   {user ? `Welcome back, ${user.name.split(" ")[0]}` : "Dominate the digital realm"}
                 </Text>
               </View>
+
+              {/* Notification Bell */}
+              {isAuthenticated && (
+                <TouchableOpacity
+                  style={styles.notifBtn}
+                  onPress={() => setNotifModalVisible(true)}
+                  activeOpacity={0.8}
+                >
+                  <Bell color={colors.neonAmber} size={22} />
+                  {unreadCount > 0 && (
+                    <View style={styles.notifBadge}>
+                      <Text style={styles.notifBadgeText}>
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              )}
             </View>
 
             {/* Intro Video */}
@@ -97,8 +140,8 @@ export default function HomeScreen() {
               <VideoView
                 style={styles.videoPlayer}
                 player={player}
-                allowsFullscreen
-                allowsPictureInPicture
+                nativeControls={true}
+                contentFit="contain"
               />
               <View style={styles.videoOverlay}>
                 <Text style={styles.videoTitle}>{introVideo?.title ?? "Welcome to the Academy"}</Text>
@@ -107,19 +150,25 @@ export default function HomeScreen() {
 
             {/* Hunter Stats Bar — mirrors web HunterStatsBar exactly */}
             {isAuthenticated && stats && (
-              <View style={styles.statsContainer}>
+              <TouchableOpacity
+                style={styles.statsContainer}
+                activeOpacity={0.9}
+                onPress={() => router.push("/ranks" as any)}
+              >
                 {/* Rank badge */}
                 <View style={styles.rankRow}>
                   <View style={styles.rankBadge}>
                     <Text style={styles.rankLetter}>{stats.rankLetter}</Text>
                   </View>
-                  <View>
+                  <View style={{ flex: 1 }}>
                     <Text style={styles.rankName}>{stats.rankName}</Text>
-                    <Text style={styles.expLabel}>EXP: {stats.expTotal.toLocaleString()}</Text>
+                    <Text style={styles.expLabel}>EXP: {stats.expTotal.toLocaleString()} • Tap for guide</Text>
                   </View>
                   <View style={styles.streakBox}>
-                    <Swords color={colors.neonAmber} size={14} />
-                    <Text style={styles.streakText}>{stats.streak}d streak</Text>
+                    <Flame color={colors.neonAmber} size={16} />
+                    <Text style={styles.streakText}>
+                      {stats.streak}d streak
+                    </Text>
                   </View>
                 </View>
 
@@ -141,10 +190,10 @@ export default function HomeScreen() {
                 <ProgressBar
                   value={stats.mpPercent}
                   color={colors.neonLime}
-                  label={`MP  Streak ${stats.mpPercent}%`}
+                  label={`MP  Streak ${stats.streak > 0 ? `🔥 ${stats.streak}d` : `${stats.mpPercent}%`}`}
                   height={6}
                 />
-              </View>
+              </TouchableOpacity>
             )}
 
             {!isAuthenticated && (
@@ -243,12 +292,19 @@ export default function HomeScreen() {
                   onPress={() => router.push(`/(tabs)/courses/${item.slug}` as any)}
                 >
                   <View style={styles.courseThumb}>
-                    <LinearGradient
-                      colors={[colors.neonCyan + "30", colors.neonLime + "20"]}
-                      style={styles.thumbGrad}
-                    >
-                      <Swords color={colors.neonCyan} size={28} />
-                    </LinearGradient>
+                    {item.thumbnail ? (
+                      <Image
+                        source={{ uri: item.thumbnail }}
+                        style={styles.thumbImg}
+                      />
+                    ) : (
+                      <LinearGradient
+                        colors={[colors.neonCyan + "30", colors.neonLime + "20"]}
+                        style={styles.thumbGrad}
+                      >
+                        <Swords color={colors.neonCyan} size={28} />
+                      </LinearGradient>
+                    )}
                   </View>
                   <View style={styles.courseInfo}>
                     <Badge label="Module" variant="cyan" />
@@ -266,6 +322,82 @@ export default function HomeScreen() {
         {/* Bottom spacer */}
         <View style={{ height: spacing[8] }} />
       </ScrollView>
+
+      {/* ── Notification Modal / Bottom Sheet ── */}
+      <Modal
+        visible={notifModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setNotifModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <View style={styles.modalHeaderTitleRow}>
+                <Bell color={colors.neonAmber} size={20} />
+                <Text style={styles.modalTitle}>Academy Alerts</Text>
+                {unreadCount > 0 && (
+                  <View style={styles.modalBadge}>
+                    <Text style={styles.modalBadgeText}>{unreadCount} new</Text>
+                  </View>
+                )}
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+                {notifications.length > 0 && (
+                  <TouchableOpacity onPress={() => markAllAsRead()}>
+                    <Text style={styles.markAllText}>Mark read</Text>
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  onPress={() => setNotifModalVisible(false)}
+                  style={styles.closeBtn}
+                >
+                  <X color={colors.mutedForeground} size={20} />
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {notifications.length === 0 ? (
+              <View style={styles.notifEmpty}>
+                <Bell color={colors.mutedForeground} size={48} opacity={0.3} />
+                <Text style={styles.notifEmptyTitle}>All caught up!</Text>
+                <Text style={styles.notifEmptySub}>
+                  New courses, certifications, purchases, and support updates will appear here.
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={notifications}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.notifList}
+                renderItem={({ item }) => (
+                  <View
+                    style={[
+                      styles.notifItem,
+                      !item.read && styles.notifItemUnread,
+                    ]}
+                  >
+                    <View style={styles.notifItemHeader}>
+                      <Text
+                        style={[
+                          styles.notifItemTitle,
+                          !item.read && { color: colors.neonAmber },
+                        ]}
+                      >
+                        {item.title}
+                      </Text>
+                      <Text style={styles.notifItemDate}>
+                        {new Date(item.createdAt).toLocaleDateString()}
+                      </Text>
+                    </View>
+                    <Text style={styles.notifItemMessage}>{item.message}</Text>
+                  </View>
+                )}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeScreen>
   );
 }
@@ -293,10 +425,10 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: colors.neonPurple + "80",
   },
-  heroTop: { flexDirection: "row", alignItems: "center", gap: spacing[4] },
+  heroTop: { flexDirection: "row", alignItems: "center", gap: spacing[3] },
   heroIconBox: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: radii.lg,
     backgroundColor: colors.neonCyanAlpha20,
     borderWidth: 1,
@@ -307,7 +439,7 @@ const styles = StyleSheet.create({
   heroText: { flex: 1 },
   heroTitle: {
     fontFamily: fonts.display,
-    fontSize: fontSizes.md,
+    fontSize: fontSizes.sm,
     color: colors.foreground,
     letterSpacing: 1,
   },
@@ -316,8 +448,36 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     color: colors.mutedForeground,
     textTransform: "uppercase",
-    letterSpacing: 2,
-    marginTop: 4,
+    letterSpacing: 1,
+    marginTop: 2,
+  },
+  notifBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.full,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+  },
+  notifBadge: {
+    position: "absolute",
+    top: -2,
+    right: -2,
+    backgroundColor: colors.neonAmber,
+    borderRadius: radii.full,
+    minWidth: 16,
+    height: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 3,
+  },
+  notifBadgeText: {
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "#000",
   },
 
   // Video
@@ -455,5 +615,119 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     color: colors.mutedForeground,
     padding: spacing[4],
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    justifyContent: "flex-end",
+  },
+  modalContainer: {
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radii["2xl"],
+    borderTopRightRadius: radii["2xl"],
+    borderTopWidth: 1,
+    borderColor: colors.border,
+    maxHeight: "80%",
+    paddingBottom: spacing[6],
+  },
+  modalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: spacing[4],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  modalHeaderTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  modalTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.base,
+    color: colors.foreground,
+    letterSpacing: 1,
+  },
+  modalBadge: {
+    backgroundColor: colors.neonAmberAlpha20,
+    paddingHorizontal: spacing[2],
+    paddingVertical: 2,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.neonAmber,
+  },
+  modalBadgeText: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.neonAmber,
+    fontWeight: "bold",
+  },
+  markAllText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.neonCyan,
+    textDecorationLine: "underline",
+  },
+  closeBtn: {
+    padding: 4,
+  },
+  notifList: {
+    padding: spacing[4],
+    gap: spacing[3],
+  },
+  notifItem: {
+    backgroundColor: colors.surface2,
+    borderRadius: radii.xl,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
+  },
+  notifItemUnread: {
+    borderColor: colors.neonAmber + "60",
+    backgroundColor: colors.neonAmberAlpha20 + "20",
+  },
+  notifItemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  notifItemTitle: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    color: colors.foreground,
+    fontWeight: "bold",
+    flex: 1,
+  },
+  notifItemDate: {
+    fontFamily: fonts.body,
+    fontSize: 10,
+    color: colors.mutedForeground,
+  },
+  notifItemMessage: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    lineHeight: 18,
+  },
+  notifEmpty: {
+    padding: spacing[8],
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing[3],
+  },
+  notifEmptyTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.base,
+    color: colors.foreground,
+    letterSpacing: 1,
+  },
+  notifEmptySub: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    textAlign: "center",
+    lineHeight: 18,
   },
 });

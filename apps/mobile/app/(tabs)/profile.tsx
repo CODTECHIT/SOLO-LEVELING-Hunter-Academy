@@ -19,6 +19,7 @@ import { ChevronRight, CreditCard, Receipt, HelpCircle, LifeBuoy, Tag } from "lu
 import { useAuthStore } from "@/store/authStore";
 import { useHunterStats } from "@/hooks/useHunterStats";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { CyberTechLogo } from "@/components/ui/CyberTechLogo";
 import { api } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
@@ -90,14 +91,18 @@ export default function ProfileScreen() {
 
         {/* Hunter Stats */}
         {stats && (
-          <Card accent="purple">
-            <View style={styles.statsTitleRow}>
-              <Shield color={colors.neonPurple} size={16} />
-              <Text style={styles.statsTitle}>Hunter Stats</Text>
-              <View style={styles.rankPill}>
-                <Text style={styles.rankLetter}>{stats.rankLetter}</Text>
+          <TouchableOpacity activeOpacity={0.9} onPress={() => router.push("/ranks" as any)}>
+            <Card accent="purple">
+              <View style={styles.statsTitleRow}>
+                <Shield color={colors.neonPurple} size={16} />
+                <Text style={styles.statsTitle}>Hunter Stats</Text>
+                <View style={styles.rankPill}>
+                  <Text style={styles.rankLetter}>{stats.rankLetter}</Text>
+                </View>
+                <Text style={[styles.statLabel, { color: colors.neonCyan, marginLeft: "auto", textDecorationLine: "underline" }]}>
+                  Rank Guide ➔
+                </Text>
               </View>
-            </View>
             <View style={styles.statsGrid}>
               <View style={styles.statItem}>
                 <Text style={styles.statVal}>{stats.coursesTaken}</Text>
@@ -108,8 +113,12 @@ export default function ProfileScreen() {
                 <Text style={styles.statLabel}>Lessons</Text>
               </View>
               <View style={styles.statItem}>
-                <Text style={styles.statVal}>{stats.streak}d</Text>
-                <Text style={styles.statLabel}>Streak</Text>
+                <Text style={[styles.statVal, { color: colors.neonAmber }]}>
+                  🔥 {stats.streak}d
+                </Text>
+                <Text style={styles.statLabel}>
+                  Streak (Max {stats.longestStreak || stats.streak}d)
+                </Text>
               </View>
               <View style={styles.statItem}>
                 <Text style={styles.statVal}>{stats.expTotal.toLocaleString()}</Text>
@@ -119,10 +128,16 @@ export default function ProfileScreen() {
             <View style={styles.bars}>
               <ProgressBar value={(stats.expCurrent / stats.expMax) * 100} color={colors.neonPurple} label="EXP" height={6} />
               <ProgressBar value={stats.focusPct} color={colors.neonCyan} label="HP Focus" height={6} />
-              <ProgressBar value={stats.mpPercent} color={colors.neonLime} label="MP Streak" height={6} />
+              <ProgressBar
+                value={stats.mpPercent}
+                color={colors.neonLime}
+                label={`MP Streak ${stats.streak > 0 ? `(🔥 ${stats.streak}d)` : ""}`}
+                height={6}
+              />
             </View>
           </Card>
-        )}
+        </TouchableOpacity>
+      )}
 
         {/* Profile info */}
         <Card>
@@ -181,6 +196,14 @@ export default function ProfileScreen() {
             <Text style={styles.sectionTitle}>More</Text>
           </View>
           <View style={styles.menuList}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/ranks" as any)}>
+              <View style={styles.menuItemLeft}>
+                <Shield color={colors.neonPurple} size={20} />
+                <Text style={styles.menuItemText}>Hunter Rank Guide</Text>
+              </View>
+              <ChevronRight color={colors.mutedForeground} size={16} />
+            </TouchableOpacity>
+
             <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(tabs)/purchases")}>
               <View style={styles.menuItemLeft}>
                 <CreditCard color={colors.neonCyan} size={20} />
@@ -231,6 +254,14 @@ export default function ProfileScreen() {
           fullWidth
           style={styles.logoutBtn}
         />
+
+        {/* Brand Footer */}
+        <View style={styles.brandFooter}>
+          <CyberTechLogo size="sm" horizontal showText />
+          <Text style={styles.brandCopyright}>
+            © 2026 Cyber Tech Academy — Arise, Hunter.
+          </Text>
+        </View>
       </View>
     </SafeScreen>
   );
@@ -295,4 +326,17 @@ const styles = StyleSheet.create({
   menuItemText: { fontFamily: fonts.sans, fontSize: fontSizes.base, color: colors.foreground },
 
   logoutBtn: { marginTop: spacing[2] },
+  brandFooter: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: spacing[4],
+    marginBottom: spacing[6],
+    gap: spacing[2],
+  },
+  brandCopyright: {
+    fontFamily: fonts.sans,
+    fontSize: 11,
+    color: colors.mutedForeground,
+    textAlign: "center",
+  },
 });

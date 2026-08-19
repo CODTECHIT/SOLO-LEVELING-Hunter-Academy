@@ -23,7 +23,6 @@ function StudentLayout() {
   const navItems = [
     { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { to: "/purchases", icon: ShoppingBag, label: "Purchases" },
-    { to: "/refunds", icon: RotateCcw, label: "Refunds" },
     { to: "/profile", icon: UserCircle, label: "Profile" },
   ];
 
@@ -62,21 +61,21 @@ function StudentLayout() {
           </nav>
         </aside>
 
-        {/* Mobile Navigation (Tabs) */}
-        <nav className="lg:hidden flex overflow-x-auto gap-2 pb-2 scrollbar-hide border-b border-border mb-6">
-           {navItems.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors text-muted-foreground whitespace-nowrap"
-                activeProps={{
-                  className: "bg-neon-cyan/10 text-neon-cyan",
-                }}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </Link>
-            ))}
+        {/* Mobile Navigation (Segmented Tabs) */}
+        <nav className="lg:hidden grid grid-cols-3 gap-2 p-1 rounded-xl border border-border/80 bg-surface-2/60 mb-6">
+          {navItems.map((item) => (
+            <Link
+              key={item.to}
+              to={item.to}
+              className="flex items-center justify-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all text-muted-foreground text-center"
+              activeProps={{
+                className: "bg-neon-cyan/15 text-neon-cyan border border-neon-cyan/30 shadow-[0_0_12px_rgba(0,243,255,0.2)] font-bold",
+              }}
+            >
+              <item.icon className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{item.label}</span>
+            </Link>
+          ))}
         </nav>
 
         {/* Main Content */}

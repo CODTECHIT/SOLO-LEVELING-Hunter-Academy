@@ -2,12 +2,65 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
 import { z } from "zod";
 import { getCurrentUserFn } from "./auth";
+import { createNotification } from "./notifications";
 
 // A purchase grants access for 1 year from the date of purchase.
 const ENROLLMENT_DURATION_MS = 365 * 24 * 60 * 60 * 1000;
 const accessExpired = (expiresAt: Date | null | undefined) =>
   !!expiresAt && expiresAt.getTime() <= Date.now();
 const accessExpiresAt = () => new Date(Date.now() + ENROLLMENT_DURATION_MS);
+
+export async function updateUserStreak(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentStreak: true, longestStreak: true, lastStudyDate: true },
+    });
+    if (!user) return null;
+
+    const now = new Date();
+    const todayStr = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-${now.getUTCDate()}`;
+
+    let newStreak = user.currentStreak || 0;
+    let lastDateStr: string | null = null;
+    if (user.lastStudyDate) {
+      const d = new Date(user.lastStudyDate);
+      lastDateStr = `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;
+    }
+
+    if (!lastDateStr) {
+      newStreak = 1;
+    } else if (lastDateStr === todayStr) {
+      return { currentStreak: newStreak, longestStreak: user.longestStreak || newStreak };
+    } else {
+      const yesterday = new Date(now);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      const yesterdayStr = `${yesterday.getUTCFullYear()}-${yesterday.getUTCMonth() + 1}-${yesterday.getUTCDate()}`;
+
+      if (lastDateStr === yesterdayStr) {
+        newStreak += 1;
+      } else {
+        newStreak = 1;
+      }
+    }
+
+    const longestStreak = Math.max(user.longestStreak || 0, newStreak);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        currentStreak: newStreak,
+        longestStreak,
+        lastStudyDate: now,
+      },
+    });
+
+    return { currentStreak: newStreak, longestStreak };
+  } catch (err) {
+    console.error("Failed to update user streak:", err);
+    return null;
+  }
+}
 
 export const getCatalogFn = createServerFn({ method: "GET" }).handler(async () => {
   const categories = await prisma.category.findMany({
@@ -55,6 +108,9 @@ export const getCourseFn = createServerFn({ method: "GET" })
           select: { id: true, title: true, lessonId: true, timeLimit: true, passingScore: true },
         },
         category: true,
+        faqs: {
+          orderBy: { order: "asc" },
+        },
         reviews: {
           include: {
             user: {
@@ -67,6 +123,15 @@ export const getCourseFn = createServerFn({ method: "GET" })
 
     if (!course) {
       throw new Error("Course not found");
+    }
+
+    // If no course-specific FAQs exist, fall back to global FAQs
+    let courseFaqs = course.faqs;
+    if (!courseFaqs || courseFaqs.length === 0) {
+      courseFaqs = await prisma.faqItem.findMany({
+        where: { courseId: null },
+        orderBy: { order: "asc" },
+      });
     }
 
     // Check enrollment if logged in
@@ -100,7 +165,17 @@ export const getCourseFn = createServerFn({ method: "GET" })
       lessonProgress = Object.fromEntries(progress.map((p) => [p.lessonId, p.progressSeconds]));
     }
 
-    return { course, isEnrolled, hasAccessExpired, completedLessonIds, lessonProgress };
+    return {
+      course: {
+        ...course,
+        faqs: courseFaqs,
+      },
+      isEnrolled,
+      hasAccessExpired,
+      completedLessonIds,
+      lessonProgress,
+      currentUser: user ? { id: user.id, name: user.name, email: user.email } : null,
+    };
   });
 
 export const enrollUserFn = createServerFn({ method: "POST" })
@@ -111,7 +186,7 @@ export const enrollUserFn = createServerFn({ method: "POST" })
 
     const course = await prisma.course.findUnique({
       where: { id: data.courseId },
-      select: { id: true, price: true },
+      select: { id: true, price: true, title: true },
     });
     if (!course) throw new Error("Course not found");
 
@@ -159,6 +234,19 @@ export const enrollUserFn = createServerFn({ method: "POST" })
       });
     }
 
+    // Create notification for course enrollment
+    try {
+      await createNotification({
+        userId: user.id,
+        title: "🎉 Course Unlocked!",
+        message: `You now have full access to "${course.title}". Start learning today!`,
+        type: "COURSE_PURCHASED",
+        data: { courseId: course.id },
+      });
+    } catch {
+      // Non-blocking
+    }
+
     return { success: true };
   });
 
@@ -172,7 +260,7 @@ export const markLessonCompletedFn = createServerFn({ method: "POST" })
     // user could forge progress on courses they never paid for.
     const lesson = await prisma.lesson.findUnique({
       where: { id: data.lessonId },
-      select: { courseId: true },
+      select: { id: true, courseId: true },
     });
     if (!lesson) throw new Error("Lesson not found");
 
@@ -208,6 +296,44 @@ export const markLessonCompletedFn = createServerFn({ method: "POST" })
         completedAt: new Date(),
       },
     });
+
+    // Update study streak
+    await updateUserStreak(user.id);
+
+    // Check if course 100% complete -> award certificate & notify
+    try {
+      const totalLessons = await prisma.lesson.count({ where: { courseId: lesson.courseId } });
+      const completedCount = await prisma.lessonProgress.count({
+        where: {
+          userId: user.id,
+          completed: true,
+          lesson: { courseId: lesson.courseId },
+        },
+      });
+      if (totalLessons > 0 && completedCount >= totalLessons) {
+        const cert = await prisma.certificate.findUnique({
+          where: { userId_courseId: { userId: user.id, courseId: lesson.courseId } },
+        });
+        if (!cert) {
+          await prisma.certificate.create({
+            data: { userId: user.id, courseId: lesson.courseId },
+          });
+          const crs = await prisma.course.findUnique({
+            where: { id: lesson.courseId },
+            select: { title: true },
+          });
+          await createNotification({
+            userId: user.id,
+            title: "🏆 Official Certificate Awarded!",
+            message: `Congratulations! You conquered all lessons in "${crs?.title || "your course"}" and earned your verified Certificate!`,
+            type: "CERTIFICATE_EARNED",
+            data: { courseId: lesson.courseId },
+          });
+        }
+      }
+    } catch {
+      // Non-blocking
+    }
 
     return { success: true };
   });
@@ -296,6 +422,46 @@ export const updateLessonProgressFn = createServerFn({ method: "POST" })
       },
     });
 
+    // Update study streak on progress
+    await updateUserStreak(user.id);
+
+    // If completed and all lessons in course done -> award certificate and notify
+    if (completed && lesson.courseId) {
+      try {
+        const totalLessons = await prisma.lesson.count({ where: { courseId: lesson.courseId } });
+        const completedCount = await prisma.lessonProgress.count({
+          where: {
+            userId: user.id,
+            completed: true,
+            lesson: { courseId: lesson.courseId },
+          },
+        });
+        if (totalLessons > 0 && completedCount >= totalLessons) {
+          const cert = await prisma.certificate.findUnique({
+            where: { userId_courseId: { userId: user.id, courseId: lesson.courseId } },
+          });
+          if (!cert) {
+            await prisma.certificate.create({
+              data: { userId: user.id, courseId: lesson.courseId },
+            });
+            const crs = await prisma.course.findUnique({
+              where: { id: lesson.courseId },
+              select: { title: true },
+            });
+            await createNotification({
+              userId: user.id,
+              title: "🏆 Official Certificate Awarded!",
+              message: `Congratulations! You conquered all lessons in "${crs?.title || "your course"}" and earned your verified Certificate!`,
+              type: "CERTIFICATE_EARNED",
+              data: { courseId: lesson.courseId },
+            });
+          }
+        }
+      } catch {
+        // Non-blocking
+      }
+    }
+
     return { progressSeconds: row.progressSeconds, completed: row.completed };
   });
 
@@ -325,39 +491,19 @@ export const getEnrolledCoursesFn = createServerFn({ method: "GET" }).handler(as
   });
   const progressByLesson = new Map(progressRows.map((p) => [p.lessonId, p]));
 
-  return enrollments.map((enrollment) => {
-    const { course } = enrollment;
-    const lessons = course.lessons;
-    const { lessons: _lessons, ...rest } = course;
-    const total = lessons.length;
-    const completed = lessons.filter((l) => progressByLesson.get(l.id)?.completed).length;
-
-    // Progress is driven by real watch time: watched seconds vs total duration.
-    const totalDuration = lessons.reduce((sum, l) => sum + (l.duration || 0), 0);
-    const watchedDuration = lessons.reduce((sum, l) => {
-      const p = progressByLesson.get(l.id);
-      if (p?.completed) return sum + (l.duration || 0);
-      return sum + Math.min(p?.progressSeconds || 0, l.duration || 0);
-    }, 0);
-
-    let progress = 0;
-    if (totalDuration > 0) {
-      progress = Math.round((watchedDuration / totalDuration) * 100);
-    }
-    // Completed lessons are a hard floor: marking a lesson complete must always
-    // move the bar, even when that lesson's duration is tiny next to the rest
-    // of the course.
-    if (total > 0) {
-      progress = Math.max(progress, Math.round((completed / total) * 100));
-    }
-
+  return enrollments.map(({ course, enrolledAt, expiresAt }) => {
+    const total = course.lessons.length;
+    const completed = course.lessons.filter((l) => progressByLesson.get(l.id)?.completed).length;
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     return {
-      ...rest,
+      ...course,
       totalLessons: total,
       completedLessons: completed,
-      progress: Math.min(progress, 100),
-      expiresAt: enrollment.expiresAt,
-      expired: accessExpired(enrollment.expiresAt),
+      enrolledAt,
+      expiresAt,
+      expired: accessExpired(expiresAt),
+      hasAccessExpired: accessExpired(expiresAt),
+      progress,
     };
   });
 });
@@ -381,13 +527,14 @@ export const getHunterStatsFn = createServerFn({ method: "GET" }).handler(async 
   if (!user) {
     return {
       rankLetter: "E",
-      rankName: ranks[0].name,
+      rankName: "E-Rank Hunter",
       expTotal: 0,
       expCurrent: 0,
       expMax: 1000,
       focusPct: 0,
       mpPercent: 0,
       streak: 0,
+      longestStreak: 0,
       coursesTaken: 0,
       coursesCompleted: 0,
       lessonsCompleted: 0,
@@ -447,25 +594,14 @@ export const getHunterStatsFn = createServerFn({ method: "GET" }).handler(async 
         ? Math.min(Math.round((lessonsCompleted / totalLessons) * 100), 100)
         : 0;
 
-  // Streak: consecutive days (local time) with at least one lesson completed,
-  // anchored at today or yesterday so an in-progress day does not reset it.
-  const dayKey = (d: Date) => `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-  const days = new Set(
-    progressRows
-      .filter((p) => p.completed && p.completedAt)
-      .map((p) => dayKey(new Date(p.completedAt as Date))),
-  );
-  let streak = 0;
-  const cursor = new Date();
-  cursor.setHours(0, 0, 0, 0);
-  if (!days.has(dayKey(cursor))) {
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  while (days.has(dayKey(cursor))) {
-    streak++;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  const mpPercent = Math.min(Math.round((streak / 7) * 100), 100);
+  const userRecord = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { currentStreak: true, longestStreak: true, lastStudyDate: true },
+  });
+
+  const currentStreak = userRecord?.currentStreak || 0;
+  const longestStreak = userRecord?.longestStreak || currentStreak;
+  const mpPercent = Math.min(Math.round((currentStreak / 7) * 100), 100);
 
   return {
     rankLetter: rank.letter,
@@ -474,8 +610,9 @@ export const getHunterStatsFn = createServerFn({ method: "GET" }).handler(async 
     expCurrent,
     expMax,
     focusPct,
-    mpPercent,
-    streak,
+    mpPercent: mpPercent > 0 ? mpPercent : focusPct,
+    streak: currentStreak,
+    longestStreak,
     coursesTaken,
     coursesCompleted,
     lessonsCompleted,
@@ -618,21 +755,7 @@ export const submitReviewFn = createServerFn({ method: "POST" })
   .validator((data) => reviewSchema.parse(data))
   .handler(async ({ data }) => {
     const user = await getCurrentUserFn();
-    if (!user) throw new Error("Must be logged in");
-
-    // Check if enrolled
-    const enrollment = await prisma.enrollment.findUnique({
-      where: {
-        userId_courseId: {
-          userId: user.id,
-          courseId: data.courseId,
-        },
-      },
-    });
-
-    if (!enrollment) {
-      throw new Error("Must be enrolled to review");
-    }
+    if (!user) throw new Error("Must be logged in to submit a review");
 
     await prisma.review.upsert({
       where: {
@@ -643,13 +766,13 @@ export const submitReviewFn = createServerFn({ method: "POST" })
       },
       update: {
         rating: data.rating,
-        comment: data.comment,
+        comment: data.comment ?? "",
       },
       create: {
         userId: user.id,
         courseId: data.courseId,
         rating: data.rating,
-        comment: data.comment,
+        comment: data.comment ?? "",
       },
     });
 

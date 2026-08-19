@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,27 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
+  ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ArrowLeft, CheckCircle2, ChevronDown, Lock } from "lucide-react-native";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ChevronDown,
+  Lock,
+  Download,
+  Trash2,
+  HardDriveDownload,
+  WifiOff,
+  Award,
+} from "lucide-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
+import * as ScreenCapture from "expo-screen-capture";
 import { useCourse, useEnrolledCourses } from "@/hooks/useCourses";
+import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import { useAuthStore } from "@/store/authStore";
+import { CertificateModal } from "@/components/ui/CertificateModal";
 import { api } from "@/lib/api";
 import { getCloudFrontUrl, getYouTubeVideoId } from "@/lib/cdn";
 import { WebView } from "react-native-webview";
@@ -30,7 +46,25 @@ export default function LearningPlayerScreen() {
   const router = useRouter();
   const qc = useQueryClient();
 
+  // Screen recording restriction (Active across the player screen)
+  useEffect(() => {
+    ScreenCapture.preventScreenCaptureAsync().catch(() => {});
+    return () => {
+      ScreenCapture.allowScreenCaptureAsync().catch(() => {});
+    };
+  }, []);
+
+  const {
+    isDownloaded,
+    getOfflineUri,
+    downloadLesson,
+    deleteDownload,
+    progressMap,
+    isDownloading,
+  } = useOfflineDownloads();
+
   const { data: enrollments } = useEnrolledCourses();
+  const { user } = useAuthStore();
   const course = enrollments?.find((c: any) => c.id === courseId);
   const slug = course?.slug;
 
@@ -41,20 +75,23 @@ export default function LearningPlayerScreen() {
     initialLessonId ?? lessons[0]?.id ?? "",
   );
   const [showLessons, setShowLessons] = useState(false);
+  const [certModalVisible, setCertModalVisible] = useState(false);
   const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const activeLesson = lessons.find((l: any) => l.id === activeId) ?? lessons[0];
+  const activeLesson: any = lessons.find((l: any) => l.id === activeId) ?? lessons[0];
   const isEnrolled = data?.isEnrolled ?? false;
   const completedIds = data?.completedLessonIds ?? [];
   const progress = lessons.length > 0
     ? Math.round((completedIds.length / lessons.length) * 100)
     : 0;
 
+  const offlineUri = activeLesson ? getOfflineUri(activeLesson.id) : null;
   const youtubeId = getYouTubeVideoId(activeLesson?.videoUrl ?? "");
   const cloudFrontUrl = getCloudFrontUrl(activeLesson?.videoUrl ?? "");
+  const videoSource = offlineUri || (youtubeId ? "" : cloudFrontUrl);
 
-  // Video player (for native expo-video)
-  const player = useVideoPlayer(youtubeId ? "" : cloudFrontUrl, (p) => {
+  // Video player (for native expo-video with offline sandbox playback support)
+  const player = useVideoPlayer(videoSource, (p) => {
     p.loop = false;
     p.play();
   });
@@ -126,8 +163,7 @@ export default function LearningPlayerScreen() {
             <VideoView
               style={styles.video}
               player={player}
-              allowsFullscreen
-              allowsPictureInPicture
+              nativeControls={true}
               contentFit="contain"
             />
           )
@@ -150,12 +186,101 @@ export default function LearningPlayerScreen() {
         />
       </View>
 
-      {/* Lesson title */}
+      {/* 100% Certificate Conquest Banner */}
+      {progress >= 100 && (
+        <View style={styles.certBanner}>
+          <View style={styles.certBannerLeft}>
+            <Award color={colors.neonLime} size={24} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.certBannerTitle}>Course Conquered!</Text>
+              <Text style={styles.certBannerSub}>Official Certificate Ready</Text>
+            </View>
+          </View>
+          <TouchableOpacity
+            style={styles.claimCertBtn}
+            onPress={() => setCertModalVisible(true)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.claimCertBtnText}>View / Download</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Lesson title & Offline Download Action */}
       <View style={styles.lessonHeader}>
-        <Text style={styles.lessonTitle}>{activeLesson?.title}</Text>
-        {completedIds.includes(activeLesson?.id ?? "") && (
-          <CheckCircle2 color={colors.neonLime} size={20} />
-        )}
+        <View style={{ flex: 1 }}>
+          <Text style={styles.lessonTitle}>{activeLesson?.title}</Text>
+          {offlineUri && (
+            <View style={styles.offlineBadgeRow}>
+              <WifiOff color={colors.neonLime} size={12} />
+              <Text style={styles.offlineBadgeText}>Playing Offline Sandboxed</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.headerActions}>
+          {completedIds.includes(activeLesson?.id ?? "") && (
+            <CheckCircle2 color={colors.neonLime} size={20} />
+          )}
+
+          {isEnrolled && activeLesson && (
+            isDownloaded(activeLesson.id) ? (
+              <TouchableOpacity
+                style={styles.downloadBtnSuccess}
+                onPress={() => {
+                  Alert.alert(
+                    "Delete Offline Download",
+                    "Do you want to remove this video from your device storage?",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: () => deleteDownload(activeLesson.id),
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Trash2 color={colors.destructive || "#ef4444"} size={16} />
+              </TouchableOpacity>
+            ) : isDownloading(activeLesson.id) ? (
+              <View style={styles.downloadingContainer}>
+                <ActivityIndicator size="small" color={colors.neonCyan} />
+                <Text style={styles.downloadingText}>
+                  {progressMap[activeLesson.id] ?? 0}%
+                </Text>
+              </View>
+            ) : (
+              !getYouTubeVideoId(activeLesson.videoUrl || "") && (
+                <TouchableOpacity
+                  style={styles.downloadBtn}
+                  onPress={async () => {
+                    try {
+                      await downloadLesson({
+                        id: activeLesson.id,
+                        title: activeLesson.title,
+                        courseId: courseId,
+                        courseTitle: data.course.title,
+                        videoUrl: activeLesson.videoUrl,
+                        duration: activeLesson.duration,
+                      });
+                      Alert.alert(
+                        "Downloaded!",
+                        "Lesson saved securely in-app for offline playback."
+                      );
+                    } catch (err: any) {
+                      Alert.alert("Download Error", err.message || "Failed to download");
+                    }
+                  }}
+                >
+                  <Download color={colors.neonCyan} size={16} />
+                  <Text style={styles.downloadBtnText}>Save Offline</Text>
+                </TouchableOpacity>
+              )
+            )
+          )}
+        </View>
       </View>
 
       {/* Toggle lesson list */}
@@ -178,6 +303,9 @@ export default function LearningPlayerScreen() {
             const isCompleted = completedIds.includes(lesson.id);
             const isActive = lesson.id === activeId;
             const isAccessible = isEnrolled;
+            const isLessonSaved = isDownloaded(lesson.id);
+            const isLessonDownloading = isDownloading(lesson.id);
+
             return (
               <TouchableOpacity
                 key={lesson.id}
@@ -200,16 +328,41 @@ export default function LearningPlayerScreen() {
                   )}
                 </View>
                 <Text
-                  style={[styles.lessonName, isActive && styles.lessonNameActive, !isAccessible && styles.lessonLocked]}
+                  style={[
+                    styles.lessonName,
+                    isActive && styles.lessonNameActive,
+                    !isAccessible && styles.lessonLocked,
+                  ]}
                   numberOfLines={2}
                 >
                   {lesson.title}
                 </Text>
+
+                {isAccessible && (
+                  isLessonSaved ? (
+                    <View style={styles.savedIconBadge}>
+                      <HardDriveDownload color={colors.neonLime} size={14} />
+                    </View>
+                  ) : isLessonDownloading ? (
+                    <Text style={styles.downloadingSmallText}>
+                      {progressMap[lesson.id]}%
+                    </Text>
+                  ) : null
+                )}
               </TouchableOpacity>
             );
           })}
         </ScrollView>
       )}
+
+      {/* Certificate Modal */}
+      <CertificateModal
+        visible={certModalVisible}
+        onClose={() => setCertModalVisible(false)}
+        userName={user?.name ?? "Hunter"}
+        courseTitle={data?.course?.title ?? course?.title ?? "Master Course"}
+        courseId={courseId}
+      />
     </SafeScreen>
   );
 }
@@ -240,11 +393,65 @@ const styles = StyleSheet.create({
   },
   lockedText: { fontFamily: fonts.sans, fontSize: fontSizes.base, color: colors.mutedForeground },
   progressRow: { paddingHorizontal: spacing[4], paddingVertical: spacing[3] },
+
+  // Certificate banner
+  certBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: spacing[4],
+    marginTop: spacing[1],
+    marginBottom: spacing[4],
+    padding: 14,
+    borderRadius: radii.xl,
+    backgroundColor: "rgba(34, 197, 94, 0.12)",
+    borderWidth: 1.5,
+    borderColor: colors.neonLime,
+    shadowColor: colors.neonLime,
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 4,
+    gap: spacing[3],
+  },
+  certBannerLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    flex: 1,
+  },
+  certBannerTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.sm,
+    color: colors.neonLime,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+  certBannerSub: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.mutedForeground,
+    marginTop: 1,
+  },
+  claimCertBtn: {
+    backgroundColor: colors.neonLime,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radii.lg,
+  },
+  claimCertBtnText: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    color: "#050810",
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+
   lessonHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: spacing[4],
+    paddingTop: spacing[1],
     paddingBottom: spacing[3],
     gap: spacing[2],
   },
@@ -293,4 +500,61 @@ const styles = StyleSheet.create({
   lessonName: { flex: 1, fontFamily: fonts.body, fontSize: fontSizes.base, color: colors.foreground },
   lessonNameActive: { color: colors.neonPurple, fontFamily: fonts.bodySemiBold },
   lessonLocked: { color: colors.mutedForeground },
+  headerActions: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
+  offlineBadgeRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 2,
+  },
+  offlineBadgeText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.neonLime,
+  },
+  downloadBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: colors.neonCyanAlpha20,
+    borderColor: colors.neonCyan,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: radii.md,
+  },
+  downloadBtnText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.neonCyan,
+    fontWeight: "bold",
+  },
+  downloadBtnSuccess: {
+    padding: 6,
+    borderRadius: radii.md,
+    backgroundColor: "rgba(239, 68, 68, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(239, 68, 68, 0.4)",
+  },
+  downloadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 8,
+  },
+  downloadingText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.neonCyan,
+    fontWeight: "bold",
+  },
+  downloadingSmallText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.neonCyan,
+    fontWeight: "bold",
+  },
+  savedIconBadge: {
+    padding: 2,
+  },
 });

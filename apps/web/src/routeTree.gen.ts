@@ -15,6 +15,7 @@ import { Route as StudentRouteImport } from './routes/_student'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as RanksRouteImport } from './routes/ranks'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -34,6 +35,7 @@ import { Route as StudentQuizQuizIdRouteImport } from './routes/_student.quiz.$q
 import { Route as AdminAcademyLoginRouteImport } from './routes/admin.academy.login'
 import { Route as AdminAdminAcademyIndexRouteImport } from './routes/_admin.admin.academy/index'
 import { Route as AdminAdminAcademyCategoriesRouteImport } from './routes/_admin.admin.academy/categories'
+import { Route as AdminAdminAcademyCertificatesRouteImport } from './routes/_admin.admin.academy/certificates'
 import { Route as AdminAdminAcademyCoursesRouteImport } from './routes/_admin.admin.academy/courses'
 import { Route as AdminAdminAcademyPaymentsRouteImport } from './routes/_admin.admin.academy/payments'
 import { Route as AdminAdminAcademyQuizzesRouteImport } from './routes/_admin.admin.academy/quizzes'
@@ -82,6 +84,11 @@ const LoginRoute = LoginRouteImport.update({
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RanksRoute = RanksRouteImport.update({
+  id: '/ranks',
+  path: '/ranks',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -178,6 +185,12 @@ const AdminAdminAcademyCategoriesRoute =
   AdminAdminAcademyCategoriesRouteImport.update({
     id: '/admin/academy/categories',
     path: '/admin/academy/categories',
+    getParentRoute: () => AdminRoute,
+  } as any)
+const AdminAdminAcademyCertificatesRoute =
+  AdminAdminAcademyCertificatesRouteImport.update({
+    id: '/admin/academy/certificates',
+    path: '/admin/academy/certificates',
     getParentRoute: () => AdminRoute,
   } as any)
 const AdminAdminAcademyCoursesRoute =
@@ -309,6 +322,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/ranks': typeof RanksRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -327,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/admin/academy/login': typeof AdminAcademyLoginRoute
   '/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
+  '/admin/academy/certificates': typeof AdminAdminAcademyCertificatesRoute
   '/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
   '/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
   '/admin/academy/quizzes': typeof AdminAdminAcademyQuizzesRoute
@@ -355,6 +370,7 @@ export interface FileRoutesByTo {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/ranks': typeof RanksRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -373,6 +389,7 @@ export interface FileRoutesByTo {
   '/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/admin/academy/login': typeof AdminAcademyLoginRoute
   '/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
+  '/admin/academy/certificates': typeof AdminAdminAcademyCertificatesRoute
   '/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
   '/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
   '/admin/academy/quizzes': typeof AdminAdminAcademyQuizzesRoute
@@ -404,6 +421,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/login': typeof LoginRoute
   '/pricing': typeof PricingRoute
+  '/ranks': typeof RanksRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -422,6 +440,7 @@ export interface FileRoutesById {
   '/_student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/admin/academy/login': typeof AdminAcademyLoginRoute
   '/_admin/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
+  '/_admin/admin/academy/certificates': typeof AdminAdminAcademyCertificatesRoute
   '/_admin/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
   '/_admin/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
   '/_admin/admin/academy/quizzes': typeof AdminAdminAcademyQuizzesRoute
@@ -452,6 +471,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/ranks'
     | '/reset-password'
     | '/signup'
     | '/sitemap.xml'
@@ -470,6 +490,7 @@ export interface FileRouteTypes {
     | '/quiz/$quizId'
     | '/admin/academy/login'
     | '/admin/academy/categories'
+    | '/admin/academy/certificates'
     | '/admin/academy/courses'
     | '/admin/academy/payments'
     | '/admin/academy/quizzes'
@@ -498,6 +519,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/ranks'
     | '/reset-password'
     | '/signup'
     | '/sitemap.xml'
@@ -516,6 +538,7 @@ export interface FileRouteTypes {
     | '/quiz/$quizId'
     | '/admin/academy/login'
     | '/admin/academy/categories'
+    | '/admin/academy/certificates'
     | '/admin/academy/courses'
     | '/admin/academy/payments'
     | '/admin/academy/quizzes'
@@ -546,6 +569,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/login'
     | '/pricing'
+    | '/ranks'
     | '/reset-password'
     | '/signup'
     | '/sitemap.xml'
@@ -564,6 +588,7 @@ export interface FileRouteTypes {
     | '/_student/quiz/$quizId'
     | '/admin/academy/login'
     | '/_admin/admin/academy/categories'
+    | '/_admin/admin/academy/certificates'
     | '/_admin/admin/academy/courses'
     | '/_admin/admin/academy/payments'
     | '/_admin/admin/academy/quizzes'
@@ -595,6 +620,7 @@ export interface RootRouteChildren {
   FaqRoute: typeof FaqRoute
   LoginRoute: typeof LoginRoute
   PricingRoute: typeof PricingRoute
+  RanksRoute: typeof RanksRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -649,6 +675,13 @@ declare module '@tanstack/react-router' {
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ranks': {
+      id: '/ranks'
+      path: '/ranks'
+      fullPath: '/ranks'
+      preLoaderRoute: typeof RanksRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -782,6 +815,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/academy/categories'
       fullPath: '/admin/academy/categories'
       preLoaderRoute: typeof AdminAdminAcademyCategoriesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/certificates': {
+      id: '/_admin/admin/academy/certificates'
+      path: '/admin/academy/certificates'
+      fullPath: '/admin/academy/certificates'
+      preLoaderRoute: typeof AdminAdminAcademyCertificatesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/admin/academy/courses': {
@@ -984,6 +1024,7 @@ const AdminAdminAcademyCoursesCourseIdRouteWithChildren =
 
 interface AdminRouteChildren {
   AdminAdminAcademyCategoriesRoute: typeof AdminAdminAcademyCategoriesRoute
+  AdminAdminAcademyCertificatesRoute: typeof AdminAdminAcademyCertificatesRoute
   AdminAdminAcademyCoursesRoute: typeof AdminAdminAcademyCoursesRouteWithChildren
   AdminAdminAcademyPaymentsRoute: typeof AdminAdminAcademyPaymentsRoute
   AdminAdminAcademyQuizzesRoute: typeof AdminAdminAcademyQuizzesRoute
@@ -1005,6 +1046,7 @@ interface AdminRouteChildren {
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminAcademyCategoriesRoute: AdminAdminAcademyCategoriesRoute,
+  AdminAdminAcademyCertificatesRoute: AdminAdminAcademyCertificatesRoute,
   AdminAdminAcademyCoursesRoute: AdminAdminAcademyCoursesRouteWithChildren,
   AdminAdminAcademyPaymentsRoute: AdminAdminAcademyPaymentsRoute,
   AdminAdminAcademyQuizzesRoute: AdminAdminAcademyQuizzesRoute,
@@ -1058,6 +1100,7 @@ const rootRouteChildren: RootRouteChildren = {
   FaqRoute: FaqRoute,
   LoginRoute: LoginRoute,
   PricingRoute: PricingRoute,
+  RanksRoute: RanksRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
 import { getCurrentUserFn, logoutFn } from "@/server/auth";
 import {
@@ -21,6 +22,9 @@ import {
   FileQuestion,
   Headphones,
   Sparkles,
+  Award,
+  Menu,
+  X,
 } from "lucide-react";
 
 export const Route = createFileRoute("/_admin")({
@@ -41,10 +45,12 @@ export const Route = createFileRoute("/_admin")({
 function AdminLayout() {
   const { user } = Route.useRouteContext();
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     await logoutFn();
-    router.navigate({ to: "/admin/academy/login" });
+    router.invalidate();
+    window.location.href = "/admin/academy/login";
   };
 
   const isSuperAdmin = user.role === "ADMIN";
@@ -52,18 +58,20 @@ function AdminLayout() {
   const isTechnicalTeam = user.role === "TECHNICAL_TEAM";
 
   const canManageCourses = isSuperAdmin || isManager;
-  const canManageQuizzes = isSuperAdmin;
+  const canManageCategories = isSuperAdmin || isManager;
+  const canManageCertificates = isSuperAdmin || isManager;
+  const canManageQuizzes = isSuperAdmin || isManager;
   const canManageSupport = isSuperAdmin || isTechnicalTeam;
-  const canManageUsers = isSuperAdmin;
+  const canManageStudents = isSuperAdmin || isManager;
+  const canManageStaff = isSuperAdmin;
   const canManageFinancials = isSuperAdmin;
+  const canManageReviews = isSuperAdmin || isManager;
   const canManageCms = isSuperAdmin || isManager;
-  const canManageSettings = isSuperAdmin;
 
   const getRoleLabel = () => {
     if (isSuperAdmin) return "Super Admin";
     if (isManager) return "Manager";
     if (isTechnicalTeam) return "Technical Support";
-    if (user.role === "SUB_ADMIN" || user.customRoleId) return "Sub Admin";
     return "Staff";
   };
 
@@ -75,40 +83,100 @@ function AdminLayout() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 border-r border-border bg-surface-2/50 p-6 flex flex-col justify-between h-screen sticky top-0">
-        <div className="overflow-y-auto pr-2 flex-1">
-          <div className="mb-6 flex items-center gap-3">
+    <div className="flex min-h-screen bg-background flex-col lg:flex-row">
+      {/* Mobile Top Header */}
+      <header className="lg:hidden sticky top-0 z-40 flex items-center justify-between border-b border-border bg-surface-2/95 px-4 py-3 backdrop-blur-xl">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label="Toggle menu"
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-surface hover:text-foreground"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+          <div className="flex items-center gap-2">
             <img
               src="/logo.png"
               alt="CyberTech Logo"
-              className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]"
+              className="h-7 w-auto object-contain"
             />
-            <div>
-              <h2 className="font-display text-lg font-bold text-neon-purple glow-text">
-                Control Hub
-              </h2>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className={`inline-flex items-center text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wider ${getRoleBadgeTone()}`}>
-                  {getRoleLabel()}
-                </span>
+            <span className="font-display text-xs font-black tracking-wider text-foreground">
+              CONTROL HUB
+            </span>
+          </div>
+        </div>
+
+        <span
+          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getRoleBadgeTone()}`}
+        >
+          {getRoleLabel()}
+        </span>
+      </header>
+
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div
+          aria-hidden="true"
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden animate-in fade-in"
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-64 flex-shrink-0 border-r border-border bg-surface-2 p-6 flex flex-col justify-between transition-transform duration-300 ease-in-out lg:sticky lg:top-0 lg:h-screen lg:translate-x-0 ${
+          mobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full"
+        }`}
+      >
+        <div className="overflow-y-auto pr-2 flex-1">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="CyberTech Logo"
+                className="h-10 w-auto object-contain drop-shadow-[0_0_12px_rgba(168,85,247,0.5)]"
+              />
+              <div>
+                <div className="font-display text-sm font-black tracking-wider text-foreground">
+                  CONTROL HUB
+                </div>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="flex h-1.5 w-1.5 rounded-full bg-neon-lime animate-pulse" />
+                  <span
+                    className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold ${getRoleBadgeTone()}`}
+                  >
+                    {getRoleLabel()}
+                  </span>
+                </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              aria-label="Close menu"
+              onClick={() => setMobileMenuOpen(false)}
+              className="lg:hidden rounded-lg p-1 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-5 w-5" />
+            </button>
           </div>
 
           <nav className="space-y-1">
+            {/* Overview (All Staff) */}
             <div className="px-3 py-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              Dashboard
+              Overview
             </div>
             <Link
               to="/admin/academy"
+              onClick={() => setMobileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
+              activeOptions={{ exact: true }}
             >
-              <LayoutDashboard className="h-4 w-4" /> Overview
+              <LayoutDashboard className="h-4 w-4" /> System Overview
             </Link>
 
-            {/* Courses & Categories (Super Admin & Manager) */}
+            {/* Courses & Certificates (Super Admin & Manager) */}
             {canManageCourses && (
               <>
                 <div className="px-3 py-1.5 mt-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -116,20 +184,33 @@ function AdminLayout() {
                 </div>
                 <Link
                   to="/admin/academy/courses"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
                 >
-                  <BookOpen className="h-4 w-4" /> Course List
+                  <BookOpen className="h-4 w-4" /> Course Vault
                 </Link>
-                <Link
-                  to="/admin/academy/categories"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
-                >
-                  <FolderTree className="h-4 w-4" /> Categories
-                </Link>
+                {canManageCategories && (
+                  <Link
+                    to="/admin/academy/categories"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
+                  >
+                    <FolderTree className="h-4 w-4" /> Categories
+                  </Link>
+                )}
+                {canManageCertificates && (
+                  <Link
+                    to="/admin/academy/certificates"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
+                  >
+                    <Award className="h-4 w-4" /> Certificates
+                  </Link>
+                )}
               </>
             )}
 
-            {/* Quizzes & Assessments (Super Admin) */}
+            {/* Quizzes & Assessments (Super Admin & Manager) */}
             {canManageQuizzes && (
               <>
                 <div className="px-3 py-1.5 mt-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -137,6 +218,7 @@ function AdminLayout() {
                 </div>
                 <Link
                   to="/admin/academy/quizzes"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-cyan/10 hover:text-neon-cyan [&.active]:bg-neon-cyan/20 [&.active]:text-neon-cyan"
                 >
                   <FileQuestion className="h-4 w-4 text-neon-cyan" /> Quizzes & Import
@@ -152,6 +234,7 @@ function AdminLayout() {
                 </div>
                 <Link
                   to="/admin/academy/support"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-lime/10 hover:text-neon-lime [&.active]:bg-neon-lime/20 [&.active]:text-neon-lime"
                 >
                   <div className="flex items-center gap-3">
@@ -162,34 +245,50 @@ function AdminLayout() {
               </>
             )}
 
-            {/* Users & Staff (Super Admin) */}
-            {canManageUsers && (
+            {/* Reviews Moderation (Super Admin & Manager) */}
+            {canManageReviews && (
               <>
                 <div className="px-3 py-1.5 mt-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  User Operations
+                  Moderation
                 </div>
                 <Link
-                  to="/admin/academy/users/students"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
+                  to="/admin/academy/reviews"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-amber/10 hover:text-neon-amber [&.active]:bg-neon-amber/20 [&.active]:text-neon-amber"
                 >
-                  <Users className="h-4 w-4" /> Students
-                </Link>
-                <Link
-                  to="/admin/academy/users/staff"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
-                >
-                  <UserPlus className="h-4 w-4" /> Staff
-                </Link>
-                <Link
-                  to="/admin/academy/roles"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
-                >
-                  <Shield className="h-4 w-4" /> Roles
+                  <Star className="h-4 w-4 text-neon-amber" /> Reviews Moderation
                 </Link>
               </>
             )}
 
-            {/* Financials (Super Admin) */}
+            {/* Users & Staff (Super Admin & Manager for Students) */}
+            {(canManageStudents || canManageStaff) && (
+              <>
+                <div className="px-3 py-1.5 mt-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                  User Operations
+                </div>
+                {canManageStudents && (
+                  <Link
+                    to="/admin/academy/users/students"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
+                  >
+                    <Users className="h-4 w-4" /> Students / Hunters
+                  </Link>
+                )}
+                {canManageStaff && (
+                  <Link
+                    to="/admin/academy/users/staff"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-purple/10 hover:text-neon-purple [&.active]:bg-neon-purple/20 [&.active]:text-neon-purple"
+                  >
+                    <UserPlus className="h-4 w-4" /> Staff
+                  </Link>
+                )}
+              </>
+            )}
+
+            {/* Financials (Super Admin Only) */}
             {canManageFinancials && (
               <>
                 <div className="px-3 py-1.5 mt-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
@@ -197,75 +296,33 @@ function AdminLayout() {
                 </div>
                 <Link
                   to="/admin/academy/reports"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-amber/10 hover:text-neon-amber [&.active]:bg-neon-amber/20 [&.active]:text-neon-amber"
                 >
-                  <PieChart className="h-4 w-4" /> Reports
-                </Link>
-                <Link
-                  to="/admin/academy/refunds"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-amber/10 hover:text-neon-amber [&.active]:bg-neon-amber/20 [&.active]:text-neon-amber"
-                >
-                  <ReceiptRefund className="h-4 w-4" /> Refunds
+                  <PieChart className="h-4 w-4" /> Financial Reports
                 </Link>
               </>
             )}
 
-            {/* CMS (Super Admin & Manager) */}
+            {/* Content Management (Super Admin & Manager) */}
             {canManageCms && (
               <>
                 <div className="px-3 py-1.5 mt-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Content Management
+                  Content Hub
                 </div>
                 <Link
-                  to="/admin/academy/cms/pages"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-lime/10 hover:text-neon-lime [&.active]:bg-neon-lime/20 [&.active]:text-neon-lime"
-                >
-                  <FileText className="h-4 w-4" /> Pages
-                </Link>
-                <Link
                   to="/admin/academy/cms/faq"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-lime/10 hover:text-neon-lime [&.active]:bg-neon-lime/20 [&.active]:text-neon-lime"
                 >
                   <HelpCircle className="h-4 w-4" /> FAQ
                 </Link>
                 <Link
-                  to="/admin/academy/cms/sliders"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-lime/10 hover:text-neon-lime [&.active]:bg-neon-lime/20 [&.active]:text-neon-lime"
-                >
-                  <ImageIcon className="h-4 w-4" /> Sliders
-                </Link>
-                <Link
                   to="/admin/academy/cms/intro-video"
+                  onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-lime/10 hover:text-neon-lime [&.active]:bg-neon-lime/20 [&.active]:text-neon-lime"
                 >
                   <Video className="h-4 w-4" /> Intro Video
-                </Link>
-              </>
-            )}
-
-            {/* Settings & Reviews (Super Admin) */}
-            {canManageSettings && (
-              <>
-                <div className="px-3 py-1.5 mt-4 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                  Settings
-                </div>
-                <Link
-                  to="/admin/academy/settings/site"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-cyan/10 hover:text-neon-cyan [&.active]:bg-neon-cyan/20 [&.active]:text-neon-cyan"
-                >
-                  <Settings className="h-4 w-4" /> Site Config
-                </Link>
-                <Link
-                  to="/admin/academy/settings/frontend"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-cyan/10 hover:text-neon-cyan [&.active]:bg-neon-cyan/20 [&.active]:text-neon-cyan"
-                >
-                  <Monitor className="h-4 w-4" /> Frontend Manager
-                </Link>
-                <Link
-                  to="/admin/academy/reviews"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-neon-cyan/10 hover:text-neon-cyan [&.active]:bg-neon-cyan/20 [&.active]:text-neon-cyan"
-                >
-                  <Star className="h-4 w-4" /> Reviews
                 </Link>
               </>
             )}
@@ -283,7 +340,7 @@ function AdminLayout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto min-w-0">
         <Outlet />
       </main>
     </div>

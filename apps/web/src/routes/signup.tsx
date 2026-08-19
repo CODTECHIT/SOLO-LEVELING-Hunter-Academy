@@ -82,6 +82,7 @@ function Signup() {
         </div>
 
         <form
+          method="POST"
           onSubmit={handleSubmit}
           className="mt-7 space-y-5"
         >

@@ -1,27 +1,42 @@
 {
   "expo": {
-    "name": "Hunter Academy",
-    "slug": "hunter-academy",
-    "scheme": "hunteracademy",
+    "name": "Cyber Tech Academy",
+    "slug": "cyber-tech-academy",
+    "scheme": "cybertechacademy",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "backgroundColor": "#1a1629",
+    "backgroundColor": "#050810",
     "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#050810"
+    },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cybertech.hunteracademy",
+      "bundleIdentifier": "com.cybertech.academy",
       "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1a1629"
+        "backgroundColor": "#050810"
       },
-      "package": "com.cybertech.hunteracademy",
+      "splash": {
+        "image": "./assets/splash.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#050810",
+        "dark": {
+          "image": "./assets/splash.png",
+          "backgroundColor": "#050810"
+        }
+      },
+      "backgroundColor": "#050810",
+      "package": "com.cybertech.academy",
       "versionCode": 1,
       "permissions": [
         "android.permission.INTERNET"
@@ -50,7 +65,19 @@
         }
       ],
       "expo-image",
-      "expo-splash-screen"
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#050810",
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "dark": {
+            "backgroundColor": "#050810",
+            "image": "./assets/splash.png"
+          }
+        }
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true

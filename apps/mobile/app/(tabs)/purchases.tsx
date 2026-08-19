@@ -6,7 +6,7 @@ import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 type Purchase = {
   id: string;
@@ -59,7 +59,7 @@ export default function PurchasesScreen() {
             <Text style={styles.emptyDesc}>When you enroll in a course, your receipts will appear here.</Text>
             <Button 
               label="Browse Courses" 
-              variant="outline"
+              variant="secondary"
               style={{ marginTop: spacing[6] }}
               onPress={() => router.push("/(tabs)/courses")}
             />
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
   },
   detailValue: {
-    fontFamily: fonts.mono,
+    fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
     color: colors.foreground,
   },

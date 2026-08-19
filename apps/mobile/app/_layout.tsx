@@ -18,6 +18,7 @@ import {
   Inter_600SemiBold,
 } from "@expo-google-fonts/inter";
 import * as SplashScreen from "expo-splash-screen";
+import { StatusBar } from "expo-status-bar";
 import { colors } from "@/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -58,6 +59,7 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider>
+        <StatusBar style="light" />
         <QueryClientProvider client={queryClient}>
           <Stack
             screenOptions={{

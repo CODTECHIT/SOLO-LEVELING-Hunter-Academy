@@ -12,13 +12,17 @@ import { useEffect, useRef, useState } from "react";
 import { format, getDaysInMonth } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { getCurrentUserFn } from "@/server/auth";
-import { getStudentNotificationsFn } from "@/server/courses";
+import {
+  getNotificationsFn,
+  markAllNotificationsReadFn,
+} from "@/server/notifications";
 
 const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"] as const;
 
 const links = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/courses", label: "Courses" },
+  { to: "/ranks", label: "Rank System" },
   { to: "/pricing", label: "Hunter Pass" },
 ] as const;
 
@@ -33,9 +37,8 @@ export function TopNav() {
   const [user, setUser] = useState<Awaited<ReturnType<typeof getCurrentUserFn>> | null | undefined>(
     undefined,
   );
-  const [notifications, setNotifications] = useState<
-    { id: string; title: string; message: string; createdAt: Date }[]
-  >([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   const today = new Date();
   const totalDays = getDaysInMonth(today);
@@ -45,14 +48,34 @@ export function TopNav() {
     ...Array.from({ length: totalDays }, (_, i) => i + 1),
   ];
 
+  const loadNotifications = () => {
+    getNotificationsFn()
+      .then((res) => {
+        setNotifications(res.notifications);
+        setUnreadCount(res.unreadCount);
+      })
+      .catch(() => {
+        setNotifications([]);
+        setUnreadCount(0);
+      });
+  };
+
   useEffect(() => {
     getCurrentUserFn()
       .then(setUser)
       .catch(() => setUser(null));
-    getStudentNotificationsFn()
-      .then(setNotifications)
-      .catch(() => setNotifications([]));
+    loadNotifications();
   }, []);
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllNotificationsReadFn();
+      setUnreadCount(0);
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch {
+      // ignore
+    }
+  };
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {
@@ -76,54 +99,54 @@ export function TopNav() {
   return (
     <header className="sticky top-0 z-50 border-b border-neon-purple/25 bg-background/85 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 py-2.5 flex items-center justify-between gap-4">
-        {/* Left Side: Navigation Links */}
-        <nav className="hidden lg:flex items-center gap-2 flex-1 justify-start">
-          {links.map((l) => (
-            <Link
-              key={l.to}
-              to={l.to}
-              activeProps={{
-                className:
-                  "text-neon-cyan border-neon-cyan/50 bg-neon-cyan/10 shadow-[0_0_12px_rgba(0,243,255,0.2)]",
-              }}
-              inactiveProps={{
-                className: "text-muted-foreground border-transparent hover:text-foreground",
-              }}
-              className="rounded-lg border px-3.5 py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition-colors"
-            >
-              {l.label}
-            </Link>
-          ))}
-        </nav>
+        {/* Left Side: Logo & Mobile Hamburger */}
+        <div className="flex items-center gap-3 shrink-0">
+          {/* Mobile menu trigger */}
+          <div className="lg:hidden flex items-center">
+            <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setOpen((v) => !v)}>
+              <Menu className="h-5 w-5" />
+            </Button>
+          </div>
 
-        {/* Mobile menu trigger on the left for small screens */}
-        <div className="lg:hidden flex items-center">
-          <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setOpen((v) => !v)}>
-            <Menu />
-          </Button>
-        </div>
-
-        {/* Center: BIG Prominent Logo */}
-        <div className="flex-1 flex justify-center items-center">
-          <Link to="/" className="flex flex-col sm:flex-row items-center gap-2 group py-1">
+          <Link to="/" className="flex items-center gap-2.5 group py-0.5">
             <img
               src="/logo.png"
               alt="CyberTech Hunter Academy Logo"
-              className="h-14 sm:h-18 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_0_16px_rgba(0,243,255,0.5)]"
+              className="h-10 sm:h-12 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_0_14px_rgba(0,243,255,0.45)]"
             />
-            <div className="text-center sm:text-left">
-              <span className="block font-display text-base sm:text-lg font-black tracking-widest text-neon uppercase leading-none">
+            <div>
+              <span className="block font-display text-sm sm:text-base font-black tracking-widest text-neon uppercase leading-none">
                 Cyber Tech
               </span>
-              <span className="block text-[10px] uppercase tracking-[0.35em] text-neon-cyan/80 font-bold mt-0.5">
+              <span className="block text-[9px] uppercase tracking-[0.3em] text-neon-cyan/80 font-bold mt-0.5">
                 Hunter Academy
               </span>
             </div>
           </Link>
         </div>
 
-        {/* Right Side: Action Buttons */}
-        <div className="flex-1 flex items-center justify-end gap-2">
+        {/* Center: Clean Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-1.5 mx-auto">
+          {links.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              activeProps={{
+                className:
+                  "text-neon-cyan border-neon-cyan/50 bg-neon-cyan/10 shadow-[0_0_12px_rgba(0,243,255,0.25)] font-bold",
+              }}
+              inactiveProps={{
+                className: "text-muted-foreground border-transparent hover:text-foreground hover:bg-surface-2/60",
+              }}
+              className="rounded-xl border px-3.5 py-1.5 font-display text-xs font-semibold uppercase tracking-wider transition-all duration-200"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Right Side: Action Buttons & User Profile */}
+        <div className="flex items-center justify-end gap-2 shrink-0">
           <Link to="/faq" aria-label="FAQ" title="Frequently Asked Questions">
             <Button variant="ghost" size="icon">
               <HelpCircle className="h-5 w-5 text-muted-foreground hover:text-neon-cyan" />
@@ -203,22 +226,42 @@ export function TopNav() {
               size="icon"
               aria-label="Alerts"
               aria-expanded={notifOpen}
+              className="relative"
               onClick={() => {
                 setNotifOpen((v) => !v);
                 setCalOpen(false);
               }}
             >
               <Bell className={notifOpen ? "text-neon-amber" : "text-muted-foreground"} />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-neon-amber opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-neon-amber shadow-[0_0_8px_#f59e0b]"></span>
+                </span>
+              )}
             </Button>
             {notifOpen && (
-              <div className="absolute right-0 top-full mt-2 z-50 w-80 rounded-2xl border border-neon-amber/25 bg-background/95 p-4 shadow-[0_0_30px_-6px_rgba(250,204,21,0.3)] backdrop-blur-2xl">
+              <div className="absolute right-0 top-full mt-2 z-50 w-84 rounded-2xl border border-neon-amber/25 bg-background/95 p-4 shadow-[0_0_30px_-6px_rgba(250,204,21,0.3)] backdrop-blur-2xl">
                 <div className="mb-3 flex items-center justify-between">
-                  <span className="font-display text-xs font-bold uppercase tracking-widest text-foreground">
+                  <span className="font-display text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-1.5">
+                    <Bell className="h-3.5 w-3.5 text-neon-amber" />
                     Notifications
                   </span>
-                  <span className="rounded-full bg-neon-amber/15 px-2 py-0.5 text-[10px] font-bold text-neon-amber">
-                    {notifications.length} new
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <span className="rounded-full bg-neon-amber/15 px-2 py-0.5 text-[10px] font-bold text-neon-amber">
+                        {unreadCount} new
+                      </span>
+                    )}
+                    {notifications.length > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-[10px] text-muted-foreground hover:text-neon-amber transition-colors underline cursor-pointer"
+                      >
+                        Mark all read
+                      </button>
+                    )}
+                  </div>
                 </div>
                 {notifications.length === 0 ? (
                   <div className="flex flex-col items-center py-8 text-center text-muted-foreground">
@@ -229,22 +272,28 @@ export function TopNav() {
                     </p>
                   </div>
                 ) : (
-                  <div className="max-h-80 space-y-2 overflow-y-auto">
+                  <div className="max-h-80 space-y-2 overflow-y-auto pr-1">
                     {notifications.map((n) => (
                       <div
                         key={n.id}
-                        className="rounded-xl border border-border/70 bg-background/40 p-3"
+                        className={`rounded-xl border p-3 transition-colors ${
+                          n.read
+                            ? "border-border/60 bg-background/30 opacity-75"
+                            : "border-neon-amber/40 bg-neon-amber/5 shadow-[0_0_12px_rgba(245,158,11,0.08)]"
+                        }`}
                       >
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-neon-amber">{n.title}</p>
-                          <span className="text-[10px] text-muted-foreground">
+                          <p className={`text-xs font-bold ${n.read ? "text-foreground" : "text-neon-amber"}`}>
+                            {n.title}
+                          </p>
+                          <span className="text-[10px] text-muted-foreground font-mono">
                             {new Date(n.createdAt).toLocaleDateString("en-IN", {
                               month: "short",
                               day: "numeric",
                             })}
                           </span>
                         </div>
-                        <p className="mt-1 text-sm text-foreground line-clamp-2">{n.message}</p>
+                        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{n.message}</p>
                       </div>
                     ))}
                   </div>
@@ -330,12 +379,12 @@ export function PageShell({
   return (
     <div className="min-h-screen">
       <TopNav />
-      <main className="mx-auto max-w-7xl px-4 py-8">
-        <div className="mb-8">
-          <h1 className="font-display text-2xl font-bold uppercase tracking-[0.12em] text-neon sm:text-3xl">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="font-display text-xl sm:text-3xl font-bold uppercase tracking-tight sm:tracking-[0.12em] text-neon leading-tight">
             {title}
           </h1>
-          {subtitle && <p className="mt-2 max-w-2xl text-sm text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="mt-2 max-w-2xl text-xs sm:text-sm text-muted-foreground">{subtitle}</p>}
         </div>
         {children}
       </main>

@@ -5,7 +5,7 @@ import { useRouter } from "expo-router";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Card } from "@/components/ui/Card";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 type Refund = {
   id: string;
@@ -70,7 +70,7 @@ export default function RefundsScreen() {
 
         {refunds.length === 0 && !loading ? (
           <View style={styles.emptyState}>
-            <ReceiptRefund color={colors.mutedForeground} size={48} />
+            <Receipt color={colors.mutedForeground} size={48} />
             <Text style={styles.emptyTitle}>No refunds requested</Text>
             <Text style={styles.emptyDesc}>If you request a refund, its status will appear here.</Text>
           </View>
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
   },
   detailValue: {
-    fontFamily: fonts.mono,
+    fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
     color: colors.foreground,
   },

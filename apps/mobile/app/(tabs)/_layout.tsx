@@ -15,19 +15,20 @@ export default function TabsLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.surface,
+          backgroundColor: "#070a14",
           borderTopWidth: 1,
-          borderTopColor: colors.border,
+          borderTopColor: "rgba(0, 243, 255, 0.2)",
           paddingBottom: 8,
           paddingTop: 8,
           height: 64,
         },
-        tabBarActiveTintColor: colors.neonPurple,
+        tabBarActiveTintColor: colors.neonCyan,
         tabBarInactiveTintColor: colors.mutedForeground,
         tabBarLabelStyle: {
           fontFamily: fonts.sans,
           fontSize: 11,
-          letterSpacing: 0.5,
+          fontWeight: "600",
+          letterSpacing: 0.3,
         },
         tabBarHideOnKeyboard: true,
       }}
@@ -40,14 +41,14 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="courses"
+        name="courses/index"
         options={{
           title: "Courses",
           tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size} />,
         }}
       />
       <Tabs.Screen
-        name="my-learning"
+        name="my-learning/index"
         options={{
           title: "My Learning",
           tabBarIcon: ({ color, size }) => <GraduationCap color={color} size={size} />,
@@ -60,25 +61,39 @@ export default function TabsLayout() {
           tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />
+
+      {/* Hidden nested screens & utility subpages */}
+      <Tabs.Screen
+        name="courses/[slug]"
+        options={{
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="my-learning/[courseId]"
+        options={{
+          href: null,
+        }}
+      />
       <Tabs.Screen
         name="purchases"
-        options={{ href: null, title: "Purchases" }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="refunds"
-        options={{ href: null, title: "Refunds" }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="faq"
-        options={{ href: null, title: "FAQ" }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="support"
-        options={{ href: null, title: "Support" }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="pricing"
-        options={{ href: null, title: "Pricing" }}
+        options={{ href: null }}
       />
     </Tabs>
   );

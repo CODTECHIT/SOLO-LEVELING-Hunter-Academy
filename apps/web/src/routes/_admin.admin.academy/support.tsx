@@ -51,7 +51,8 @@ function AdminSupportDeskPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [replyText, setReplyText] = useState("");
   const [isSending, setIsSending] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const prevMsgCountRef = useRef<number>(0);
 
   // Poll active ticket messages every 3 seconds for live chat experience
   useEffect(() => {
@@ -78,10 +79,16 @@ function AdminSupportDeskPage() {
     };
   }, [selectedTicketId]);
 
-  // Scroll to bottom when messages update
+  // Scroll ONLY the internal messages container, never the main browser window
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeTicket?.messages]);
+    const currentCount = activeTicket?.messages?.length || 0;
+    if (currentCount !== prevMsgCountRef.current) {
+      prevMsgCountRef.current = currentCount;
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }
+  }, [activeTicket?.messages?.length, selectedTicketId]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -412,7 +419,10 @@ function AdminSupportDeskPage() {
               </div>
 
               {/* Live Messages Thread */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4 bg-background/40">
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 p-4 overflow-y-auto space-y-4 bg-background/40 max-h-[460px]"
+              >
                 {activeTicket.messages?.map((msg: any) => {
                   const isStaffMsg =
                     msg.senderRole === "ADMIN" ||
@@ -449,7 +459,6 @@ function AdminSupportDeskPage() {
                     </div>
                   );
                 })}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Quick Canned Suggestions */}

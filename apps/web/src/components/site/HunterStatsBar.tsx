@@ -6,6 +6,7 @@ interface HunterStatsBarProps {
   expMax?: number;
   hpPercent?: number;
   mpPercent?: number;
+  streak?: number;
   className?: string;
 }
 
@@ -14,6 +15,7 @@ export function HunterStatsBar({
   expMax = 75000,
   hpPercent = 92,
   mpPercent = 68,
+  streak = 0,
   className,
 }: HunterStatsBarProps) {
   const [animated, setAnimated] = useState(false);
@@ -110,7 +112,7 @@ export function HunterStatsBar({
           <div className="flex justify-between text-[10px] font-display uppercase tracking-widest text-muted-foreground font-bold">
             <span className="flex items-center gap-1.5 text-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-neon-purple" />
-              MP • STREAK
+              MP • STREAK {streak > 0 ? `(🔥 ${streak}d)` : ""}
             </span>
             <span className="text-neon-purple font-bold glow-text">{displayMp}%</span>
           </div>

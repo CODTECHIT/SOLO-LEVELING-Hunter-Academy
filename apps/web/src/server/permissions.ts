@@ -5,6 +5,7 @@ export type StaffPermission =
   | "courses"
   | "categories"
   | "quizzes"
+  | "certificates"
   | "support"
   | "users"
   | "roles"
@@ -28,7 +29,9 @@ export async function ensurePermission(permission: StaffPermission) {
     if (
       permission === "courses" ||
       permission === "categories" ||
-      permission === "cms" ||
+      permission === "quizzes" ||
+      permission === "certificates" ||
+      permission === "users" ||
       permission === "reviews" ||
       permission === "stats"
     ) {
@@ -38,16 +41,6 @@ export async function ensurePermission(permission: StaffPermission) {
 
   if (user.role === "TECHNICAL_TEAM") {
     if (permission === "support" || permission === "stats") {
-      return user;
-    }
-  }
-
-  if (user.customRoleId) {
-    const customRole = await prisma.customRole.findUnique({
-      where: { id: user.customRoleId },
-    });
-    const perms = customRole?.permissions as Record<string, boolean> | null;
-    if (perms && (perms[permission] === true || perms.all === true)) {
       return user;
     }
   }

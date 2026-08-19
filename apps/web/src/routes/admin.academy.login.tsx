@@ -54,7 +54,7 @@ function AdminLogin() {
         </div>
 
         <Panel accent="purple" className="backdrop-blur-md bg-surface/80">
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form method="POST" onSubmit={handleLogin} className="space-y-4">
             {error && (
               <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3 text-center text-xs font-semibold tracking-wide text-red-400">
                 {error}

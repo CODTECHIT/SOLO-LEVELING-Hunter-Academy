@@ -10,6 +10,7 @@ export type HunterStats = {
   focusPct: number;
   mpPercent: number;
   streak: number;
+  longestStreak?: number;
   coursesTaken: number;
   coursesCompleted: number;
   lessonsCompleted: number;

@@ -1,13 +1,24 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useMutation } from "@tanstack/react-query";
-import { getCourseFn } from "@/server/courses";
+import { getCourseFn, submitReviewFn } from "@/server/courses";
 import { enrollInCourse } from "@/lib/api-enrollments";
 import { getAuthToken } from "@/lib/api";
 import { TopNav, SiteFooter } from "@/components/site/nav";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { Lock, PlayCircle, Star, ChevronDown, CheckCircle2, Loader2 } from "lucide-react";
+import {
+  Lock,
+  PlayCircle,
+  Star,
+  ChevronDown,
+  CheckCircle2,
+  Loader2,
+  Send,
+  LogIn,
+  MessageSquare,
+} from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/courses/$slug")({
   loader: async ({ params }) => {
@@ -16,7 +27,11 @@ export const Route = createFileRoute("/courses/$slug")({
   head: ({ loaderData }) => ({
     meta: [
       { title: `${loaderData?.course?.title ?? "Course"} — Cyber Tech Academy` },
-      { name: "description", content: loaderData?.course?.description ?? "View course details and lessons." },
+      {
+        name: "description",
+        content:
+          loaderData?.course?.description ?? "View course details and lessons.",
+      },
     ],
   }),
   component: CourseDetail,
@@ -28,7 +43,27 @@ function CourseDetail() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const courseResponse = Route.useLoaderData();
   const course = (courseResponse as any)?.course ?? courseResponse;
+  const currentUser = courseResponse?.currentUser;
   const token = getAuthToken();
+
+  const reviews = course.reviews || [];
+  const faqs = (course as any).faqs || [];
+  const lessons = course.lessons || [];
+  const isEnrolled = Boolean(courseResponse?.isEnrolled);
+
+  // User's existing review
+  const existingReview = currentUser
+    ? reviews.find(
+        (r: any) =>
+          r.userId === currentUser.id || r.user?.id === currentUser.id
+      )
+    : null;
+
+  // Review Form State
+  const [rating, setRating] = useState<number>(existingReview?.rating || 5);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [comment, setComment] = useState<string>(existingReview?.comment || "");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   // Enrollment mutation
   const enrollMutation = useMutation({
@@ -39,10 +74,42 @@ function CourseDetail() {
     },
   });
 
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentUser) {
+      toast.error("Please log in to submit a review");
+      router.navigate({ to: "/login" });
+      return;
+    }
+
+    try {
+      setIsSubmittingReview(true);
+      await submitReviewFn({
+        data: {
+          courseId: course.id,
+          rating,
+          comment: comment.trim(),
+        },
+      });
+      toast.success(
+        existingReview
+          ? "Your review has been updated!"
+          : "Thank you! Your review has been published."
+      );
+      router.invalidate();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit review");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   if (!course) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
-        <h1 className="font-display text-2xl font-bold text-foreground">Course not found</h1>
+        <h1 className="font-display text-2xl font-bold text-foreground">
+          Course not found
+        </h1>
         <Link to="/courses">
           <Button variant="neon" className="mt-6">
             Back to Courses
@@ -52,17 +119,15 @@ function CourseDetail() {
     );
   }
 
-  const reviews = course.reviews || [];
-  const faqs = (course as any).faqs || [];
-  const lessons = course.lessons || [];
   const avgRating = reviews.length
-    ? (reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    ? (
+        reviews.reduce((acc: number, r: any) => acc + r.rating, 0) /
+        reviews.length
+      ).toFixed(1)
     : "No ratings yet";
 
-  const isEnrolled = Boolean(courseResponse?.isEnrolled);
-
   const handleEnroll = async () => {
-    if (!token) {
+    if (!token && !currentUser) {
       router.navigate({ to: "/login" });
       return;
     }
@@ -105,7 +170,9 @@ function CourseDetail() {
               <h1 className="font-display text-4xl sm:text-5xl font-bold text-foreground mb-6">
                 {course.title}
               </h1>
-              <p className="text-lg text-muted-foreground mb-8">{course.description}</p>
+              <p className="text-lg text-muted-foreground mb-8">
+                {course.description}
+              </p>
 
               <div className="flex items-center gap-6 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
@@ -168,7 +235,7 @@ function CourseDetail() {
                 </Button>
               )}
               <p className="text-center text-xs text-muted-foreground mt-4">
-                30-day refund policy. Secure Razorpay checkout.
+                Secure Razorpay checkout. Immediate access upon registration.
               </p>
             </Panel>
           </div>
@@ -214,14 +281,130 @@ function CourseDetail() {
                 </div>
               </section>
 
-              {/* Reviews */}
-              <section>
-                <h2 className="font-display text-2xl font-bold text-foreground mb-6">
-                  Student Reviews
-                </h2>
-                <div className="space-y-4">
+              {/* Reviews Section */}
+              <section className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-2xl font-bold text-foreground">
+                    Student Reviews ({reviews.length})
+                  </h2>
+                </div>
+
+                {/* Logged-In User Review Submission Form */}
+                {currentUser ? (
+                  <Panel accent="amber" className="space-y-4">
+                    <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                      <div>
+                        <h3 className="font-display text-base font-bold text-foreground">
+                          {existingReview
+                            ? "Update Your Review"
+                            : "Rate & Review This Course"}
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                          Share your experience and learnings with fellow hunters.
+                        </p>
+                      </div>
+                      <span className="text-xs font-mono text-neon-amber font-semibold">
+                        Logged in as: {currentUser.name}
+                      </span>
+                    </div>
+
+                    <form onSubmit={handleReviewSubmit} className="space-y-4">
+                      {/* Star Rating Picker */}
+                      <div>
+                        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                          Your Rating:
+                        </label>
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4, 5].map((starVal) => {
+                            const isFilled =
+                              (hoverRating !== null ? hoverRating : rating) >=
+                              starVal;
+                            return (
+                              <button
+                                key={starVal}
+                                type="button"
+                                onMouseEnter={() => setHoverRating(starVal)}
+                                onMouseLeave={() => setHoverRating(null)}
+                                onClick={() => setRating(starVal)}
+                                className="p-1 rounded-lg hover:scale-110 transition-transform focus:outline-none"
+                              >
+                                <Star
+                                  className={`w-7 h-7 transition-colors ${
+                                    isFilled
+                                      ? "fill-neon-amber text-neon-amber drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+                                      : "text-muted-foreground/30 hover:text-muted-foreground"
+                                  }`}
+                                />
+                              </button>
+                            );
+                          })}
+                          <span className="ml-3 font-display text-sm font-bold text-neon-amber">
+                            {(hoverRating !== null ? hoverRating : rating)}.0 / 5
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Comment Input */}
+                      <div>
+                        <label className="block text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                          Feedback & Comment (Optional):
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={comment}
+                          onChange={(e) => setComment(e.target.value)}
+                          placeholder="How did this dungeon training help you? What rank did you achieve?"
+                          className="w-full rounded-xl border border-border bg-background/80 p-3 text-sm text-foreground focus:border-neon-amber focus:outline-none"
+                        />
+                      </div>
+
+                      <Button
+                        type="submit"
+                        variant="neon"
+                        disabled={isSubmittingReview}
+                        className="px-6"
+                      >
+                        {isSubmittingReview ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Submitting...
+                          </>
+                        ) : (
+                          <>
+                            <Send className="mr-2 h-4 w-4" />
+                            {existingReview
+                              ? "Update Review"
+                              : "Post Review"}
+                          </>
+                        )}
+                      </Button>
+                    </form>
+                  </Panel>
+                ) : (
+                  /* Login Prompt for Non-Logged In Users */
+                  <Panel className="p-6 text-center space-y-3 bg-surface-2/40 border-dashed">
+                    <MessageSquare className="h-8 w-8 text-neon-amber mx-auto opacity-80" />
+                    <div>
+                      <h4 className="font-display text-base font-bold text-foreground">
+                        Want to rate & review this course?
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-1 max-w-md mx-auto">
+                        Please sign in to your hunter account to post feedback, rate instructors, and share your experience.
+                      </p>
+                    </div>
+                    <Link to="/login">
+                      <Button variant="outline" size="sm" className="mt-2 text-xs">
+                        <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                        Log In to Write a Review
+                      </Button>
+                    </Link>
+                  </Panel>
+                )}
+
+                {/* Reviews List */}
+                <div className="space-y-4 pt-2">
                   {reviews.length === 0 ? (
-                    <p className="text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       No reviews yet. Be the first to conquer this dungeon!
                     </p>
                   ) : (
@@ -232,22 +415,32 @@ function CourseDetail() {
                       >
                         <div className="flex items-center gap-4 mb-4">
                           <div className="w-10 h-10 rounded-full bg-neon-purple/20 text-neon-purple flex items-center justify-center font-bold font-display uppercase">
-                            {review.user?.name ? review.user.name.substring(0, 2) : "AN"}
+                            {review.user?.name
+                              ? review.user.name.substring(0, 2)
+                              : "AN"}
                           </div>
                           <div>
-                            <p className="font-bold text-foreground">{review.user?.name || "Anonymous Hunter"}</p>
+                            <p className="font-bold text-foreground">
+                              {review.user?.name || "Anonymous Hunter"}
+                            </p>
                             <div className="flex gap-1 text-neon-amber mt-1">
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
                                   key={i}
-                                  className={`w-3 h-3 ${i < review.rating ? "fill-neon-amber" : "text-muted-foreground"}`}
+                                  className={`w-3.5 h-3.5 ${
+                                    i < review.rating
+                                      ? "fill-neon-amber text-neon-amber"
+                                      : "text-muted-foreground/30"
+                                  }`}
                                 />
                               ))}
                             </div>
                           </div>
                         </div>
                         {review.comment && (
-                          <p className="text-muted-foreground text-sm">{review.comment}</p>
+                          <p className="text-muted-foreground text-sm leading-relaxed">
+                            {review.comment}
+                          </p>
                         )}
                       </div>
                     ))
@@ -268,12 +461,15 @@ function CourseDetail() {
                     >
                       <button
                         className="w-full text-left p-4 flex items-center justify-between font-bold text-foreground hover:bg-background/50"
-
-                        onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                        onClick={() =>
+                          setOpenFaq(openFaq === idx ? null : idx)
+                        }
                       >
                         {faq.question}
                         <ChevronDown
-                          className={`w-5 h-5 transition-transform ${openFaq === idx ? "rotate-180" : ""}`}
+                          className={`w-5 h-5 transition-transform ${
+                            openFaq === idx ? "rotate-180" : ""
+                          }`}
                         />
                       </button>
                       {openFaq === idx && (
@@ -284,7 +480,9 @@ function CourseDetail() {
                     </div>
                   ))}
                   {faqs.length === 0 && (
-                    <p className="text-sm text-muted-foreground">No FAQs yet for this course.</p>
+                    <p className="text-sm text-muted-foreground">
+                      No FAQs yet for this course.
+                    </p>
                   )}
                 </div>
               </section>

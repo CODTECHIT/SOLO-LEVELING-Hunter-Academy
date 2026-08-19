@@ -115,6 +115,23 @@ export class SupportService {
       }),
     ]);
 
+    // If staff replied, notify the student
+    if (isStaff && ticket.userId !== userId) {
+      try {
+        await this.prisma.notification.create({
+          data: {
+            userId: ticket.userId,
+            title: "🎧 Support Ticket Reply",
+            message: `Your ticket has a new response from academy staff.`,
+            type: "SUPPORT_REPLY",
+            data: { ticketId: ticket.id },
+          },
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
+
     return newMessage;
   }
 }

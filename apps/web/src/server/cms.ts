@@ -33,21 +33,29 @@ export const saveCmsPageFn = createServerFn({ method: "POST" })
     return page;
   });
 
-// ---------- FAQ ----------
+// ---------- FAQ (Admin & Manager) ----------
 
 export const getFaqItemsFn = createServerFn({ method: "GET" }).handler(async () => {
-  await ensureAdmin();
-  const faqs = await prisma.faqItem.findMany({
-    where: { courseId: null },
-    orderBy: { order: "asc" },
-  });
-  return { faqs };
+  await ensureStaff();
+  const [faqs, courses] = await Promise.all([
+    prisma.faqItem.findMany({
+      orderBy: { order: "asc" },
+      include: {
+        course: { select: { id: true, title: true, slug: true } },
+      },
+    }),
+    prisma.course.findMany({
+      select: { id: true, title: true, slug: true },
+      orderBy: { title: "asc" },
+    }),
+  ]);
+  return { faqs, courses };
 });
 
 export const getCourseFaqsFn = createServerFn({ method: "GET" })
   .validator(z.object({ courseId: z.string() }))
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensureStaff();
     const faqs = await prisma.faqItem.findMany({
       where: { courseId: data.courseId },
       orderBy: { order: "asc" },
@@ -66,7 +74,10 @@ export const saveFaqItemFn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensureStaff();
+
+    const normalizedCourseId =
+      data.courseId && data.courseId !== "GLOBAL" ? data.courseId : null;
 
     if (data.id) {
       return await prisma.faqItem.update({
@@ -75,7 +86,7 @@ export const saveFaqItemFn = createServerFn({ method: "POST" })
           question: data.question,
           answer: data.answer,
           order: data.order ?? 0,
-          courseId: data.courseId ?? null,
+          courseId: normalizedCourseId,
         },
       });
     }
@@ -86,7 +97,7 @@ export const saveFaqItemFn = createServerFn({ method: "POST" })
         question: data.question,
         answer: data.answer,
         order: data.order ?? (maxOrder._max.order ?? 0) + 1,
-        courseId: data.courseId ?? null,
+        courseId: normalizedCourseId,
       },
     });
   });
@@ -94,7 +105,7 @@ export const saveFaqItemFn = createServerFn({ method: "POST" })
 export const deleteFaqItemFn = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensureStaff();
     await prisma.faqItem.delete({ where: { id: data.id } });
     return { success: true };
   });
@@ -218,6 +229,14 @@ export const deleteIntroVideoFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+async function ensureStaff() {
+  const user = await getCurrentUserFn();
+  if (!user || (user.role !== "ADMIN" && user.role !== "MANAGER")) {
+    throw new Error("Unauthorized: Staff access required");
+  }
+  return user;
+}
+
 export const getPresignedUrlFn = createServerFn({ method: "POST" })
   .validator(
     z.object({
@@ -227,9 +246,9 @@ export const getPresignedUrlFn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensureStaff();
     const ext = data.filename.split(".").pop() || "file";
-    const folderName = data.folder || "intro-videos";
+    const folderName = data.folder || "category-images";
     const key = `${folderName}/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
     const uploadUrl = await getPresignedUploadUrl(key, data.contentType);
 
@@ -250,9 +269,9 @@ export const uploadFileToS3Fn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensureStaff();
     const ext = data.filename.split(".").pop() || "file";
-    const folderName = data.folder || "intro-videos";
+    const folderName = data.folder || "category-images";
     const key = `${folderName}/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
 
     const buffer = Buffer.from(data.base64Data, "base64");

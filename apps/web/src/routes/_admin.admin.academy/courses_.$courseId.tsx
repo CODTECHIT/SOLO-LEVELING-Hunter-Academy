@@ -14,7 +14,7 @@ import {
 } from "@/server/cms";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Plus, Trash2, Pencil, Upload, Loader2, HelpCircle } from "lucide-react";
+import { ArrowLeft, Play, Plus, Trash2, Pencil, Upload, Loader2, HelpCircle, X } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_admin/admin/academy/courses_/$courseId")({
@@ -352,18 +352,56 @@ function CourseLessonsAdmin() {
         )}
       </div>
 
-      <div className="flex items-center justify-between pt-4">
-        <h2 className="font-display text-lg uppercase tracking-widest text-muted-foreground">
-          Course FAQs
-        </h2>
-        <Button variant="hero" onClick={startCreateFaq}>
-          <Plus className="mr-2 h-4 w-4" /> Add FAQ
-        </Button>
+      {/* Course FAQs Section */}
+      <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/80">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="font-display text-lg uppercase tracking-widest text-foreground flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-neon-cyan" />
+              Course FAQs
+            </h2>
+            <span className="inline-flex items-center gap-1 rounded-full bg-neon-cyan/10 border border-neon-cyan/30 px-2.5 py-0.5 text-xs font-semibold text-neon-cyan">
+              Target Scope: {course.title}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            Questions & Answers created here appear directly on this course's public details and learn page.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Link to="/admin/academy/cms/faq">
+            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-foreground">
+              All FAQs Hub ➔
+            </Button>
+          </Link>
+          <Button variant="neon" size="sm" onClick={startCreateFaq}>
+            <Plus className="mr-1.5 h-4 w-4" /> Add FAQ for this Course
+          </Button>
+        </div>
       </div>
 
       {isCreatingFaq && (
-        <Panel accent="lime" className="mb-6">
-          <PanelTitle>{faqEditingId ? "Edit Question" : "New Question"}</PanelTitle>
+        <Panel accent="cyan" className="mb-6 animate-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div>
+              <PanelTitle>{faqEditingId ? "Edit Question" : "New Course FAQ"}</PanelTitle>
+              <p className="text-xs text-neon-cyan mt-0.5 font-mono">
+                Target Scope: Automatically assigned to this course ("{course.title}")
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setIsCreatingFaq(false);
+                setFaqEditingId(null);
+                setFaqForm(emptyFaq);
+              }}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
           <form onSubmit={handleFaqSubmit} className="mt-4 space-y-4 max-w-2xl">
             <div>
               <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1">
@@ -373,7 +411,8 @@ function CourseLessonsAdmin() {
                 required
                 value={faqForm.question}
                 onChange={(e) => setFaqForm({ ...faqForm, question: e.target.value })}
-                className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:border-neon-lime focus:outline-none"
+                placeholder="e.g. What prerequisites are needed for this dungeon module?"
+                className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:border-neon-cyan focus:outline-none"
               />
             </div>
             <div>
@@ -385,7 +424,8 @@ function CourseLessonsAdmin() {
                 rows={4}
                 value={faqForm.answer}
                 onChange={(e) => setFaqForm({ ...faqForm, answer: e.target.value })}
-                className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:border-neon-lime focus:outline-none"
+                placeholder="Provide a clear, helpful response for students taking this course..."
+                className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:border-neon-cyan focus:outline-none"
               />
             </div>
             <div className="flex gap-2 justify-end pt-2">
@@ -401,7 +441,7 @@ function CourseLessonsAdmin() {
                 Cancel
               </Button>
               <Button type="submit" variant="neon">
-                {faqEditingId ? "Save Changes" : "Add Entry"}
+                {faqEditingId ? "Save Changes" : "Add Course FAQ"}
               </Button>
             </div>
           </form>
@@ -412,16 +452,21 @@ function CourseLessonsAdmin() {
         {faqs.map((f) => (
           <Panel
             key={f.id}
-            className="p-4 flex items-center justify-between hover:border-neon-lime/50 transition-colors"
+            className="p-4 flex items-center justify-between hover:border-neon-cyan/50 transition-colors"
           >
             <div className="flex items-center gap-4 min-w-0">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 border border-neon-lime/20 text-neon-lime">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-2 border border-neon-cyan/20 text-neon-cyan">
                 <HelpCircle className="h-4 w-4" />
               </div>
               <div className="min-w-0">
-                <p className="truncate font-display text-base font-bold text-foreground">
-                  {f.question}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="truncate font-display text-base font-bold text-foreground">
+                    {f.question}
+                  </p>
+                  <span className="text-[10px] font-mono rounded bg-neon-cyan/10 border border-neon-cyan/30 px-1.5 py-0.5 text-neon-cyan">
+                    Course Scoped
+                  </span>
+                </div>
                 <p className="mt-1 line-clamp-2 text-xs text-muted-foreground max-w-2xl">
                   {f.answer}
                 </p>
@@ -432,7 +477,7 @@ function CourseLessonsAdmin() {
                 variant="ghost"
                 size="icon"
                 onClick={() => startEditFaq(f)}
-                className="text-neon-lime hover:text-neon-lime hover:bg-neon-lime/10"
+                className="text-neon-cyan hover:text-neon-cyan hover:bg-neon-cyan/10"
                 title="Edit FAQ"
               >
                 <Pencil className="h-4 w-4" />
@@ -450,8 +495,7 @@ function CourseLessonsAdmin() {
         ))}
         {faqs.length === 0 && !isCreatingFaq && (
           <div className="text-center py-12 text-muted-foreground text-sm border border-dashed border-border rounded-xl">
-            No FAQs for this course yet. Click "Add FAQ" to create one. If none are set, the course
-            page shows the global FAQ list.
+            No FAQs specifically created for this course yet. Click "Add FAQ for this Course" above to create one.
           </div>
         )}
       </div>

@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
 import { getCurrentUserFn } from "./auth";
+import { createNotification } from "./notifications";
 import { ensurePermission } from "./permissions";
 
 import { SupportCategory, SupportPriority, SupportStatus } from "@prisma/client";
@@ -209,6 +210,20 @@ export const sendSupportMessageFn = createServerFn({ method: "POST" })
         },
       }),
     ]);
+
+    if (isStaff && ticket.userId !== user.id) {
+      try {
+        await createNotification({
+          userId: ticket.userId,
+          title: "🎧 Support Ticket Reply",
+          message: `Your ticket has a new response from academy staff.`,
+          type: "SUPPORT_REPLY",
+          data: { ticketId: ticket.id },
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
 
     return newMessage;
   });

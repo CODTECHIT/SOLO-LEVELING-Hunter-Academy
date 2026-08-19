@@ -1,257 +1,154 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import {
-  getAdminRolesFn,
-  createRoleFn,
-  updateRolePermissionsFn,
-  deleteRoleFn,
-} from "@/server/admin";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { Shield, ShieldCheck, Plus, Trash2 } from "lucide-react";
-import { useState } from "react";
+import {
+  Shield,
+  ShieldCheck,
+  FolderTree,
+  FileQuestion,
+  Headphones,
+  UserPlus,
+  Users,
+  CheckCircle2,
+  Lock,
+} from "lucide-react";
 
 export const Route = createFileRoute("/_admin/admin/academy/roles")({
-  loader: async () => {
-    return await getAdminRolesFn();
-  },
   component: AdminRoles,
 });
 
-const PERMISSIONS = [
-  "courses",
-  "users",
-  "payments",
-  "refunds",
-  "reviews",
-  "cms",
-  "settings",
-] as const;
+const SYSTEM_ROLES = [
+  {
+    role: "ADMIN",
+    title: "Super Admin",
+    subtitle: "Complete Platform Authority",
+    badge: "bg-neon-purple/20 text-neon-purple border-neon-purple/40",
+    icon: Shield,
+    iconColor: "text-neon-purple",
+    borderColor: "border-neon-purple/30",
+    description:
+      "Has unrestricted administrative control across all platform areas, settings, financial data, and user accounts.",
+    permissions: [
+      "Dashboard Overview & System Analytics",
+      "Course Studio (Create, Edit & Delete Courses)",
+      "Categories Management & Image Uploads",
+      "Assessments & Quiz Question Import",
+      "Customer Support Hub & Ticket Management",
+      "User Operations (Student Management & Staff Role Allocation)",
+      "Financials (Payment Logs, Reports & Refund Approvals)",
+      "Content Management (Pages, FAQ, Sliders, Intro Videos)",
+      "Platform Settings, Site Config & Student Reviews",
+    ],
+  },
+  {
+    role: "MANAGER",
+    title: "Manager",
+    subtitle: "Course Studio, Assessments & Hunter Operations",
+    badge: "bg-neon-amber/20 text-neon-amber border-neon-amber/40",
+    icon: FolderTree,
+    iconColor: "text-neon-amber",
+    borderColor: "border-neon-amber/30",
+    description:
+      "Dedicated operational access to manage Courses & Lessons, Category taxonomies, Quiz creation & bulk import, and Student/Hunter rosters.",
+    permissions: [
+      "Dashboard Overview Access",
+      "Course Studio (Create, Edit, Publish & Delete Courses)",
+      "Lesson Management (Video URLs, Descriptions & Ordering)",
+      "Category Management (Create, Edit & Organize Categories)",
+      "Assessments & Quizzes (Create, Edit & Delete Quizzes)",
+      "Question Management & Bulk Question Import (CSV / JSON)",
+      "Student / Hunter Operations & Enrollment Visibility",
+    ],
+  },
+  {
+    role: "TECHNICAL_TEAM",
+    title: "Technical Team",
+    subtitle: "Customer Support & Ticket Operations",
+    badge: "bg-neon-cyan/20 text-neon-cyan border-neon-cyan/40",
+    icon: Headphones,
+    iconColor: "text-neon-cyan",
+    borderColor: "border-neon-cyan/30",
+    description:
+      "Dedicated access to the Customer Support Hub to assist students, resolve support tickets, and answer student inquiries.",
+    permissions: [
+      "Dashboard Overview Access",
+      "Customer Support Hub (Support Desk)",
+      "Ticket Lifecycle Management (Open, In Progress, Resolved, Closed)",
+      "Ticket Messaging & Live Support Responses",
+      "Priority and Category Categorization",
+    ],
+  },
+];
 
 function AdminRoles() {
-  const { builtIn, customRoles } = Route.useLoaderData();
-  const router = useRouter();
-
-  const [isCreating, setIsCreating] = useState(false);
-  const [newRoleName, setNewRoleName] = useState("");
-  const [permissions, setPermissions] = useState<Record<string, boolean>>({});
-  const [editingId, setEditingId] = useState<string | null>(null);
-
-  const togglePerm = (perm: string) => setPermissions((prev) => ({ ...prev, [perm]: !prev[perm] }));
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    await createRoleFn({ data: { name: newRoleName, permissions } });
-    setNewRoleName("");
-    setPermissions({});
-    setIsCreating(false);
-    router.invalidate();
-  };
-
-  const handleSavePermissions = async (id: string) => {
-    await updateRolePermissionsFn({ data: { id, permissions } });
-    setEditingId(null);
-    setPermissions({});
-    router.invalidate();
-  };
-
-  const handleEdit = (id: string, current: Record<string, boolean>) => {
-    setEditingId(id);
-    setPermissions(current ?? {});
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Delete this role? Users assigned to it will lose the custom role.")) return;
-    await deleteRoleFn({ data: { id } });
-    router.invalidate();
-  };
-
-  const renderPermissionCheckboxes = () => (
-    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
-      {PERMISSIONS.map((perm) => (
-        <label
-          key={perm}
-          className="flex cursor-pointer items-center gap-2 rounded-md border border-border bg-background/50 px-3 py-2 text-xs text-muted-foreground hover:text-foreground"
-        >
-          <input
-            type="checkbox"
-            checked={!!permissions[perm]}
-            onChange={() => togglePerm(perm)}
-            className="accent-[var(--neon-cyan)]"
-          />
-          <span className="capitalize">{perm}</span>
-        </label>
-      ))}
-    </div>
-  );
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Roles & Permissions</h1>
+          <h1 className="font-display text-2xl font-bold text-foreground">System Roles & Access Matrix</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Configure access control for the academy system.
+            Clear role definitions and module permissions for Super Admin, Manager, and Technical Support.
           </p>
         </div>
-        <Button
-          variant="hero"
-          onClick={() => {
-            setIsCreating(!isCreating);
-            setEditingId(null);
-          }}
-        >
-          <Plus className="mr-2 h-4 w-4" /> New Role
-        </Button>
+        <Link to="/admin/academy/users/staff">
+          <Button variant="hero">
+            <UserPlus className="mr-2 h-4 w-4" /> Manage Staff & Assign Roles
+          </Button>
+        </Link>
       </div>
 
-      {isCreating && !editingId && (
-        <Panel accent="cyan" className="mb-6">
-          <PanelTitle>Create Custom Role</PanelTitle>
-          <form onSubmit={handleCreate} className="mt-4 max-w-xl">
-            <label className="block text-xs uppercase tracking-widest text-muted-foreground mb-1">
-              Role Name
-            </label>
-            <input
-              required
-              value={newRoleName}
-              onChange={(e) => setNewRoleName(e.target.value)}
-              placeholder="e.g. Course Manager"
-              className="w-full rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:border-neon-cyan focus:outline-none"
-            />
-            {renderPermissionCheckboxes()}
-            <div className="mt-4 flex justify-end gap-2">
-              <Button type="button" variant="ghost" onClick={() => setIsCreating(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" variant="neon">
-                Create Role
-              </Button>
-            </div>
-          </form>
-        </Panel>
-      )}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {SYSTEM_ROLES.map((r) => {
+          const Icon = r.icon;
+          return (
+            <Panel key={r.role} className={`flex flex-col justify-between ${r.borderColor} bg-surface/80`}>
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`grid h-11 w-11 place-items-center rounded-xl border ${r.badge}`}>
+                      <Icon className={`h-6 w-6 ${r.iconColor}`} />
+                    </div>
+                    <div>
+                      <h2 className="font-display text-lg font-bold text-foreground">{r.title}</h2>
+                      <p className="text-xs text-muted-foreground">{r.subtitle}</p>
+                    </div>
+                  </div>
+                </div>
 
-      <Panel className="p-0 overflow-hidden">
-        <PanelTitle className="px-6 pt-5">Role Definitions</PanelTitle>
-        <table className="w-full text-left text-sm">
-          <thead className="bg-surface-2/50 font-display text-xs uppercase tracking-widest text-muted-foreground">
-            <tr>
-              <th className="px-6 py-4 font-medium">Role</th>
-              <th className="px-6 py-4 font-medium">Type</th>
-              <th className="px-6 py-4 font-medium text-center">Users</th>
-              <th className="px-6 py-4 font-medium">Permissions</th>
-              <th className="px-6 py-4 font-medium text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {builtIn.map((role) => (
-              <tr key={role.name} className="transition-colors hover:bg-surface-2/30">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-9 w-9 place-items-center rounded-lg border border-neon-amber/30 bg-neon-amber/10 text-neon-amber">
-                      <Shield className="h-4 w-4" />
-                    </div>
-                    <span className="font-display font-bold text-foreground">{role.name}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-xs text-muted-foreground">
-                    Built-in
+                <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
+                  {r.description}
+                </p>
+
+                <div className="border-t border-border/50 pt-4">
+                  <p className="font-display text-xs uppercase tracking-widest text-muted-foreground mb-3">
+                    Assigned Module Access:
+                  </p>
+                  <ul className="space-y-2 text-xs">
+                    {r.permissions.map((perm, i) => (
+                      <li key={i} className="flex items-start gap-2 text-foreground/90">
+                        <CheckCircle2 className={`h-4 w-4 shrink-0 mt-0.5 ${r.iconColor}`} />
+                        <span>{perm}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-border/50 flex items-center justify-between">
+                <span className={`inline-flex items-center text-[10px] px-2.5 py-1 rounded-full border font-semibold uppercase tracking-wider ${r.badge}`}>
+                  {r.role}
+                </span>
+                <Link to="/admin/academy/users/staff">
+                  <span className="text-xs text-neon-cyan hover:underline">
+                    Assign to Staff &rarr;
                   </span>
-                </td>
-                <td className="px-6 py-4 text-center font-display text-neon-amber">
-                  {role.userCount}
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-xs text-muted-foreground">
-                    {role.name === "ADMIN"
-                      ? "Full access"
-                      : role.name === "SUB_ADMIN"
-                        ? "All except roles"
-                        : "Courses only"}
-                  </span>
-                </td>
-                <td className="px-6 py-4" />
-              </tr>
-            ))}
-            {customRoles.map((role) => (
-              <tr key={role.id} className="transition-colors hover:bg-surface-2/30">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-9 w-9 place-items-center rounded-lg border border-neon-purple/30 bg-neon-purple/10 text-neon-purple">
-                      <ShieldCheck className="h-4 w-4" />
-                    </div>
-                    <span className="font-display font-bold text-foreground">{role.name}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="rounded-full border border-neon-purple/30 bg-neon-purple/10 px-2 py-0.5 text-xs text-neon-purple">
-                    Custom
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-center font-display text-neon-purple">
-                  {role._count.users}
-                </td>
-                <td className="px-6 py-4">
-                  {editingId === role.id ? (
-                    renderPermissionCheckboxes()
-                  ) : (
-                    <div className="flex flex-wrap gap-1.5">
-                      {Object.entries(role.permissions as Record<string, boolean>)
-                        .filter(([, v]) => v)
-                        .map(([perm]) => (
-                          <span
-                            key={perm}
-                            className="rounded-full border border-neon-cyan/30 bg-neon-cyan/10 px-2 py-0.5 text-[10px] text-neon-cyan"
-                          >
-                            {perm}
-                          </span>
-                        ))}
-                      {Object.values(role.permissions as Record<string, boolean>).every(
-                        (v) => !v,
-                      ) && <span className="text-xs text-muted-foreground">No permissions</span>}
-                    </div>
-                  )}
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-end gap-2">
-                    {editingId === role.id ? (
-                      <Button
-                        variant="neon"
-                        size="sm"
-                        onClick={() => handleSavePermissions(role.id)}
-                      >
-                        Save
-                      </Button>
-                    ) : (
-                      <>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="border border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/10"
-                          onClick={() =>
-                            handleEdit(role.id, (role.permissions ?? {}) as Record<string, boolean>)
-                          }
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(role.id)}
-                          className="text-red-500 hover:bg-red-500/10"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </Panel>
+                </Link>
+              </div>
+            </Panel>
+          );
+        })}
+      </div>
     </div>
   );
 }
+

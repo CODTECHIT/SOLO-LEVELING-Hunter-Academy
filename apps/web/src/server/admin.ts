@@ -4,6 +4,7 @@ import { prisma } from "./db";
 import { z } from "zod";
 import { getCurrentUserFn } from "./auth";
 import { ensurePermission, ensureAdmin } from "./permissions";
+import { createNotification } from "./notifications";
 export { ensurePermission, ensureAdmin };
 
 
@@ -39,23 +40,314 @@ export const promoteToAdminFn = createServerFn({ method: "POST" }).handler(async
   return { success: true };
 });
 
-export const getAdminStatsFn = createServerFn({ method: "GET" }).handler(async () => {
-  await ensurePermission("stats");
+export type RevenuePeriod =
+  | "7d"
+  | "30d"
+  | "3m"
+  | "6m"
+  | "12m"
+  | "year"
+  | "custom"
+  | "all";
 
-  const totalUsers = await prisma.user.count();
-  const totalCourses = await prisma.course.count();
-  const totalEnrollments = await prisma.enrollment.count();
+export function computeRevenueChartData(
+  payments: { amount: number; createdAt: Date; status: string }[],
+  options?: {
+    period?: RevenuePeriod;
+    selectedYear?: number;
+    startDate?: string;
+    endDate?: string;
+  },
+) {
+  const period: RevenuePeriod = options?.period || "6m";
+  const now = new Date();
+  const paidPayments = payments.filter((p) => p.status === "PAID");
 
-  // Assuming fixed price 3999 per enrollment for mock revenue
-  const totalRevenue = totalEnrollments * 3999;
+  // Distinct available years from payment history
+  const paymentYears = Array.from(
+    new Set(paidPayments.map((p) => new Date(p.createdAt).getFullYear())),
+  ).sort((a, b) => b - a);
 
+  if (!paymentYears.includes(now.getFullYear())) {
+    paymentYears.unshift(now.getFullYear());
+  }
+
+  // 1. SPECIFIC YEAR (12 Months Jan-Dec)
+  if (period === "year" || options?.selectedYear) {
+    const targetYear = options?.selectedYear || now.getFullYear();
+    const months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec",
+    ];
+    const buckets = months.map((monthName, mIdx) => {
+      const matches = paidPayments.filter((p) => {
+        const pDate = new Date(p.createdAt);
+        return pDate.getFullYear() === targetYear && pDate.getMonth() === mIdx;
+      });
+      const amount = matches.reduce((sum, p) => sum + p.amount, 0);
+      return {
+        label: monthName,
+        amount,
+        orders: matches.length,
+        dateKey: `${targetYear}-${String(mIdx + 1).padStart(2, "0")}`,
+      };
+    });
+    const periodRevenue = buckets.reduce((s, b) => s + b.amount, 0);
+    return {
+      buckets,
+      periodRevenue,
+      availableYears: paymentYears,
+      selectedYear: targetYear,
+    };
+  }
+
+  // 2. CUSTOM CALENDAR DATE RANGE
+  if (period === "custom" && options?.startDate && options?.endDate) {
+    const start = new Date(options.startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(options.endDate);
+    end.setHours(23, 59, 59, 999);
+
+    const diffDays = Math.max(
+      1,
+      Math.min(
+        120,
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+      ),
+    );
+    const buckets: {
+      label: string;
+      amount: number;
+      orders: number;
+      dateKey: string;
+    }[] = [];
+
+    for (let i = 0; i < diffDays; i++) {
+      const cur = new Date(start);
+      cur.setDate(start.getDate() + i);
+      const dateKey = cur.toISOString().slice(0, 10);
+      const label = cur.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+      const matches = paidPayments.filter(
+        (p) => new Date(p.createdAt).toISOString().slice(0, 10) === dateKey,
+      );
+      const amount = matches.reduce((sum, p) => sum + p.amount, 0);
+      buckets.push({ label, amount, orders: matches.length, dateKey });
+    }
+    const periodRevenue = buckets.reduce((s, b) => s + b.amount, 0);
+    return {
+      buckets,
+      periodRevenue,
+      availableYears: paymentYears,
+      selectedYear: now.getFullYear(),
+    };
+  }
+
+  // 3. 7 DAYS
+  if (period === "7d") {
+    const buckets: {
+      label: string;
+      amount: number;
+      orders: number;
+      dateKey: string;
+    }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const dateKey = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString("en-US", {
+        weekday: "short",
+        day: "numeric",
+      });
+      const matches = paidPayments.filter(
+        (p) => new Date(p.createdAt).toISOString().slice(0, 10) === dateKey,
+      );
+      const amount = matches.reduce((sum, p) => sum + p.amount, 0);
+      buckets.push({ label, amount, orders: matches.length, dateKey });
+    }
+    const periodRevenue = buckets.reduce((s, b) => s + b.amount, 0);
+    return {
+      buckets,
+      periodRevenue,
+      availableYears: paymentYears,
+      selectedYear: now.getFullYear(),
+    };
+  }
+
+  // 4. 30 DAYS
+  if (period === "30d") {
+    const buckets: {
+      label: string;
+      amount: number;
+      orders: number;
+      dateKey: string;
+    }[] = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(now.getDate() - i);
+      const dateKey = d.toISOString().slice(0, 10);
+      const label = d.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      });
+      const matches = paidPayments.filter(
+        (p) => new Date(p.createdAt).toISOString().slice(0, 10) === dateKey,
+      );
+      const amount = matches.reduce((sum, p) => sum + p.amount, 0);
+      buckets.push({ label, amount, orders: matches.length, dateKey });
+    }
+    const periodRevenue = buckets.reduce((s, b) => s + b.amount, 0);
+    return {
+      buckets,
+      periodRevenue,
+      availableYears: paymentYears,
+      selectedYear: now.getFullYear(),
+    };
+  }
+
+  // 5. 3M / 6M / 12M
+  if (period === "3m" || period === "6m" || period === "12m") {
+    const monthCount = period === "3m" ? 3 : period === "6m" ? 6 : 12;
+    const buckets: {
+      label: string;
+      amount: number;
+      orders: number;
+      dateKey: string;
+    }[] = [];
+    for (let i = monthCount - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const year = d.getFullYear();
+      const month = d.getMonth();
+      const label = d.toLocaleDateString("en-US", {
+        month: "short",
+        year: "2-digit",
+      });
+      const matches = paidPayments.filter((p) => {
+        const pDate = new Date(p.createdAt);
+        return pDate.getFullYear() === year && pDate.getMonth() === month;
+      });
+      const amount = matches.reduce((sum, p) => sum + p.amount, 0);
+      buckets.push({
+        label,
+        amount,
+        orders: matches.length,
+        dateKey: `${year}-${month}`,
+      });
+    }
+    const periodRevenue = buckets.reduce((s, b) => s + b.amount, 0);
+    return {
+      buckets,
+      periodRevenue,
+      availableYears: paymentYears,
+      selectedYear: now.getFullYear(),
+    };
+  }
+
+  // 6. ALL TIME
+  const minYear =
+    paymentYears.length > 0 ? Math.min(...paymentYears) : now.getFullYear();
+  const buckets: {
+    label: string;
+    amount: number;
+    orders: number;
+    dateKey: string;
+  }[] = [];
+  for (let y = minYear; y <= now.getFullYear(); y++) {
+    const label = String(y);
+    const matches = paidPayments.filter(
+      (p) => new Date(p.createdAt).getFullYear() === y,
+    );
+    const amount = matches.reduce((sum, p) => sum + p.amount, 0);
+    buckets.push({ label, amount, orders: matches.length, dateKey: String(y) });
+  }
+  const periodRevenue = buckets.reduce((s, b) => s + b.amount, 0);
   return {
-    totalUsers,
-    totalCourses,
-    totalEnrollments,
-    totalRevenue,
+    buckets,
+    periodRevenue,
+    availableYears: paymentYears,
+    selectedYear: now.getFullYear(),
   };
-});
+}
+
+export const getAdminStatsFn = createServerFn({ method: "GET" })
+  .validator(
+    z
+      .object({
+        period: z
+          .enum(["7d", "30d", "3m", "6m", "12m", "year", "custom", "all"])
+          .optional(),
+        selectedYear: z.number().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      })
+      .optional(),
+  )
+  .handler(async ({ data }) => {
+    const user = await ensurePermission("stats");
+    const isSuperAdmin = user.role === "ADMIN";
+
+    const [totalUsers, totalCourses, totalEnrollments, allPayments] =
+      await Promise.all([
+        prisma.user.count(),
+        prisma.course.count(),
+        prisma.enrollment.count(),
+        isSuperAdmin
+          ? prisma.payment.findMany({
+              select: { amount: true, createdAt: true, status: true },
+              orderBy: { createdAt: "asc" },
+            })
+          : Promise.resolve([]),
+      ]);
+
+    const period: RevenuePeriod = data?.period || "6m";
+    const totalRevenue = allPayments
+      .filter((p) => p.status === "PAID")
+      .reduce((sum, p) => sum + p.amount, 0);
+
+    const {
+      buckets: chartData,
+      periodRevenue,
+      availableYears,
+      selectedYear,
+    } = isSuperAdmin
+      ? computeRevenueChartData(allPayments, {
+          period,
+          selectedYear: data?.selectedYear,
+          startDate: data?.startDate,
+          endDate: data?.endDate,
+        })
+      : {
+          buckets: [],
+          periodRevenue: 0,
+          availableYears: [new Date().getFullYear()],
+          selectedYear: new Date().getFullYear(),
+        };
+
+    return {
+      totalUsers,
+      totalCourses,
+      totalEnrollments,
+      totalRevenue: isSuperAdmin ? totalRevenue : 0,
+      periodRevenue: isSuperAdmin ? periodRevenue : 0,
+      chartData: isSuperAdmin ? chartData : [],
+      availableYears: isSuperAdmin ? availableYears : [],
+      selectedYear: isSuperAdmin ? selectedYear : new Date().getFullYear(),
+      isSuperAdmin,
+      period,
+    };
+  });
 
 export const getAdminCoursesFn = createServerFn({ method: "GET" }).handler(async () => {
   await ensurePermission("courses");
@@ -78,8 +370,7 @@ export const getAdminCoursesFn = createServerFn({ method: "GET" }).handler(async
 export const getAdminCourseDetailsFn = createServerFn({ method: "GET" })
   .validator((d: { courseId: string }) => d)
   .handler(async ({ data }) => {
-    const user = await getCurrentUserFn();
-    if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
+    await ensurePermission("courses");
 
     const course = await prisma.course.findUnique({
       where: { id: data.courseId },
@@ -97,8 +388,7 @@ export const getAdminCourseDetailsFn = createServerFn({ method: "GET" })
 export const createLessonFn = createServerFn({ method: "POST" })
   .validator((d: { courseId: string; title: string; description: string; videoUrl: string }) => d)
   .handler(async ({ data }) => {
-    const user = await getCurrentUserFn();
-    if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
+    await ensurePermission("courses");
 
     // Find highest order to append to the end
     const lastLesson = await prisma.lesson.findFirst({
@@ -122,7 +412,7 @@ export const createLessonFn = createServerFn({ method: "POST" })
 export const updateLessonFn = createServerFn({ method: "POST" })
   .validator((d: { lessonId: string; title: string; description?: string; videoUrl: string }) => d)
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("courses");
 
     try {
       const updated = await prisma.lesson.update({
@@ -142,8 +432,7 @@ export const updateLessonFn = createServerFn({ method: "POST" })
 export const deleteLessonFn = createServerFn({ method: "POST" })
   .validator((d: { lessonId: string }) => d)
   .handler(async ({ data }) => {
-    const user = await getCurrentUserFn();
-    if (!user || user.role !== "ADMIN") throw new Error("Unauthorized");
+    await ensurePermission("courses");
 
     await prisma.lesson.delete({
       where: { id: data.lessonId },
@@ -163,7 +452,7 @@ export const createCourseFn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("courses");
 
     try {
       const slug = data.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") + "-" + Date.now();
@@ -200,7 +489,7 @@ export const updateCourseFn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("courses");
 
     try {
       const updatedCourse = await prisma.course.update({
@@ -229,12 +518,26 @@ export const toggleCoursePublishedFn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("courses");
 
     const updatedCourse = await prisma.course.update({
       where: { id: data.courseId },
       data: { published: data.published },
     });
+
+    if (data.published) {
+      try {
+        await createNotification({
+          userId: null,
+          title: "🔥 New Course Released!",
+          message: `"${updatedCourse.title}" is now available in the Course Vault. Begin training!`,
+          type: "NEW_COURSE",
+          data: { courseId: updatedCourse.id, slug: updatedCourse.slug },
+        });
+      } catch {
+        // Non-blocking
+      }
+    }
 
     return updatedCourse;
   });
@@ -242,7 +545,7 @@ export const toggleCoursePublishedFn = createServerFn({ method: "POST" })
 export const deleteCourseFn = createServerFn({ method: "POST" })
   .validator(z.object({ courseId: z.string() }))
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("courses");
 
     await prisma.$transaction(async (tx) => {
       // Progress is keyed to lessons of this course
@@ -273,7 +576,7 @@ export const deleteCourseFn = createServerFn({ method: "POST" })
 // ---------- Categories ----------
 
 export const getAdminCategoriesFn = createServerFn({ method: "GET" }).handler(async () => {
-  await ensureAdmin();
+  await ensurePermission("categories");
 
   const categories = await prisma.category.findMany({
     orderBy: { name: "asc" },
@@ -288,7 +591,7 @@ export const getAdminCategoriesFn = createServerFn({ method: "GET" }).handler(as
 export const createCategoryFn = createServerFn({ method: "POST" })
   .validator(z.object({ name: z.string().trim().min(1), image: z.string().optional() }))
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("categories");
 
     try {
       const existing = await prisma.category.findFirst({
@@ -322,7 +625,7 @@ export const updateCategoryFn = createServerFn({ method: "POST" })
     z.object({ id: z.string(), name: z.string().trim().min(1), image: z.string().optional() }),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("categories");
 
     try {
       const existing = await prisma.category.findFirst({
@@ -355,7 +658,7 @@ export const updateCategoryFn = createServerFn({ method: "POST" })
 export const deleteCategoryFn = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("categories");
 
     const courseCount = await prisma.course.count({ where: { categoryId: data.id } });
     if (courseCount > 0) {
@@ -367,6 +670,42 @@ export const deleteCategoryFn = createServerFn({ method: "POST" })
   });
 
 // ---------- Users ----------
+
+export const createStaffUserFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      name: z.string().min(2),
+      email: z.string().email(),
+      password: z.string().min(6),
+      role: z.enum(["ADMIN", "MANAGER", "TECHNICAL_TEAM"]),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await ensureAdmin();
+
+    const email = data.email.trim().toLowerCase();
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      throw new Error("A user with this email address already exists.");
+    }
+
+    const bcrypt = await import("bcryptjs");
+    const hashedPassword = await bcrypt.default.hash(data.password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        name: data.name.trim(),
+        email,
+        password: hashedPassword,
+        role: data.role,
+      },
+    });
+
+    return {
+      success: true,
+      user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    };
+  });
 
 export const getAdminUsersFn = createServerFn({ method: "GET" })
   .validator(
@@ -459,7 +798,7 @@ export const getAdminStudentsFn = createServerFn({ method: "GET" })
       .optional(),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("users");
 
     const search = data?.search?.trim();
     const categoryId = data?.categoryId;
@@ -604,7 +943,7 @@ export const updateStudentFn = createServerFn({ method: "POST" })
     }),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("users");
 
     const student = await prisma.user.findFirst({ where: { id: data.id, role: "STUDENT" } });
     if (!student) throw new Error("Student not found");
@@ -677,29 +1016,67 @@ export const deleteRoleFn = createServerFn({ method: "POST" })
     return { success: true };
   });
 
-// ---------- Payments / Financials ----------
+// ---------- Payments / Financials (Super Admin Only) ----------
 
-export const getAdminPaymentsFn = createServerFn({ method: "GET" }).handler(async () => {
-  await ensureAdmin();
+export const getAdminPaymentsFn = createServerFn({ method: "GET" })
+  .validator(
+    z
+      .object({
+        period: z
+          .enum(["7d", "30d", "3m", "6m", "12m", "year", "custom", "all"])
+          .optional(),
+        selectedYear: z.number().optional(),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+      })
+      .optional(),
+  )
+  .handler(async ({ data }) => {
+    await ensureAdmin();
 
-  const payments = await prisma.payment.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    include: {
-      user: { select: { name: true, email: true } },
-    },
+    const period: RevenuePeriod = data?.period || "6m";
+
+    const payments = await prisma.payment.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        user: { select: { name: true, email: true } },
+      },
+    });
+
+    const totalRevenue = payments
+      .filter((p) => p.status === "PAID")
+      .reduce((s, p) => s + p.amount, 0);
+
+    const {
+      buckets: chartData,
+      periodRevenue,
+      availableYears,
+      selectedYear,
+    } = computeRevenueChartData(payments, {
+      period,
+      selectedYear: data?.selectedYear,
+      startDate: data?.startDate,
+      endDate: data?.endDate,
+    });
+
+    const paidCount = payments.filter((p) => p.status === "PAID").length;
+    const pendingCount = payments.filter((p) => p.status === "PENDING").length;
+    const failedCount = payments.filter((p) => p.status === "FAILED").length;
+
+    return {
+      payments,
+      totalRevenue,
+      periodRevenue,
+      chartData,
+      availableYears,
+      selectedYear,
+      paidCount,
+      pendingCount,
+      failedCount,
+      period,
+    };
   });
-
-  const totalRevenue = payments
-    .filter((p) => p.status === "PAID")
-    .reduce((s, p) => s + p.amount, 0);
-
-  const paidCount = payments.filter((p) => p.status === "PAID").length;
-  const pendingCount = payments.filter((p) => p.status === "PENDING").length;
-  const failedCount = payments.filter((p) => p.status === "FAILED").length;
-
-  return { payments, totalRevenue, paidCount, pendingCount, failedCount };
-});
 
 // ---------- Refunds ----------
 
@@ -728,10 +1105,10 @@ export const updateRefundStatusFn = createServerFn({ method: "POST" })
     return refund;
   });
 
-// ---------- Reviews ----------
+// ---------- Reviews Moderation (Admin & Manager) ----------
 
 export const getAdminReviewsFn = createServerFn({ method: "GET" }).handler(async () => {
-  await ensureAdmin();
+  await ensurePermission("reviews");
 
   const reviews = await prisma.review.findMany({
     orderBy: { createdAt: "desc" },
@@ -741,7 +1118,9 @@ export const getAdminReviewsFn = createServerFn({ method: "GET" }).handler(async
     },
   });
 
-  const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+  const avgRating = reviews.length
+    ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length
+    : 0;
 
   return { reviews, avgRating };
 });
@@ -749,7 +1128,7 @@ export const getAdminReviewsFn = createServerFn({ method: "GET" }).handler(async
 export const deleteReviewFn = createServerFn({ method: "POST" })
   .validator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("reviews");
     await prisma.review.delete({ where: { id: data.id } });
     return { success: true };
   });

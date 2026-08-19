@@ -42,16 +42,16 @@ function LandingPage() {
       <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 py-8 flex flex-col gap-6">
 
         {/* Profile Header / Slogan */}
-        <Panel accent="purple" className="flex flex-col md:flex-row items-center justify-between p-6 gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 shrink-0 rounded-2xl border border-neon-cyan bg-neon-cyan/10 flex items-center justify-center font-display text-2xl font-bold text-neon-cyan glow-text shadow-[0_0_15px_-3px_var(--neon-cyan)]">
-              <Zap className="w-8 h-8" />
+        <Panel accent="purple" className="flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl border border-neon-cyan bg-neon-cyan/10 flex items-center justify-center font-display text-2xl font-bold text-neon-cyan glow-text shadow-[0_0_15px_-3px_var(--neon-cyan)]">
+              <Zap className="w-7 h-7 sm:w-8 sm:h-8" />
             </div>
             <div>
-              <h1 className="font-display text-2xl font-bold text-foreground tracking-wider">
+              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground tracking-wider">
                 Unleash Your Inner Hunter
               </h1>
-              <p className="text-sm text-muted-foreground uppercase tracking-widest mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-widest mt-1">
                 Dominate the digital realm with elite cyber security skills
               </p>
             </div>
@@ -66,8 +66,8 @@ function LandingPage() {
 
             {/* Introduction Video */}
             <Panel accent="cyan" className="flex flex-col overflow-hidden bg-background">
-              <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
-                <h2 className="font-display font-bold uppercase tracking-widest text-neon-cyan text-sm">
+              <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-border/50">
+                <h2 className="font-display font-bold uppercase tracking-widest text-neon-cyan text-xs sm:text-sm">
                   {activeVideo ? activeVideo.title : "Welcome to the Academy"}
                 </h2>
                 <span className="text-[10px] font-display text-muted-foreground tracking-widest uppercase">Intro</span>
@@ -90,48 +90,95 @@ function LandingPage() {
             </Panel>
 
             {/* Bottom Row: Analytics & Achievements */}
-            <div className="grid md:grid-cols-2 gap-6">
-              <Panel accent="purple" className="p-6">
+            <div className="grid sm:grid-cols-2 gap-6">
+              <Panel accent="purple" className="p-5 sm:p-6">
                 <h3 className="font-display text-xs font-bold uppercase tracking-widest text-neon mb-6">Course Analytics</h3>
-                <div className="flex justify-around items-center">
-                  <div className="relative flex flex-col items-center justify-center">
-                    <div className="relative flex items-center justify-center">
-                      <svg className="w-24 h-24 transform -rotate-90">
-                        <circle cx="48" cy="48" r="36" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-surface-2" />
-                        <circle cx="48" cy="48" r="36" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={36 * 2 * Math.PI} strokeDashoffset={0} className="text-neon-purple drop-shadow-[0_0_8px_var(--neon-purple)] transition-all duration-1000 ease-out" />
+                <div className="flex justify-around items-center gap-6 py-1">
+                  <div className="flex flex-col items-center justify-center group">
+                    <div className="relative flex items-center justify-center p-2">
+                      <svg viewBox="0 0 100 100" className="w-20 h-20 sm:w-24 sm:h-24 overflow-visible transform -rotate-90">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="38"
+                          stroke="currentColor"
+                          strokeWidth="7"
+                          fill="transparent"
+                          className="text-surface-2"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="38"
+                          stroke="#a855f7"
+                          strokeWidth="7"
+                          fill="transparent"
+                          strokeDasharray={38 * 2 * Math.PI}
+                          strokeDashoffset={0}
+                          strokeLinecap="round"
+                          className="transition-all duration-1000 ease-out drop-shadow-[0_0_10px_rgba(168,85,247,0.85)]"
+                        />
                       </svg>
-                      <div className="absolute inset-0 flex items-center justify-center flex-col">
-                        <span className="font-display font-bold text-2xl text-foreground">{fullCourses.length}</span>
+                      <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                        <span className="font-display font-bold text-2xl sm:text-3xl text-foreground group-hover:text-neon-purple transition-colors">
+                          {fullCourses.length}
+                        </span>
                       </div>
                     </div>
-                    <span className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mt-3">Total Courses</span>
+                    <span className="text-[10px] sm:text-xs font-display uppercase tracking-wider text-muted-foreground mt-2 font-semibold">
+                      Total Courses
+                    </span>
                   </div>
-                  <div className="relative flex flex-col items-center justify-center">
-                    <div className="relative flex items-center justify-center">
-                      <svg className="w-24 h-24 transform -rotate-90">
-                        <circle cx="48" cy="48" r="36" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-surface-2" />
-                        <circle cx="48" cy="48" r="36" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray={36 * 2 * Math.PI} strokeDashoffset={0} className="text-neon-cyan drop-shadow-[0_0_8px_var(--neon-cyan)] transition-all duration-1000 ease-out" />
+
+                  <div className="flex flex-col items-center justify-center group">
+                    <div className="relative flex items-center justify-center p-2">
+                      <svg viewBox="0 0 100 100" className="w-20 h-20 sm:w-24 sm:h-24 overflow-visible transform -rotate-90">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="38"
+                          stroke="currentColor"
+                          strokeWidth="7"
+                          fill="transparent"
+                          className="text-surface-2"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="38"
+                          stroke="#00f3ff"
+                          strokeWidth="7"
+                          fill="transparent"
+                          strokeDasharray={38 * 2 * Math.PI}
+                          strokeDashoffset={0}
+                          strokeLinecap="round"
+                          className="transition-all duration-1000 ease-out drop-shadow-[0_0_10px_rgba(0,243,255,0.85)]"
+                        />
                       </svg>
-                      <div className="absolute inset-0 flex items-center justify-center flex-col">
-                        <span className="font-display font-bold text-2xl text-foreground">{moduleCourses.length}</span>
+                      <div className="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                        <span className="font-display font-bold text-2xl sm:text-3xl text-foreground group-hover:text-neon-cyan transition-colors">
+                          {moduleCourses.length}
+                        </span>
                       </div>
                     </div>
-                    <span className="text-[10px] font-display uppercase tracking-wider text-muted-foreground mt-3">Hunter Passes</span>
+                    <span className="text-[10px] sm:text-xs font-display uppercase tracking-wider text-muted-foreground mt-2 font-semibold">
+                      Hunter Passes
+                    </span>
                   </div>
                 </div>
               </Panel>
 
-              <Panel accent="lime" className="p-6">
+              <Panel accent="lime" className="p-5 sm:p-6">
                 <h3 className="font-display text-xs font-bold uppercase tracking-widest text-neon-lime mb-6">Level Up Achievements</h3>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4">
                   {[
-                    { title: "Shadow Monarch", icon: <Crown className="w-6 h-6 text-neon-lime" /> },
-                    { title: "Dungeon Raider", icon: <Swords className="w-6 h-6 text-neon-lime" /> },
-                    { title: "Swift Blade", icon: <Shield className="w-6 h-6 text-neon-lime" /> }
+                    { title: "Shadow Monarch", icon: <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-neon-lime" /> },
+                    { title: "Dungeon Raider", icon: <Swords className="w-5 h-5 sm:w-6 sm:h-6 text-neon-lime" /> },
+                    { title: "Swift Blade", icon: <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-neon-lime" /> }
                   ].map((achieve, i) => (
-                    <div key={i} className="flex flex-col items-center justify-center p-3 rounded-xl border border-neon-lime/20 bg-neon-lime/5 gap-2 text-center hover:border-neon-lime/50 hover:bg-neon-lime/10 transition-colors shadow-[0_0_15px_-5px_var(--neon-lime)]">
+                    <div key={i} className="flex flex-col items-center justify-center p-2 sm:p-3 rounded-xl border border-neon-lime/20 bg-neon-lime/5 gap-1.5 sm:gap-2 text-center hover:border-neon-lime/50 hover:bg-neon-lime/10 transition-colors shadow-[0_0_15px_-5px_var(--neon-lime)]">
                       <div>{achieve.icon}</div>
-                      <span className="text-[9px] font-display uppercase tracking-wider text-muted-foreground leading-tight">{achieve.title}</span>
+                      <span className="text-[8px] sm:text-[9px] font-display uppercase tracking-wider text-muted-foreground leading-tight">{achieve.title}</span>
                     </div>
                   ))}
                 </div>

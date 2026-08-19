@@ -10,6 +10,7 @@ import { UsersModule } from "./users/users.module";
 import { EnrollmentsModule } from "./enrollments/enrollments.module";
 import { QuizzesModule } from "./quizzes/quizzes.module";
 import { SupportModule } from "./support/support.module";
+import { NotificationsModule } from "./notifications/notifications.module";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 
@@ -33,6 +34,7 @@ import { AppService } from "./app.service";
     EnrollmentsModule,
     QuizzesModule,
     SupportModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

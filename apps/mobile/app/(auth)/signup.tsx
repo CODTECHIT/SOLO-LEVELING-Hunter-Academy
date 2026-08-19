@@ -19,6 +19,7 @@ import * as Google from "expo-auth-session/providers/google";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { CyberTechLogo } from "@/components/ui/CyberTechLogo";
 import { useAuthStore } from "@/store/authStore";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
@@ -30,7 +31,7 @@ const schema = z
     confirm: z.string(),
   })
   .refine((d) => d.password === d.confirm, {
-    message: "Passwords don't match",
+    message: "Passwords do not match",
     path: ["confirm"],
   });
 
@@ -42,6 +43,7 @@ export default function SignupScreen() {
   const router = useRouter();
   const { signup } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: "PLACEHOLDER_ANDROID_CLIENT_ID",
@@ -88,10 +90,7 @@ export default function SignupScreen() {
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           <View style={styles.brand}>
-            <View style={styles.logoBox}>
-              <Shield color={colors.neonLime} size={32} />
-            </View>
-            <Text style={styles.title}>JOIN THE GUILD</Text>
+            <CyberTechLogo size="lg" />
             <Text style={styles.subtitle}>Create your hunter account</Text>
           </View>
 
@@ -172,7 +171,7 @@ export default function SignupScreen() {
               label="Continue with Google"
               onPress={() => promptAsync()}
               disabled={!request || loading}
-              variant="outline"
+              variant="secondary"
               fullWidth
               style={styles.googleBtn}
             />

@@ -51,6 +51,21 @@ export class EnrollmentsService {
       },
     });
 
+    // Create enrollment notification
+    try {
+      await this.prisma.notification.create({
+        data: {
+          userId,
+          title: "🎉 Course Unlocked!",
+          message: `You now have full access to "${course.title}". Start learning today!`,
+          type: "COURSE_PURCHASED",
+          data: { courseId: course.id, slug: course.slug },
+        },
+      });
+    } catch {
+      // Non-blocking notification creation
+    }
+
     return {
       message: "Successfully enrolled in course",
       enrollment,

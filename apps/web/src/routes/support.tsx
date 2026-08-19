@@ -68,15 +68,13 @@ function SupportPage() {
   const [newInitialMsg, setNewInitialMsg] = useState("");
   const [isNewTicketModal, setIsNewTicketModal] = useState(false);
 
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+  const prevMsgCountRef = useRef<number>(0);
 
-  // Sync tickets with loader data
+  // Select first ticket by default on load
   useEffect(() => {
-    if (initialTickets) {
-      setTickets(initialTickets);
-      if (initialTickets.length > 0 && !selectedTicketId) {
-        setSelectedTicketId(initialTickets[0].id);
-      }
+    if (!selectedTicketId && initialTickets.length > 0) {
+      setSelectedTicketId(initialTickets[0].id);
     }
   }, [initialTickets]);
 
@@ -102,9 +100,16 @@ function SupportPage() {
     };
   }, [selectedTicketId, user]);
 
+  // Scroll ONLY the internal messages container, never the main page window
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeTicket?.messages]);
+    const currentCount = activeTicket?.messages?.length || 0;
+    if (currentCount !== prevMsgCountRef.current) {
+      prevMsgCountRef.current = currentCount;
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }
+  }, [activeTicket?.messages?.length, selectedTicketId]);
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -207,9 +212,9 @@ function SupportPage() {
             </div>
 
             {/* Live Chat Split View */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 rounded-2xl border border-border bg-surface overflow-hidden min-h-[520px]">
+            <div className="grid grid-cols-1 md:grid-cols-12 rounded-2xl border border-border bg-surface overflow-hidden min-h-[520px]">
               {/* Left Column: My Tickets */}
-              <div className="md:col-span-4 border-r border-border flex flex-col bg-surface-2/40">
+              <div className="md:col-span-4 border-b md:border-b-0 md:border-r border-border flex flex-col bg-surface-2/40">
                 <div className="p-4 border-b border-border flex items-center justify-between">
                   <h3 className="font-display text-xs uppercase tracking-wider font-semibold text-muted-foreground">
                     My Conversations ({tickets.length})
@@ -226,7 +231,7 @@ function SupportPage() {
                   </button>
                 </div>
 
-                <div className="flex-1 overflow-y-auto divide-y divide-border/60 max-h-[460px]">
+                <div className="flex-1 overflow-y-auto divide-y divide-border/60 max-h-[320px] md:max-h-[460px]">
                   {tickets.map((t) => {
                     const isSelected = selectedTicketId === t.id;
                     const lastMsg = t.messages?.[0];
@@ -289,7 +294,7 @@ function SupportPage() {
               </div>
 
               {/* Right Column: Live Chat Stream or New Ticket Form */}
-              <div className="md:col-span-8 flex flex-col bg-background/50">
+              <div className="md:col-span-8 flex flex-col bg-background/50 min-h-[400px]">
                 {selectedTicketId && activeTicket ? (
                   // Active Ticket Chat Thread
                   <>
@@ -317,7 +322,10 @@ function SupportPage() {
                     </div>
 
                     {/* Messages list */}
-                    <div className="flex-1 p-4 overflow-y-auto space-y-3 max-h-[380px]">
+                    <div
+                      ref={messagesContainerRef}
+                      className="flex-1 p-4 overflow-y-auto space-y-3 max-h-[380px]"
+                    >
                       {activeTicket.messages?.map((msg: any) => {
                         const isStaff =
                           msg.senderRole === "ADMIN" ||
@@ -353,7 +361,6 @@ function SupportPage() {
                           </div>
                         );
                       })}
-                      <div ref={messagesEndRef} />
                     </div>
 
                     {/* Send Message */}

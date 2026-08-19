@@ -132,24 +132,35 @@ function StudentQuizPage() {
             </p>
           )}
 
-          {/* Key Specs */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 pt-2">
-            <div className="p-4 rounded-xl border border-border bg-surface-2/60">
-              <p className="text-xs text-muted-foreground">Total Questions</p>
-              <p className="font-display text-xl font-bold text-foreground mt-1">
-                {questions.length} Items
+          {/* Overview Info */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+            <div className="p-4 rounded-xl border border-neon-purple/30 bg-surface-2/60 flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(168,85,247,0.08)]">
+              <div className="p-2 rounded-lg bg-neon-purple/10 text-neon-purple mb-1">
+                <FileQuestion className="h-5 w-5" />
+              </div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Total Questions</p>
+              <p className="font-display text-2xl font-bold text-foreground mt-0.5">
+                {questions.length} <span className="text-xs font-normal text-muted-foreground">Items</span>
               </p>
             </div>
-            <div className="p-4 rounded-xl border border-border bg-surface-2/60">
-              <p className="text-xs text-muted-foreground">Time Limit</p>
-              <p className="font-display text-xl font-bold text-neon-amber mt-1">
-                {quiz.timeLimit > 0 ? `${quiz.timeLimit} Minutes` : "Unlimited"}
+
+            <div className="p-4 rounded-xl border border-neon-cyan/30 bg-surface-2/60 flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(0,243,255,0.08)]">
+              <div className="p-2 rounded-lg bg-neon-cyan/10 text-neon-cyan mb-1">
+                <Clock className="h-5 w-5" />
+              </div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Time Limit</p>
+              <p className="font-display text-2xl font-bold text-neon-cyan mt-0.5">
+                {quiz.timeLimit > 0 ? `${quiz.timeLimit} Mins` : "Untimed"}
               </p>
             </div>
-            <div className="p-4 rounded-xl border border-border bg-surface-2/60 col-span-2 sm:col-span-1">
-              <p className="text-xs text-muted-foreground">Passing Grade</p>
-              <p className="font-display text-xl font-bold text-neon-lime mt-1">
-                {quiz.passingScore}% Score
+
+            <div className="p-4 rounded-xl border border-neon-lime/30 bg-surface-2/60 flex flex-col items-center justify-center gap-1 shadow-[0_0_15px_rgba(34,197,94,0.08)]">
+              <div className="p-2 rounded-lg bg-neon-lime/10 text-neon-lime mb-1">
+                <Trophy className="h-5 w-5" />
+              </div>
+              <p className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Passing Grade</p>
+              <p className="font-display text-2xl font-bold text-neon-lime mt-0.5">
+                {quiz.passingScore}% <span className="text-xs font-normal text-muted-foreground">Score</span>
               </p>
             </div>
           </div>
@@ -164,7 +175,7 @@ function StudentQuizPage() {
                 {previousSubmissions.map((sub: any, i: number) => (
                   <div
                     key={sub.id}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border/70 bg-background/50 text-xs"
+                    className="flex flex-wrap items-center justify-between gap-2 p-3 rounded-lg border border-border/70 bg-background/50 text-xs"
                   >
                     <div className="flex items-center gap-2">
                       <span className="font-mono text-muted-foreground">Attempt #{previousSubmissions.length - i}:</span>
@@ -187,18 +198,18 @@ function StudentQuizPage() {
             </div>
           )}
 
-          <div className="pt-4 flex items-center justify-end gap-3">
+          <div className="pt-4 flex flex-wrap items-center justify-end gap-3">
             <Button
               onClick={() => router.history.back()}
               variant="ghost"
-              className="text-muted-foreground"
+              className="text-muted-foreground w-full sm:w-auto"
             >
               Go Back
             </Button>
             <Button
               onClick={handleStartQuiz}
               disabled={questions.length === 0}
-              className="bg-neon-purple text-white hover:bg-neon-purple/90 font-bold px-6"
+              className="bg-neon-purple text-white hover:bg-neon-purple/90 font-bold px-6 w-full sm:w-auto"
             >
               {previousSubmissions?.length > 0 ? "Retake Quiz Now" : "Start Assessment"}
             </Button>
@@ -210,12 +221,12 @@ function StudentQuizPage() {
       {stage === "IN_PROGRESS" && currentQ && (
         <div className="space-y-6">
           {/* Top Bar: Progress & Timer */}
-          <div className="flex items-center justify-between p-4 rounded-xl border border-border bg-surface">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-xl border border-border bg-surface">
             <div>
               <span className="text-xs font-semibold text-muted-foreground">
                 Question {currentQIndex + 1} of {questions.length}
               </span>
-              <div className="w-36 h-2 bg-surface-2 rounded-full overflow-hidden mt-1.5 border border-border/50">
+              <div className="w-32 sm:w-36 h-2 bg-surface-2 rounded-full overflow-hidden mt-1.5 border border-border/50">
                 <div
                   className="h-full bg-neon-purple transition-all duration-300"
                   style={{ width: `${((currentQIndex + 1) / questions.length) * 100}%` }}
@@ -232,7 +243,7 @@ function StudentQuizPage() {
           </div>
 
           {/* Question Card */}
-          <Panel className="p-8 space-y-6">
+          <Panel className="p-4 sm:p-8 space-y-6">
             <div className="flex items-start gap-4">
               <span className="grid h-8 w-8 place-items-center rounded-xl bg-neon-purple/20 text-neon-purple font-bold text-sm shrink-0 border border-neon-purple/30">
                 {currentQIndex + 1}

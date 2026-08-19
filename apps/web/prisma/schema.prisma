@@ -24,6 +24,11 @@ model User {
   tickets         SupportTicket[]  @relation("UserTickets")
   assignedTickets SupportTicket[]  @relation("AssignedStaffTickets")
   supportMessages SupportMessage[]
+  certificates    Certificate[]
+  notifications   Notification[]
+  currentStreak   Int              @default(0)
+  longestStreak   Int              @default(0)
+  lastStudyDate   DateTime?
   createdAt       DateTime         @default(now())
 }
 
@@ -46,10 +51,12 @@ model Course {
   lessons     Lesson[]
   quizzes     Quiz[]
   enrollments Enrollment[]
-  reviews     Review[]
-  payments    Payment[]
-  faqs        FaqItem[]
-  published   Boolean      @default(false)
+  reviews         Review[]
+  payments        Payment[]
+  faqs            FaqItem[]
+  certificates    Certificate[]
+  certificateTemplates CertificateTemplate[]
+  published       Boolean      @default(false)
   type        CourseType   @default(FULL)
   createdAt   DateTime     @default(now())
 }
@@ -326,4 +333,49 @@ enum RefundStatus {
   APPROVED
   REJECTED
 }
+
+// ---------------- CERTIFICATE SYSTEM ----------------
+
+model CertificateTemplate {
+  id             String    @id @default(cuid())
+  title          String
+  imageUrl       String?   // optional uploaded custom background image
+  signatoryName  String    @default("Director of Cyber Tech Academy")
+  signatoryTitle String    @default("Chief Instructor & Guildmaster")
+  signatureUrl   String?   // optional signature image
+  sealUrl        String?   // optional seal / crest image
+  isDefault      Boolean   @default(false)
+  courseId       String?
+  course         Course?   @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+}
+
+model Certificate {
+  id            String    @id @default(cuid())
+  certificateNo String    @unique @default(cuid())
+  userId        String
+  courseId      String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  issueDate     DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+
+  @@unique([userId, courseId])
+}
+
+// ---------------- NOTIFICATION SYSTEM ----------------
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?  // null for global broadcast to all students
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // "NEW_COURSE" | "COURSE_PURCHASED" | "SUPPORT_REPLY" | "CERTIFICATE_EARNED"
+  data      Json?    // Optional structured payload e.g. { courseId, slug, ticketId, certificateId }
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
 

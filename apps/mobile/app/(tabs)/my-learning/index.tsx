@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,91 +6,211 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { GraduationCap, BookOpen } from "lucide-react-native";
+import { GraduationCap, BookOpen, HardDriveDownload, Trash2, Play, Award } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import { Badge } from "@/components/ui/Badge";
+import { CertificateModal } from "@/components/ui/CertificateModal";
 import { useEnrolledCourses } from "@/hooks/useCourses";
+import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
+import { useAuthStore } from "@/store/authStore";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
 export default function MyLearningScreen() {
   const router = useRouter();
+  const { user } = useAuthStore();
+  const [tab, setTab] = useState<"ONLINE" | "OFFLINE">("ONLINE");
+  const [selectedCertCourse, setSelectedCertCourse] = useState<{ id: string; title: string } | null>(null);
   const { data: courses, isLoading } = useEnrolledCourses();
+  const { downloadedList, deleteDownload } = useOfflineDownloads();
 
   return (
     <SafeScreen>
       <View style={styles.header}>
         <Text style={styles.screenTitle}>My Learning</Text>
         <Text style={styles.subtitle}>
-          {courses?.length ?? 0} course{courses?.length !== 1 ? "s" : ""} enrolled
+          {tab === "ONLINE"
+            ? `${courses?.length ?? 0} course${courses?.length !== 1 ? "s" : ""} enrolled`
+            : `${downloadedList.length} lesson${downloadedList.length !== 1 ? "s" : ""} offline ready`}
         </Text>
+
+        {/* Tab switcher */}
+        <View style={styles.tabRow}>
+          <TouchableOpacity
+            style={[styles.tabBtn, tab === "ONLINE" && styles.tabBtnActive]}
+            onPress={() => setTab("ONLINE")}
+          >
+            <Text style={[styles.tabBtnText, tab === "ONLINE" && styles.tabBtnTextActive]}>
+              Enrolled ({courses?.length ?? 0})
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabBtn, tab === "OFFLINE" && styles.tabBtnActive]}
+            onPress={() => setTab("OFFLINE")}
+          >
+            <Text style={[styles.tabBtnText, tab === "OFFLINE" && styles.tabBtnTextActive]}>
+              Offline Downloads ({downloadedList.length})
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
-      {isLoading ? (
-        <FlatList
-          data={[1, 2, 3]}
-          renderItem={() => <SkeletonCard style={styles.card} />}
-          keyExtractor={(i) => String(i)}
-          contentContainerStyle={styles.list}
-        />
+      {tab === "ONLINE" ? (
+        isLoading ? (
+          <FlatList
+            data={[1, 2, 3]}
+            renderItem={() => <SkeletonCard style={styles.card} />}
+            keyExtractor={(i) => String(i)}
+            contentContainerStyle={styles.list}
+          />
+        ) : (
+          <FlatList
+            data={courses ?? []}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.card}
+                activeOpacity={0.85}
+                onPress={() => router.push(`/(tabs)/my-learning/${item.id}` as any)}
+              >
+                <View style={styles.cardThumb}>
+                  {(item as any).thumbnail ? (
+                    <Image
+                      source={{ uri: (item as any).thumbnail }}
+                      style={styles.thumbImg}
+                    />
+                  ) : (
+                    <LinearGradient
+                      colors={[colors.neonPurple + "40", colors.neonCyan + "20"]}
+                      style={styles.thumbGrad}
+                    >
+                      <BookOpen color={colors.neonPurple} size={28} />
+                    </LinearGradient>
+                  )}
+                </View>
+                <View style={styles.cardBody}>
+                  <View style={styles.topRow}>
+                    <Badge label={(item as any).category?.name ?? "Course"} variant="purple" />
+                    {(item as any).expired && <Badge label="Expired" variant="pink" />}
+                  </View>
+                  <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                  <ProgressBar
+                    value={item.progress}
+                    color={item.progress >= 100 ? colors.neonLime : colors.neonPurple}
+                    label={`${item.completedLessons}/${item.totalLessons} lessons`}
+                    showPercent
+                    height={6}
+                  />
+
+                  {item.progress >= 100 && (
+                    <TouchableOpacity
+                      style={styles.cardCertBtn}
+                      activeOpacity={0.85}
+                      onPress={() => setSelectedCertCourse({ id: item.id, title: item.title })}
+                    >
+                      <Award color={colors.neonLime} size={16} />
+                      <Text style={styles.cardCertBtnText}>View / Download Certificate</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <GraduationCap color={colors.mutedForeground} size={56} />
+                <Text style={styles.emptyTitle}>No courses yet</Text>
+                <Text style={styles.emptySubtitle}>
+                  Browse the catalog and enroll in your first course.
+                </Text>
+              </View>
+            }
+          />
+        )
       ) : (
         <FlatList
-          data={courses ?? []}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              style={styles.card}
-              activeOpacity={0.85}
-              onPress={() => router.push(`/(tabs)/my-learning/${item.id}` as any)}
-            >
-              <View style={styles.cardThumb}>
-                {(item as any).thumbnail ? (
-                  <Image
-                    source={{ uri: (item as any).thumbnail }}
-                    style={styles.thumbImg}
-                  />
-                ) : (
-                  <LinearGradient
-                    colors={[colors.neonPurple + "40", colors.neonCyan + "20"]}
-                    style={styles.thumbGrad}
-                  >
-                    <BookOpen color={colors.neonPurple} size={28} />
-                  </LinearGradient>
-                )}
-              </View>
-              <View style={styles.cardBody}>
-                <View style={styles.topRow}>
-                  <Badge label={(item as any).category?.name ?? "Course"} variant="purple" />
-                  {(item as any).expired && <Badge label="Expired" variant="pink" />}
-                </View>
-                <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-                <ProgressBar
-                  value={item.progress}
-                  color={item.progress >= 100 ? colors.neonLime : colors.neonPurple}
-                  label={`${item.completedLessons}/${item.totalLessons} lessons`}
-                  showPercent
-                  height={6}
-                />
-              </View>
-            </TouchableOpacity>
-          )}
+          data={downloadedList}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <TouchableOpacity
+                style={{ flex: 1, flexDirection: "row" }}
+                activeOpacity={0.85}
+                onPress={() =>
+                  router.push(
+                    `/(tabs)/my-learning/${item.courseId}?lessonId=${item.id}` as any
+                  )
+                }
+              >
+                <View style={styles.cardThumb}>
+                  <LinearGradient
+                    colors={[colors.neonCyan + "40", colors.neonPurple + "30"]}
+                    style={styles.thumbGrad}
+                  >
+                    <Play color={colors.neonCyan} size={24} />
+                  </LinearGradient>
+                </View>
+                <View style={styles.cardBody}>
+                  <Badge label="Sandboxed Offline" variant="cyan" />
+                  <Text style={styles.cardTitle} numberOfLines={1}>
+                    {item.title}
+                  </Text>
+                  <Text style={styles.courseSubtitle} numberOfLines={1}>
+                    {item.courseTitle}
+                  </Text>
+                  <Text style={styles.downloadDate}>
+                    Saved {new Date(item.downloadedAt).toLocaleDateString()}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => {
+                  Alert.alert(
+                    "Delete Offline Download",
+                    `Delete "${item.title}" from storage?`,
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: () => deleteDownload(item.id),
+                      },
+                    ]
+                  );
+                }}
+              >
+                <Trash2 color={colors.destructive || "#ef4444"} size={18} />
+              </TouchableOpacity>
+            </View>
+          )}
           ListEmptyComponent={
             <View style={styles.empty}>
-              <GraduationCap color={colors.mutedForeground} size={56} />
-              <Text style={styles.emptyTitle}>No courses yet</Text>
+              <HardDriveDownload color={colors.mutedForeground} size={56} />
+              <Text style={styles.emptyTitle}>No Offline Videos</Text>
               <Text style={styles.emptySubtitle}>
-                Browse the catalog and enroll in your first course.
+                Save lessons while connected to watch them anywhere without internet.
               </Text>
             </View>
           }
         />
       )}
+
+      {/* Certificate Modal */}
+      <CertificateModal
+        visible={!!selectedCertCourse}
+        onClose={() => setSelectedCertCourse(null)}
+        userName={user?.name ?? "Hunter"}
+        courseTitle={selectedCertCourse?.title ?? "Course"}
+        courseId={selectedCertCourse?.id ?? ""}
+      />
     </SafeScreen>
   );
 }
@@ -137,6 +257,65 @@ const styles = StyleSheet.create({
   cardBody: { flex: 1, padding: spacing[4], gap: spacing[2] },
   topRow: { flexDirection: "row", gap: spacing[2] },
   cardTitle: { fontFamily: fonts.sans, fontSize: fontSizes.base, color: colors.foreground, lineHeight: 20 },
+  courseSubtitle: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.mutedForeground },
+  downloadDate: { fontFamily: fonts.body, fontSize: 10, color: colors.neonCyan },
+
+  // Card certificate button
+  cardCertBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "rgba(34, 197, 94, 0.15)",
+    borderWidth: 1,
+    borderColor: colors.neonLime,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radii.md,
+    marginTop: 4,
+    alignSelf: "flex-start",
+  },
+  cardCertBtnText: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.neonLime,
+    fontWeight: "bold",
+    letterSpacing: 0.3,
+  },
+
+  tabRow: {
+    flexDirection: "row",
+    gap: spacing[2],
+    marginTop: spacing[2],
+  },
+  tabBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: spacing[3],
+    borderRadius: radii.full,
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: "transparent",
+  },
+  tabBtnActive: {
+    backgroundColor: colors.neonPurpleAlpha20,
+    borderColor: colors.neonPurple,
+  },
+  tabBtnText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    fontWeight: "bold",
+  },
+  tabBtnTextActive: {
+    color: colors.neonCyan,
+  },
+  deleteBtn: {
+    paddingHorizontal: spacing[3],
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.surface,
+    borderLeftWidth: 1,
+    borderLeftColor: colors.border,
+  },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", paddingTop: 80, gap: spacing[4], paddingHorizontal: spacing[6] },
   emptyTitle: { fontFamily: fonts.display, fontSize: fontSizes.lg, color: colors.foreground, letterSpacing: 2 },
   emptySubtitle: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.mutedForeground, textAlign: "center", lineHeight: 20 },

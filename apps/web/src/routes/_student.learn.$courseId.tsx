@@ -5,11 +5,24 @@ import {
   markLessonCompletedFn,
   updateLessonProgressFn,
 } from "@/server/courses";
+import { issueOrGetCertificateFn } from "@/server/certificate";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { Lock, Play, PlayCircle, CheckCircle2, FileQuestion, HelpCircle, Award } from "lucide-react";
+import { CertificateModal } from "@/components/certificate/CertificateModal";
+import {
+  Lock,
+  Play,
+  PlayCircle,
+  CheckCircle2,
+  FileQuestion,
+  HelpCircle,
+  Award,
+  Sparkles,
+  Loader2,
+} from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCloudFrontUrl } from "@/lib/cdn";
+import { toast } from "sonner";
 
 type YTPlayer = {
   getCurrentTime: () => number;
@@ -68,34 +81,33 @@ function YouTubePlayer({
         events: {
           onReady: (event) => {
             playerRef.current = event.target;
-            onProgress(event.target.getCurrentTime() || 0, event.target.getDuration() || 0);
           },
           onStateChange: (event) => {
             if (event.data === window.YT?.PlayerState?.PLAYING) {
-              playerRef.current = event.target;
+              const dur = player?.getDuration() || 0;
+              const cur = player?.getCurrentTime() || 0;
+              onProgress(cur, dur);
             }
           },
         },
       });
     };
 
-    if (window.YT?.Player) {
+    if (window.YT && window.YT.Player) {
       createPlayer();
     } else {
+      const tag = document.createElement("script");
+      tag.src = "https://www.youtube.com/iframe_api";
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
       window.onYouTubeIframeAPIReady = createPlayer;
-      if (!document.querySelector('script[src*="youtube.com/iframe_api"]')) {
-        const tag = document.createElement("script");
-        tag.src = "https://www.youtube.com/iframe_api";
-        document.head.appendChild(tag);
-      }
     }
 
     const interval = window.setInterval(() => {
-      const p = playerRef.current;
-      if (p) {
-        const t = p.getCurrentTime() || 0;
-        const d = p.getDuration() || 0;
-        onProgress(t, d);
+      if (player && typeof player.getCurrentTime === "function") {
+        const cur = player.getCurrentTime();
+        const dur = player.getDuration();
+        if (dur > 0) onProgress(cur, dur);
       }
     }, 5000);
 
@@ -140,9 +152,19 @@ function LearnCourse() {
     initialProgress || {},
   );
 
+  // Certificate State
+  const [certificateData, setCertificateData] = useState<any | null>(null);
+  const [isClaimingCert, setIsClaimingCert] = useState(false);
+  const [showCertModal, setShowCertModal] = useState(false);
+
   const watchSecondsRef = useRef(0);
   const lastReportRef = useRef(0);
   const reportingRef = useRef(false);
+
+  const isFullyCompleted =
+    course.lessons &&
+    course.lessons.length > 0 &&
+    course.lessons.every((l: any) => completedLessonIds.includes(l.id));
 
   // Reset per-lesson watch tracking when the student switches lessons.
   useEffect(() => {
@@ -224,6 +246,19 @@ function LearnCourse() {
     }
   };
 
+  const handleClaimCertificate = async () => {
+    setIsClaimingCert(true);
+    try {
+      const res = await issueOrGetCertificateFn({ data: { courseId: course.id } });
+      setCertificateData(res);
+      setShowCertModal(true);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to issue certificate");
+    } finally {
+      setIsClaimingCert(false);
+    }
+  };
+
   return (
     <div className="animate-in fade-in duration-500">
       <div className="mb-6">
@@ -232,6 +267,61 @@ function LearnCourse() {
         </h1>
         <p className="mt-2 text-muted-foreground">{course.description}</p>
       </div>
+
+      {/* 100% Course Completion Certificate Banner */}
+      {isFullyCompleted && (
+        <div className="mb-6 p-5 rounded-2xl border-2 border-neon-purple/60 bg-gradient-to-r from-neon-purple/20 via-surface to-neon-cyan/20 flex flex-wrap items-center justify-between gap-4 shadow-[0_0_30px_rgba(168,85,247,0.3)] animate-in slide-in-from-top-3">
+          <div className="flex items-center gap-4">
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-neon-purple/30 border border-neon-purple text-neon-purple shadow-[0_0_20px_rgba(168,85,247,0.5)] shrink-0">
+              <Award className="h-8 w-8 text-neon-purple" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-neon-lime/20 text-neon-lime border border-neon-lime/40">
+                  100% Mastery Complete
+                </span>
+                <span className="text-xs text-muted-foreground font-mono">
+                  {course.lessons.length} Lessons Finished
+                </span>
+              </div>
+              <h2 className="font-display text-lg sm:text-xl font-bold text-foreground mt-1">
+                Official Course Completion Certificate Unlocked!
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Congratulations! You have completed all syllabus feeds and modules.
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="hero"
+            onClick={handleClaimCertificate}
+            disabled={isClaimingCert}
+            className="cursor-pointer shadow-[0_0_20px_rgba(168,85,247,0.5)] font-bold text-sm px-5 py-2.5"
+          >
+            {isClaimingCert ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Issuing...
+              </>
+            ) : (
+              <>
+                <Award className="mr-2 h-4 w-4 text-neon-cyan" /> Claim & Download Certificate
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Certificate Modal */}
+      {showCertModal && certificateData && (
+        <CertificateModal
+          isOpen={showCertModal}
+          onClose={() => setShowCertModal(false)}
+          certificate={certificateData.certificate}
+          template={certificateData.template}
+          studentName={certificateData.user?.name}
+          courseTitle={course.title}
+        />
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
         {/* Left Pane: Video Player */}

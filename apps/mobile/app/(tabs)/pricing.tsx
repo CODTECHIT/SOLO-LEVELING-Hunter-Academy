@@ -83,7 +83,7 @@ export default function PricingScreen() {
 
           <Button 
             label="Browse Courses" 
-            variant="neonPurple"
+            variant="primary"
             onPress={() => router.push("/(tabs)/courses")} 
             style={{ marginTop: spacing[4] }} 
           />

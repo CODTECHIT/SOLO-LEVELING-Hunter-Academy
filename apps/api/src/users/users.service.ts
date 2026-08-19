@@ -155,6 +155,14 @@ export class UsersService {
     const expCurrent = totalExp - currentRank.floor;
     const expMax = nextRank ? nextRank.floor - currentRank.floor : 10000;
 
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentStreak: true, longestStreak: true, lastStudyDate: true },
+    });
+
+    const userStreak = user?.currentStreak || 0;
+    const mpPercent = Math.min(100, Math.max(0, Math.round((userStreak / 7) * 100)));
+
     return {
       rankLetter: currentRank.letter,
       rankName: currentRank.name,
@@ -162,12 +170,161 @@ export class UsersService {
       expCurrent: Math.min(expCurrent, expMax),
       expMax,
       focusPct,
-      mpPercent: Math.min(100, Math.max(0, focusPct)),
-      streak: 0, // Simplified for now
+      mpPercent: mpPercent > 0 ? mpPercent : Math.min(100, Math.max(0, focusPct)),
+      streak: userStreak,
+      longestStreak: user?.longestStreak || userStreak,
       coursesTaken: courseIds.length,
       coursesCompleted: completedCourses,
       lessonsCompleted: completedLessons,
     };
+  }
+
+  async updateProgress(
+    userId: string,
+    data: { lessonId: string; watchedSeconds: number; duration?: number; completed?: boolean },
+  ) {
+    const lesson = await this.prisma.lesson.findUnique({
+      where: { id: data.lessonId },
+      include: { course: true },
+    });
+    if (!lesson) throw new Error("Lesson not found");
+
+    const existing = await this.prisma.lessonProgress.findUnique({
+      where: {
+        userId_lessonId: {
+          userId,
+          lessonId: data.lessonId,
+        },
+      },
+    });
+
+    const progressSeconds = Math.max(
+      existing ? existing.progressSeconds : 0,
+      Math.round(data.watchedSeconds),
+    );
+    const duration = data.duration || lesson.duration || 0;
+    const threshold = duration > 0 ? Math.ceil(duration * 0.9) : 0;
+    const isCompleted =
+      data.completed === true ||
+      existing?.completed === true ||
+      (threshold > 0 && progressSeconds >= threshold);
+
+    await this.prisma.lessonProgress.upsert({
+      where: {
+        userId_lessonId: {
+          userId,
+          lessonId: data.lessonId,
+        },
+      },
+      update: {
+        progressSeconds,
+        completed: isCompleted,
+        completedAt: isCompleted && !existing?.completed ? new Date() : undefined,
+      },
+      create: {
+        userId,
+        lessonId: data.lessonId,
+        progressSeconds,
+        completed: isCompleted,
+        completedAt: isCompleted ? new Date() : null,
+      },
+    });
+
+    // Update study streak
+    await this.updateUserStreak(userId);
+
+    // Check if course 100% complete -> issue certificate & notify
+    if (isCompleted && lesson.courseId) {
+      const totalLessons = await this.prisma.lesson.count({
+        where: { courseId: lesson.courseId },
+      });
+      const completedCount = await this.prisma.lessonProgress.count({
+        where: {
+          userId,
+          completed: true,
+          lesson: { courseId: lesson.courseId },
+        },
+      });
+
+      if (totalLessons > 0 && completedCount >= totalLessons) {
+        const cert = await this.prisma.certificate.findUnique({
+          where: {
+            userId_courseId: {
+              userId,
+              courseId: lesson.courseId,
+            },
+          },
+        });
+
+        if (!cert) {
+          await this.prisma.certificate.create({
+            data: {
+              userId,
+              courseId: lesson.courseId,
+            },
+          });
+
+          await this.prisma.notification.create({
+            data: {
+              userId,
+              title: "🏆 Official Certificate Awarded!",
+              message: `Congratulations! You conquered all lessons in "${lesson.course.title}" and earned your verified Certificate!`,
+              type: "CERTIFICATE_EARNED",
+              data: { courseId: lesson.courseId },
+            },
+          });
+        }
+      }
+    }
+
+    return { success: true };
+  }
+
+  async updateUserStreak(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentStreak: true, longestStreak: true, lastStudyDate: true },
+    });
+    if (!user) return;
+
+    const now = new Date();
+    const todayStr = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-${now.getUTCDate()}`;
+
+    let newStreak = user.currentStreak || 0;
+    let lastDateStr: string | null = null;
+    if (user.lastStudyDate) {
+      const d = new Date(user.lastStudyDate);
+      lastDateStr = `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;
+    }
+
+    if (!lastDateStr) {
+      newStreak = 1;
+    } else if (lastDateStr === todayStr) {
+      return { currentStreak: newStreak, longestStreak: user.longestStreak || newStreak };
+    } else {
+      const yesterday = new Date(now);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      const yesterdayStr = `${yesterday.getUTCFullYear()}-${yesterday.getUTCMonth() + 1}-${yesterday.getUTCDate()}`;
+
+      if (lastDateStr === yesterdayStr) {
+        newStreak += 1;
+      } else {
+        newStreak = 1;
+      }
+    }
+
+    const longestStreak = Math.max(user.longestStreak || 0, newStreak);
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        currentStreak: newStreak,
+        longestStreak,
+        lastStudyDate: now,
+      },
+    });
+
+    return { currentStreak: newStreak, longestStreak };
   }
 
   async getUserPurchases(userId: string) {

@@ -19,6 +19,7 @@ import * as Google from "expo-auth-session/providers/google";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+import { CyberTechLogo } from "@/components/ui/CyberTechLogo";
 import { useAuthStore } from "@/store/authStore";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
@@ -34,7 +35,9 @@ export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuthStore();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
 
+  // Google OAuth setup (Web client ID used for dev/testing)
   const [request, response, promptAsync] = Google.useAuthRequest({
     androidClientId: "PLACEHOLDER_ANDROID_CLIENT_ID",
     iosClientId: "PLACEHOLDER_IOS_CLIENT_ID",
@@ -83,10 +86,7 @@ export default function LoginScreen() {
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           {/* Logo & Brand */}
           <View style={styles.brand}>
-            <View style={styles.logoBox}>
-              <Zap color={colors.neonCyan} size={32} />
-            </View>
-            <Text style={styles.title}>HUNTER ACADEMY</Text>
+            <CyberTechLogo size="lg" />
             <Text style={styles.subtitle}>Sign in to continue your journey</Text>
           </View>
 
@@ -142,7 +142,7 @@ export default function LoginScreen() {
               label="Continue with Google"
               onPress={() => promptAsync()}
               disabled={!request || loading}
-              variant="outline"
+              variant="secondary"
               fullWidth
               style={styles.googleBtn}
             />

@@ -6,7 +6,7 @@ import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
-import api from "@/lib/api";
+import { api } from "@/lib/api";
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -102,13 +102,12 @@ export default function ResetPasswordScreen() {
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                leftIcon={<Mail color={colors.mutedForeground} size={18} />}
               />
               <Button
                 label={loading ? "Sending..." : "Send Verification Code"}
                 onPress={handleSendOtp}
                 disabled={loading}
-                variant="neonPurple"
+                variant="primary"
               />
             </>
           )}
@@ -121,13 +120,12 @@ export default function ResetPasswordScreen() {
                 onChangeText={setOtp}
                 keyboardType="number-pad"
                 maxLength={6}
-                leftIcon={<ShieldCheck color={colors.mutedForeground} size={18} />}
               />
               <Button
                 label={loading ? "Verifying..." : "Verify Code"}
                 onPress={handleVerifyOtp}
                 disabled={loading}
-                variant="neonCyan"
+                variant="primary"
               />
             </>
           )}
@@ -139,13 +137,12 @@ export default function ResetPasswordScreen() {
                 value={newPassword}
                 onChangeText={setNewPassword}
                 secureTextEntry
-                leftIcon={<Lock color={colors.mutedForeground} size={18} />}
               />
               <Button
                 label={loading ? "Resetting..." : "Reset Password"}
                 onPress={handleResetPassword}
                 disabled={loading}
-                variant="neonLime"
+                variant="primary"
               />
             </>
           )}

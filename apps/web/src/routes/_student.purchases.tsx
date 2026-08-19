@@ -98,45 +98,95 @@ function PurchasesPage() {
           {purchases.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">No purchases found.</div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border/50 text-muted-foreground">
-                    <th className="pb-3 font-medium">Order ID</th>
-                    <th className="pb-3 font-medium">Date</th>
-                    <th className="pb-3 font-medium">Course/Pathway</th>
-                    <th className="pb-3 font-medium text-right">Amount</th>
-                    <th className="pb-3 font-medium text-right">Receipt</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/30">
-                  {purchases.map((purchase) => (
-                    <tr key={purchase.id} className="transition-colors hover:bg-background/50">
-                      <td className="py-4 font-mono text-xs text-muted-foreground">
-                        {purchase.id.split("-")[0]}...
-                      </td>
-                      <td className="py-4">{new Date(purchase.createdAt).toLocaleDateString()}</td>
-                      <td className="py-4 font-medium text-foreground">{purchase.courseTitle}</td>
-                      <td className="py-4 text-right font-display text-neon-cyan">
+            <>
+              {/* Mobile Card List (< sm screens) */}
+              <div className="space-y-3 sm:hidden">
+                {purchases.map((purchase) => (
+                  <div
+                    key={purchase.id}
+                    className="p-4 rounded-xl border border-border/70 bg-surface-2/40 space-y-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-display font-bold text-sm text-foreground line-clamp-2">
+                          {purchase.courseTitle}
+                        </h4>
+                        <p className="font-mono text-[10px] text-muted-foreground mt-0.5">
+                          Order ID: {purchase.id.split("-")[0]}...
+                        </p>
+                      </div>
+                      <span className="font-display font-bold text-neon-cyan text-sm shrink-0">
                         ₹{purchase.amount.toLocaleString("en-IN")}
-                      </td>
-                      <td className="py-4 text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          title="Download Receipt"
-                          aria-label={`Download receipt for ${purchase.courseTitle}`}
-                          onClick={() => downloadReceipt(purchase)}
-                        >
-                          <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" />
-                        </Button>
-                      </td>
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between pt-2 border-t border-border/40 text-xs">
+                      <span className="text-muted-foreground font-mono">
+                        {new Date(purchase.createdAt).toLocaleDateString("en-IN", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2.5 text-xs text-neon-cyan hover:bg-neon-cyan/10 font-semibold"
+                        onClick={() => downloadReceipt(purchase)}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 mr-1" /> Download Receipt
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View (>= sm screens) */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-sm min-w-[560px]">
+                  <thead>
+                    <tr className="border-b border-border/50 text-muted-foreground">
+                      <th className="pb-3 font-medium">Order ID</th>
+                      <th className="pb-3 font-medium">Date</th>
+                      <th className="pb-3 font-medium">Course/Pathway</th>
+                      <th className="pb-3 font-medium text-right">Amount</th>
+                      <th className="pb-3 font-medium text-right">Receipt</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-border/30">
+                    {purchases.map((purchase) => (
+                      <tr key={purchase.id} className="transition-colors hover:bg-background/50">
+                        <td className="py-4 font-mono text-xs text-muted-foreground">
+                          {purchase.id.split("-")[0]}...
+                        </td>
+                        <td className="py-4">
+                          {new Date(purchase.createdAt).toLocaleDateString("en-IN", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td className="py-4 font-medium text-foreground">{purchase.courseTitle}</td>
+                        <td className="py-4 text-right font-display text-neon-cyan font-bold">
+                          ₹{purchase.amount.toLocaleString("en-IN")}
+                        </td>
+                        <td className="py-4 text-right">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title="Download Receipt"
+                            aria-label={`Download receipt for ${purchase.courseTitle}`}
+                            onClick={() => downloadReceipt(purchase)}
+                          >
+                            <ExternalLink className="w-4 h-4 text-muted-foreground hover:text-foreground" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </Panel>
