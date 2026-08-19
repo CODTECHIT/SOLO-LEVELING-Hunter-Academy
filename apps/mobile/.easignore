@@ -1,0 +1,13 @@
+# EAS Ignore
+.git
+.agents
+.claude
+.windsurf
+.idea
+.vscode
+node_modules
+apps/api
+apps/web
+packages/db
+packages/ui
+*.log

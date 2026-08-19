@@ -37,7 +37,6 @@
       },
       "backgroundColor": "#050810",
       "package": "com.cybertech.academy",
-      "versionCode": 1,
       "permissions": [
         "android.permission.INTERNET"
       ]
@@ -85,6 +84,9 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "32d76ab3-38d1-48ef-bf91-3daa72bc3138"
       }
     }
   }

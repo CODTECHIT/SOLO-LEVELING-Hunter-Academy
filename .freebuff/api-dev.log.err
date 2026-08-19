@@ -1,9 +1,0 @@
-(node:24176) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
-(Use `node --trace-deprecation ...` to show where the warning was created)
-npm error Lifecycle script `dev` failed with error:
-npm error code 1073807364
-npm error path C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\api
-npm error workspace @lms/api@1.0.0
-npm error location C:\Users\MAHAJAN ASHOK\OneDrive\Desktop\lms-main\apps\api
-npm error command failed
-npm error command C:\WINDOWS\system32\cmd.exe /d /s /c nest start --watch
