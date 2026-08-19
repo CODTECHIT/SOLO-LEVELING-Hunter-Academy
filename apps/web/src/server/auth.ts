@@ -9,7 +9,7 @@ import { z } from "zod";
 // production: anyone who knows it can forge auth tokens for any userId (full
 // account takeover via getCurrentUserFn). In production a missing JWT_SECRET
 // must fail loudly instead of silently signing with the public key.
-const DEV_FALLBACK_SECRET = "solo-leveling-secret-key-123";
+const DEV_FALLBACK_SECRET = "your-secret-key-change-in-production";
 
 function getJwtSecret(): Uint8Array {
   const secret =
@@ -36,8 +36,13 @@ function parseZod<T>(res: z.SafeParseReturnType<any, T>): T {
   return res.data;
 }
 
-async function issueSessionToken(user: { id: string; role: string }) {
-  const token = await new SignJWT({ userId: user.id, role: user.role })
+async function issueSessionToken(user: { id: string; email: string; role: string }) {
+  const token = await new SignJWT({
+    sub: user.id,
+    userId: user.id,
+    email: user.email,
+    role: user.role,
+  })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("7d")
@@ -49,54 +54,71 @@ async function issueSessionToken(user: { id: string; role: string }) {
     maxAge: 60 * 60 * 24 * 7,
     path: "/",
   });
+
+  return token;
 }
 
 export const loginUserFn = createServerFn({ method: "POST" })
   .validator((data) => parseZod(loginSchema.safeParse(data)))
   .handler(async ({ data }) => {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    const email = data.email.trim().toLowerCase();
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw new Error("Invalid credentials: User not found");
     }
 
     const isValid = await bcrypt.compare(data.password, user.password);
     if (!isValid) {
-      throw new Error("Invalid credentials");
+      throw new Error("Invalid credentials: Incorrect password");
     }
 
-    // The user portal is for hunters only. Guild staff (ADMIN/SUB_ADMIN)
-    // must sign in through the Guild Master portal.
-    if (user.role !== "STUDENT") {
-      throw new Error("Guild staff must sign in from the Guild Master portal");
+    // Strict separation: Staff must log in via /admin/academy/login only
+    if (
+      user.role === "ADMIN" ||
+      user.role === "MANAGER" ||
+      user.role === "TECHNICAL_TEAM" ||
+      user.customRoleId
+    ) {
+      throw new Error(
+        "Staff account detected. Please log in via the Administrative Hub at /admin/academy/login"
+      );
     }
 
-    await issueSessionToken(user);
+    const token = await issueSessionToken(user);
 
-    return { success: true };
+    return { success: true, role: user.role, token };
   });
 
 export const loginAdminFn = createServerFn({ method: "POST" })
   .validator((data) => parseZod(loginSchema.safeParse(data)))
   .handler(async ({ data }) => {
-    const user = await prisma.user.findUnique({ where: { email: data.email } });
+    const email = data.email.trim().toLowerCase();
+    const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
-      throw new Error("Invalid credentials");
+      throw new Error("Invalid credentials: User not found");
     }
 
     const isValid = await bcrypt.compare(data.password, user.password);
     if (!isValid) {
-      throw new Error("Invalid credentials");
+      throw new Error("Invalid credentials: Incorrect password");
     }
 
-    // Only Guild Masters can enter the admin sector.
-    if (user.role !== "ADMIN") {
-      throw new Error("Unauthorized: Guild Master access only");
+    // Allow strictly ADMIN, MANAGER, TECHNICAL_TEAM, or custom staff role
+    const isStaff =
+      user.role === "ADMIN" ||
+      user.role === "MANAGER" ||
+      user.role === "TECHNICAL_TEAM" ||
+      Boolean(user.customRoleId);
+
+    if (!isStaff || user.role === "STUDENT") {
+      throw new Error("Unauthorized: Staff access only. Students must log in at /login");
     }
 
-    await issueSessionToken(user);
+    const token = await issueSessionToken(user);
 
-    return { success: true };
+    return { success: true, role: user.role, token };
   });
+
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -123,20 +145,9 @@ export const registerUserFn = createServerFn({ method: "POST" })
       },
     });
 
-    const token = await new SignJWT({ userId: user.id, role: user.role })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("7d")
-      .sign(getJwtSecret());
+    const token = await issueSessionToken(user);
 
-    setCookie("auth_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    });
-
-    return { success: true };
+    return { success: true, token, role: user.role };
   });
 
 export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(async () => {
@@ -145,15 +156,23 @@ export const getCurrentUserFn = createServerFn({ method: "GET" }).handler(async 
 
   try {
     const { payload } = await jwtVerify(token, getJwtSecret());
-    if (!payload.userId) return null;
+    const userId = (payload.userId as string) || (payload.sub as string);
+    if (!userId) return null;
 
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId as string },
-      select: { id: true, name: true, email: true, role: true, phone: true },
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        phone: true,
+        customRoleId: true,
+      },
     });
 
     return user;
-  } catch (e) {
+  } catch {
     return null;
   }
 });
@@ -181,49 +200,39 @@ export const updateProfileFn = createServerFn({ method: "POST" })
   });
 
 export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
-  setCookie("auth_token", "", { maxAge: 0, path: "/" });
+  setCookie("auth_token", "", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 0,
+    path: "/",
+  });
   return { success: true };
 });
 
-const syncSupabaseOAuthSchema = z.object({
+const syncOAuthSchema = z.object({
   email: z.string().email(),
-  name: z.string(),
+  name: z.string().optional(),
 });
 
 export const syncSupabaseOAuthUserFn = createServerFn({ method: "POST" })
-  .validator((data) => syncSupabaseOAuthSchema.parse(data))
+  .validator((data) => parseZod(syncOAuthSchema.safeParse(data)))
   .handler(async ({ data }) => {
-    let user = await prisma.user.findUnique({ where: { email: data.email } });
+    const normalizedEmail = data.email.trim().toLowerCase();
+    let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
     if (!user) {
       const randomPassword = await bcrypt.hash(Math.random().toString(36).slice(-10), 10);
       user = await prisma.user.create({
         data: {
-          email: data.email,
-          name: data.name,
+          email: normalizedEmail,
+          name: data.name || "Hunter",
           password: randomPassword,
           role: "STUDENT",
         },
       });
     }
 
-    // Guild staff must never authenticate through the user-side OAuth flow.
-    if (user.role !== "STUDENT") {
-      throw new Error("Guild staff accounts cannot sign in on the user portal");
-    }
+    const token = await issueSessionToken(user);
 
-    const token = await new SignJWT({ userId: user.id, role: user.role })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("7d")
-      .sign(getJwtSecret());
-
-    setCookie("auth_token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 24 * 7,
-      path: "/",
-    });
-
-    return { success: true };
+    return { success: true, role: user.role, token };
   });

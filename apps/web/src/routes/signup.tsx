@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
 import { Lock, Mail, Smartphone, UserPlus, Loader2 } from "lucide-react";
 import { AuthLayout, Panel } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -6,9 +6,16 @@ import { AuthField } from "./login";
 import { useState } from "react";
 import { signIn } from "@/lib/api-auth";
 import { supabase } from "@/lib/supabase";
-import { registerUserFn } from "@/server/auth";
+import { registerUserFn, getCurrentUserFn } from "@/server/auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/signup")({
+  beforeLoad: async () => {
+    const user = await getCurrentUserFn();
+    if (user) {
+      throw redirect({ to: "/dashboard" });
+    }
+  },
   head: () => ({
     meta: [{ title: "Awaken — Sign Up for Cyber Tech Academy" }],
   }),
@@ -31,7 +38,12 @@ function Signup() {
 
     try {
       // 1. Register user and establish session cookie
-      await registerUserFn({ data: { name, email, password } });
+      const res = await registerUserFn({ data: { name, email, password } });
+
+      if (res.token) {
+        const { setAuthToken } = await import("@/lib/api");
+        setAuthToken(res.token);
+      }
 
       // 2. Also sign in to the API server to get JWT token for localStorage
       try {
@@ -40,7 +52,8 @@ function Signup() {
         console.warn("API sign-in warning:", apiErr);
       }
 
-      await router.navigate({ to: "/dashboard" });
+      toast.success("Awakening complete! Welcome to Cyber Tech Academy.");
+      window.location.href = "/dashboard";
     } catch (err: any) {
       let msg =
         err.response?.data?.message || err.message || "Failed to register. Please try again.";
@@ -51,6 +64,7 @@ function Signup() {
         }
       } catch {}
       setError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -67,44 +81,64 @@ function Signup() {
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-7 space-y-5">
-          {error && <p className="text-sm text-red-500 font-medium text-center">{error}</p>}
+        <form
+          onSubmit={handleSubmit}
+          className="mt-7 space-y-5"
+        >
+          {error && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-center text-xs font-semibold text-red-400">
+              {error}
+            </div>
+          )}
+
           <AuthField label="Hunter Name" icon={<UserPlus className="size-4" />}>
             <input
+              id="name"
+              name="name"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Cyber Tech"
+              autoComplete="name"
               className="h-11 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </AuthField>
           <AuthField label="Email address" icon={<Mail className="size-4" />}>
             <input
+              id="email"
+              name="email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="jinwoo@hunter.ac"
+              autoComplete="email"
               className="h-11 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </AuthField>
           <AuthField label="Mobile number" icon={<Smartphone className="size-4" />}>
             <input
+              id="phone"
+              name="phone"
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+91 98765 43210"
+              autoComplete="tel"
               className="h-11 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </AuthField>
           <AuthField label="Create password" icon={<Lock className="size-4" />}>
             <input
+              id="password"
+              name="password"
               type="password"
               required
               minLength={6}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              autoComplete="new-password"
               className="h-11 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </AuthField>

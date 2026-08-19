@@ -1,13 +1,27 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter, redirect } from "@tanstack/react-router";
 import { Lock, Mail, Swords, Loader2 } from "lucide-react";
 import { AuthLayout, Panel } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { signIn } from "@/lib/api-auth";
 import { supabase } from "@/lib/supabase";
-import { loginUserFn } from "@/server/auth";
+import { loginUserFn, getCurrentUserFn } from "@/server/auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
+  beforeLoad: async () => {
+    const user = await getCurrentUserFn();
+    if (user) {
+      const target =
+        user.role === "ADMIN" ||
+        user.role === "MANAGER" ||
+        user.role === "TECHNICAL_TEAM" ||
+        user.customRoleId
+          ? "/admin/academy"
+          : "/dashboard";
+      throw redirect({ to: target });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Hunter Login — Cyber Tech Academy" },
@@ -31,26 +45,33 @@ function Login() {
 
     try {
       // 1. Establish session cookie for SSR/layout loaders
-      await loginUserFn({ data: { email, password } });
+      const res = await loginUserFn({ data: { email: email.trim(), password } });
+
+      if (res.token) {
+        const { setAuthToken } = await import("@/lib/api");
+        setAuthToken(res.token);
+      }
 
       // 2. Also obtain API JWT token for client-side API calls
       try {
-        await signIn({ email, password });
+        await signIn({ email: email.trim(), password });
       } catch (apiErr) {
         console.warn("API sign-in optional warning:", apiErr);
       }
 
-      await router.navigate({ to: "/dashboard" });
+      toast.success("Login successful! Entering the gate...");
+      window.location.href = "/dashboard";
     } catch (err: any) {
       let msg =
-        err.response?.data?.message || err.message || "Failed to login. Check your credentials.";
+        err.response?.data?.message || err.message || "Invalid credentials: Incorrect email or password";
       try {
         const parsed = JSON.parse(msg);
         if (Array.isArray(parsed) && parsed[0]?.message) {
           msg = parsed[0].message;
         }
-      } catch { }
+      } catch {}
       setError(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
@@ -58,6 +79,7 @@ function Login() {
 
   return (
     <AuthLayout>
+
       <Panel accent="cyan" className="p-7">
         <div className="text-center">
           <img
@@ -72,25 +94,38 @@ function Login() {
           </h1>
         </div>
 
-        <form onSubmit={handleSubmit} className="mt-7 space-y-5">
-          {error && <p className="text-sm text-red-500 font-medium text-center">{error}</p>}
+        <form
+          onSubmit={handleSubmit}
+          className="mt-7 space-y-5"
+        >
+          {error && (
+            <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-center text-xs font-semibold text-red-400">
+              {error}
+            </div>
+          )}
           <AuthField label="Hunter ID / Email" icon={<Mail className="size-4" />}>
             <input
+              id="email"
+              name="email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="jinwoo@hunter.ac"
+              autoComplete="username"
               className="h-11 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </AuthField>
           <AuthField label="Password" icon={<Lock className="size-4" />}>
             <input
+              id="password"
+              name="password"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              autoComplete="current-password"
               className="h-11 w-full min-w-0 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
           </AuthField>
@@ -104,10 +139,17 @@ function Login() {
             </Link>
           </div>
 
-          <Button type="submit" disabled={isLoading} variant="hero" size="xl" className="w-full">
+          <Button
+            type="submit"
+            disabled={isLoading}
+            variant="hero"
+            size="xl"
+            className="w-full cursor-pointer"
+          >
             {isLoading ? <Loader2 className="animate-spin" /> : <Swords />}{" "}
             {isLoading ? "Authenticating..." : "Arise & Login"}
           </Button>
+
 
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">

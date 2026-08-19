@@ -1,5 +1,7 @@
 import { api, setAuthToken } from "./api";
-export type { SignUpRequest, SignInRequest, AuthResponse, User } from "@lms/types";
+import type { SignUpRequest, SignInRequest, AuthResponse, User } from "@lms/types";
+export type { SignUpRequest, SignInRequest, AuthResponse, User };
+
 
 
 export async function signUp(data: SignUpRequest): Promise<AuthResponse> {

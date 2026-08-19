@@ -5,9 +5,14 @@
  */
 import { jwtVerify } from "jose";
 
-export function createAPIFileRoute(path: string) {
-  return (handler: any) => handler;
+export type APIHandler = {
+  [method: string]: (ctx: { request: Request; params?: any }) => Promise<Response> | Response;
+};
+
+export function createAPIFileRoute(_path: string) {
+  return (handler: APIHandler) => handler;
 }
+
 
 function getJwtSecret(): Uint8Array {
   const secret =

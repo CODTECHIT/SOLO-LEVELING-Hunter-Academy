@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getCourseBySlug } from "@/lib/api-courses";
-import { enrollInCourse, checkEnrollment } from "@/lib/api-enrollments";
+import { useMutation } from "@tanstack/react-query";
+import { getCourseFn } from "@/server/courses";
+import { enrollInCourse } from "@/lib/api-enrollments";
 import { getAuthToken } from "@/lib/api";
 import { TopNav, SiteFooter } from "@/components/site/nav";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
@@ -10,10 +10,13 @@ import { Lock, PlayCircle, Star, ChevronDown, CheckCircle2, Loader2 } from "luci
 import { useState } from "react";
 
 export const Route = createFileRoute("/courses/$slug")({
-  head: ({ params }) => ({
+  loader: async ({ params }) => {
+    return await getCourseFn({ data: { slug: params.slug } });
+  },
+  head: ({ loaderData }) => ({
     meta: [
-      { title: `Course — Cyber Tech Academy` },
-      { name: "description", content: "View course details and lessons." },
+      { title: `${loaderData?.course?.title ?? "Course"} — Cyber Tech Academy` },
+      { name: "description", content: loaderData?.course?.description ?? "View course details and lessons." },
     ],
   }),
   component: CourseDetail,
@@ -22,47 +25,21 @@ export const Route = createFileRoute("/courses/$slug")({
 function CourseDetail() {
   const { slug } = Route.useParams();
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
-
-  // Fetch course details
-  const {
-    data: course,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["course", slug],
-    queryFn: () => getCourseBySlug(slug),
-  });
-
+  const courseResponse = Route.useLoaderData();
+  const course = (courseResponse as any)?.course ?? courseResponse;
   const token = getAuthToken();
-
-  // Check if user is enrolled
-  const { data: enrollmentStatus } = useQuery({
-    queryKey: ["enrollment", course?.id],
-    queryFn: () => checkEnrollment(course!.id),
-    enabled: !!token && !!course?.id,
-  });
 
   // Enrollment mutation
   const enrollMutation = useMutation({
     mutationFn: (courseId: string) => enrollInCourse(courseId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["enrollment"] });
+      router.invalidate();
       router.navigate({ to: "/dashboard" });
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-neon-cyan" />
-        <p className="mt-4 text-muted-foreground">Loading course details...</p>
-      </div>
-    );
-  }
-
-  if (error || !course) {
+  if (!course) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center">
         <h1 className="font-display text-2xl font-bold text-foreground">Course not found</h1>
@@ -76,11 +53,13 @@ function CourseDetail() {
   }
 
   const reviews = course.reviews || [];
+  const faqs = (course as any).faqs || [];
+  const lessons = course.lessons || [];
   const avgRating = reviews.length
-    ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
+    ? (reviews.reduce((acc: number, r: any) => acc + r.rating, 0) / reviews.length).toFixed(1)
     : "No ratings yet";
 
-  const isEnrolled = enrollmentStatus?.isEnrolled || false;
+  const isEnrolled = Boolean(courseResponse?.isEnrolled);
 
   const handleEnroll = async () => {
     if (!token) {
@@ -100,16 +79,19 @@ function CourseDetail() {
           <div className="grid lg:grid-cols-[1.5fr_1fr] gap-12 mb-16 items-start">
             <div>
               <div className="flex flex-wrap items-center gap-2 mb-6">
-                <div className="inline-flex items-center gap-1.5 rounded-md bg-neon-cyan/10 px-3 py-1 text-sm font-medium text-neon-cyan ring-1 ring-inset ring-neon-cyan/20">
-                  {course.category.image && (
-                    <img
-                      src={course.category.image}
-                      alt={course.category.name}
-                      className="h-5 w-5 rounded object-cover"
-                    />
-                  )}
-                  {course.category.name}
-                </div>
+                {course.category?.name && (
+                  <div className="inline-flex items-center gap-1.5 rounded-md bg-neon-cyan/10 px-3 py-1 text-sm font-medium text-neon-cyan ring-1 ring-inset ring-neon-cyan/20">
+                    {(course.category as any)?.image && (
+                      <img
+                        src={(course.category as any).image}
+                        alt={course.category.name}
+                        className="h-5 w-5 rounded object-cover"
+                      />
+                    )}
+                    {course.category.name}
+                  </div>
+                )}
+
                 {course.type === "MODULE" ? (
                   <div className="inline-flex items-center rounded-md bg-neon-amber/10 px-3 py-1 text-sm font-medium text-neon-amber ring-1 ring-inset ring-neon-amber/20">
                     Hunter Pass Module
@@ -133,7 +115,7 @@ function CourseDetail() {
                 </div>
                 <div className="flex items-center gap-2">
                   <PlayCircle className="w-5 h-5" />
-                  <span>{course.lessons.length} Lessons</span>
+                  <span>{lessons.length} Lessons</span>
                 </div>
               </div>
             </div>
@@ -159,7 +141,7 @@ function CourseDetail() {
               </div>
 
               <div className="text-3xl font-display font-bold text-foreground mb-6">
-                ₹{course.price.toLocaleString("en-IN")}
+                ₹{(course.price || 0).toLocaleString("en-IN")}
               </div>
 
               {isEnrolled ? (
@@ -199,7 +181,7 @@ function CourseDetail() {
                   Course Content
                 </h2>
                 <div className="rounded-xl border border-border bg-surface overflow-hidden">
-                  {course.lessons.map((lesson, idx) => (
+                  {lessons.map((lesson: any, idx: number) => (
                     <div
                       key={lesson.id}
                       className="flex items-center gap-4 p-4 border-b border-border/50 last:border-0 hover:bg-background/50 transition-colors"
@@ -224,6 +206,11 @@ function CourseDetail() {
                       )}
                     </div>
                   ))}
+                  {lessons.length === 0 && (
+                    <p className="p-6 text-center text-sm text-muted-foreground">
+                      No lessons uploaded yet for this course.
+                    </p>
+                  )}
                 </div>
               </section>
 
@@ -238,17 +225,17 @@ function CourseDetail() {
                       No reviews yet. Be the first to conquer this dungeon!
                     </p>
                   ) : (
-                    reviews.map((review) => (
+                    reviews.map((review: any) => (
                       <div
                         key={review.id}
                         className="rounded-xl border border-border p-6 bg-surface/50"
                       >
                         <div className="flex items-center gap-4 mb-4">
                           <div className="w-10 h-10 rounded-full bg-neon-purple/20 text-neon-purple flex items-center justify-center font-bold font-display uppercase">
-                            {review.user.name.substring(0, 2)}
+                            {review.user?.name ? review.user.name.substring(0, 2) : "AN"}
                           </div>
                           <div>
-                            <p className="font-bold text-foreground">{review.user.name}</p>
+                            <p className="font-bold text-foreground">{review.user?.name || "Anonymous Hunter"}</p>
                             <div className="flex gap-1 text-neon-amber mt-1">
                               {Array.from({ length: 5 }).map((_, i) => (
                                 <Star
@@ -274,13 +261,14 @@ function CourseDetail() {
                   Frequently Asked Questions
                 </h2>
                 <div className="space-y-4">
-                  {faqs.map((faq, idx) => (
+                  {faqs.map((faq: any, idx: number) => (
                     <div
                       key={faq.id}
                       className="rounded-xl border border-border bg-surface overflow-hidden"
                     >
                       <button
                         className="w-full text-left p-4 flex items-center justify-between font-bold text-foreground hover:bg-background/50"
+
                         onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
                       >
                         {faq.question}

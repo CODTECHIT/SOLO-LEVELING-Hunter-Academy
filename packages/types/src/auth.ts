@@ -1,3 +1,5 @@
+export type UserRole = "ADMIN" | "MANAGER" | "TECHNICAL_TEAM" | "STUDENT";
+
 export interface SignUpRequest {
   email: string;
   password: string;
@@ -17,7 +19,8 @@ export interface AuthResponse {
     id: string;
     email: string;
     name: string;
-    role: "ADMIN" | "SUB_ADMIN" | "STUDENT";
+    role: UserRole;
+    customRoleId?: string | null;
   };
 }
 
@@ -25,5 +28,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
-  role: "ADMIN" | "SUB_ADMIN" | "STUDENT";
+  phone?: string | null;
+  role: UserRole;
+  customRoleId?: string | null;
 }
+

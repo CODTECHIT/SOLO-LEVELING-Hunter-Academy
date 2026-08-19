@@ -24,11 +24,8 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401) {
-      // Clear token and redirect to login
-      clearAuth();
-      if (typeof window !== "undefined") {
-        window.location.href = "/login";
-      }
+      console.warn("API 401 unauthorized:", error.config?.url);
+      // Do not force reload to /login if already authenticated via SSR session cookie
     }
     return Promise.reject(error);
   },

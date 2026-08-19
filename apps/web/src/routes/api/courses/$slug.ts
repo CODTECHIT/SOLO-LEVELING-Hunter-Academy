@@ -16,6 +16,13 @@ export const APIRoute = createAPIFileRoute("/api/courses/$slug")({
         include: {
           lessons: { orderBy: { order: "asc" } },
           category: true,
+          reviews: {
+            include: {
+              user: {
+                select: { id: true, name: true },
+              },
+            },
+          },
         },
       });
 

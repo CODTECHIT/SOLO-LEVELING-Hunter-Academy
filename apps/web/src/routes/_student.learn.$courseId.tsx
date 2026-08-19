@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import {
   getCourseFn,
   enrollUserFn,
@@ -7,7 +7,7 @@ import {
 } from "@/server/courses";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { Lock, Play, PlayCircle, CheckCircle2 } from "lucide-react";
+import { Lock, Play, PlayCircle, CheckCircle2, FileQuestion, HelpCircle, Award } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getCloudFrontUrl } from "@/lib/cdn";
 
@@ -293,10 +293,27 @@ function LearnCourse() {
             {currentLesson && isEnrolled && (
               <div className="border-t border-border px-5 py-4 flex flex-col">
                 <div>
-                  <h3 className="font-display text-lg text-foreground">{currentLesson.title}</h3>
+                  <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <h3 className="font-display text-lg text-foreground">{currentLesson.title}</h3>
+                    {(currentLesson as any)?.quiz && (
+                      <Link to="/quiz/$quizId" params={{ quizId: (currentLesson as any).quiz.id }}>
+                        <Button variant="neonPurple" size="sm" className="gap-2 text-xs">
+                          <FileQuestion className="h-4 w-4" />
+                          Take Lesson Quiz
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                   <p className="mt-1 text-sm text-muted-foreground">{currentLesson.description}</p>
                 </div>
-                <div className="mt-6 pt-4 border-t border-border/50 flex justify-end">
+                <div className="mt-6 pt-4 border-t border-border/50 flex flex-wrap items-center justify-between gap-4">
+                  {(currentLesson as any)?.quiz ? (
+                    <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+                      <HelpCircle className="h-3.5 w-3.5 text-neon-purple" />
+                      Trial Assessment: {(currentLesson as any).quiz.title} ({(currentLesson as any).quiz.timeLimit ? `${(currentLesson as any).quiz.timeLimit} mins` : "No limit"})
+                    </span>
+                  ) : <div />}
+
                   <Button
                     variant={completedLessonIds.includes(currentLesson.id) ? "ghost" : "neon"}
                     onClick={handleMarkComplete}
@@ -331,6 +348,7 @@ function LearnCourse() {
                 const isCompleted = completedLessonIds.includes(lesson.id);
                 const watched = lessonProgress[lesson.id] || 0;
                 const lessonDuration = lesson.duration || 0;
+                const hasQuiz = Boolean((lesson as any)?.quiz);
                 const pct = isCompleted
                   ? 100
                   : lessonDuration > 0
@@ -358,11 +376,18 @@ function LearnCourse() {
                       <Lock className="h-5 w-5 shrink-0 text-muted-foreground" />
                     )}
                     <div className="min-w-0 flex-1">
-                      <p
-                        className={`truncate font-display text-sm ${isActive ? "text-neon-cyan" : "text-foreground"}`}
-                      >
-                        {idx + 1}. {lesson.title}
-                      </p>
+                      <div className="flex items-center justify-between gap-1">
+                        <p
+                          className={`truncate font-display text-sm ${isActive ? "text-neon-cyan" : "text-foreground"}`}
+                        >
+                          {idx + 1}. {lesson.title}
+                        </p>
+                        {hasQuiz && (
+                          <span className="shrink-0 inline-flex items-center gap-1 rounded bg-neon-purple/20 px-1.5 py-0.5 text-[9px] font-bold uppercase text-neon-purple">
+                            <FileQuestion className="h-2.5 w-2.5" /> Quiz
+                          </span>
+                        )}
+                      </div>
                       <div className="mt-1 flex items-center justify-between gap-2">
                         <div className="h-1 w-full bg-surface-2 rounded-full overflow-hidden">
                           <div
@@ -390,6 +415,35 @@ function LearnCourse() {
                 </p>
               )}
             </div>
+
+            {/* Course-level Quizzes (Final Assessments) */}
+            {Boolean((course as any)?.quizzes?.length) && isEnrolled && (
+              <div className="mt-6 pt-4 border-t border-border/50 space-y-2">
+                <div className="text-xs font-display font-bold uppercase tracking-wider text-neon-purple flex items-center gap-1.5 mb-2">
+                  <Award className="h-3.5 w-3.5" /> Course Assessments
+                </div>
+                {(course as any).quizzes.map((q: any) => (
+                  <Link
+                    key={q.id}
+                    to="/quiz/$quizId"
+                    params={{ quizId: q.id }}
+                    className="flex items-center justify-between gap-3 p-3 rounded-lg border border-neon-purple/30 bg-neon-purple/10 hover:bg-neon-purple/20 transition-all text-left group"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-foreground group-hover:text-neon-purple transition-colors truncate">
+                        {q.title}
+                      </p>
+                      <p className="text-[11px] text-muted-foreground">
+                        {q.timeLimit ? `${q.timeLimit} mins` : "Untimed"} · Pass: {q.passingScore}%
+                      </p>
+                    </div>
+                    <Button variant="neonPurple" size="sm" className="shrink-0 text-xs h-7 px-3">
+                      Start
+                    </Button>
+                  </Link>
+                ))}
+              </div>
+            )}
           </Panel>
         </div>
       </div>

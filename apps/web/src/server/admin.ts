@@ -3,15 +3,10 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "./db";
 import { z } from "zod";
 import { getCurrentUserFn } from "./auth";
+import { ensurePermission, ensureAdmin } from "./permissions";
+export { ensurePermission, ensureAdmin };
 
-// Middleware to ensure user is admin
-async function ensureAdmin() {
-  const user = await getCurrentUserFn();
-  if (!user || user.role !== "ADMIN") {
-    throw new Error("Unauthorized: Admin access required");
-  }
-  return user;
-}
+
 
 // Turns raw Prisma/DB errors into a short, human-friendly message instead of
 // leaking the full query engine dump to the admin UI.
@@ -45,7 +40,7 @@ export const promoteToAdminFn = createServerFn({ method: "POST" }).handler(async
 });
 
 export const getAdminStatsFn = createServerFn({ method: "GET" }).handler(async () => {
-  await ensureAdmin();
+  await ensurePermission("stats");
 
   const totalUsers = await prisma.user.count();
   const totalCourses = await prisma.course.count();
@@ -63,7 +58,7 @@ export const getAdminStatsFn = createServerFn({ method: "GET" }).handler(async (
 });
 
 export const getAdminCoursesFn = createServerFn({ method: "GET" }).handler(async () => {
-  await ensureAdmin();
+  await ensurePermission("courses");
 
   const courses = await prisma.course.findMany({
     orderBy: { createdAt: "desc" },
@@ -375,10 +370,10 @@ export const deleteCategoryFn = createServerFn({ method: "POST" })
 
 export const getAdminUsersFn = createServerFn({ method: "GET" })
   .validator(
-    z.object({ role: z.enum(["ALL", "STUDENT", "SUB_ADMIN", "ADMIN"]).default("ALL") }).optional(),
+    z.object({ role: z.enum(["ALL", "STUDENT", "TECHNICAL_TEAM", "MANAGER", "ADMIN"]).default("ALL") }).optional(),
   )
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("users");
 
     const role = data?.role && data.role !== "ALL" ? data.role : undefined;
 
@@ -391,6 +386,7 @@ export const getAdminUsersFn = createServerFn({ method: "GET" })
         email: true,
         phone: true,
         role: true,
+        customRoleId: true,
         createdAt: true,
         _count: { select: { enrollments: true } },
         enrollments: {
@@ -417,15 +413,15 @@ export const getAdminUsersFn = createServerFn({ method: "GET" })
 
     const total = await prisma.user.count();
     const studentCount = await prisma.user.count({ where: { role: "STUDENT" } });
-    const staffCount = await prisma.user.count({ where: { role: { in: ["ADMIN", "SUB_ADMIN"] } } });
+    const staffCount = await prisma.user.count({ where: { role: { in: ["ADMIN", "MANAGER", "TECHNICAL_TEAM"] } } });
 
     return { users: mappedUsers, categories, total, studentCount, staffCount };
   });
 
 export const updateUserRoleFn = createServerFn({ method: "POST" })
-  .validator(z.object({ id: z.string(), role: z.enum(["ADMIN", "SUB_ADMIN", "STUDENT"]) }))
+  .validator(z.object({ id: z.string(), role: z.enum(["ADMIN", "MANAGER", "TECHNICAL_TEAM", "STUDENT"]) }))
   .handler(async ({ data }) => {
-    await ensureAdmin();
+    await ensurePermission("users");
 
     await prisma.user.update({ where: { id: data.id }, data: { role: data.role } });
     return { success: true };

@@ -8,6 +8,8 @@ import { CoursesModule } from "./courses/courses.module";
 import { AdminModule } from "./admin/admin.module";
 import { UsersModule } from "./users/users.module";
 import { EnrollmentsModule } from "./enrollments/enrollments.module";
+import { QuizzesModule } from "./quizzes/quizzes.module";
+import { SupportModule } from "./support/support.module";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 
@@ -29,8 +31,11 @@ import { AppService } from "./app.service";
     AdminModule,
     UsersModule,
     EnrollmentsModule,
+    QuizzesModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+

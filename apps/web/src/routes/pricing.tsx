@@ -44,7 +44,7 @@ function PricingPage() {
 
   const query = search.trim().toLowerCase();
   const filtered = moduleCourses.filter((c) => {
-    if (categoryFilter !== "ALL" && c.category.id !== categoryFilter) return false;
+    if (categoryFilter !== "ALL" && c.category?.id !== categoryFilter) return false;
     if (query && ![c.title, c.description].some((v) => v.toLowerCase().includes(query)))
       return false;
     return true;

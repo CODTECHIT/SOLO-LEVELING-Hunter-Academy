@@ -7,58 +7,64 @@ datasource db {
 }
 
 model User {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  password    String
-  name        String
-  phone       String?
-  role        Role     @default(STUDENT)
-  customRoleId String?
-  customRole  CustomRole? @relation(fields: [customRoleId], references: [id])
-  enrollments Enrollment[]
-  reviews     Review[]
-  refunds     Refund[]
-  payments    Payment[]
-  progress    LessonProgress[]
-  createdAt   DateTime @default(now())
+  id              String           @id @default(cuid())
+  email           String           @unique
+  password        String
+  name            String
+  phone           String?
+  role            Role             @default(STUDENT)
+  customRoleId    String?
+  customRole      CustomRole?      @relation(fields: [customRoleId], references: [id])
+  enrollments     Enrollment[]
+  reviews         Review[]
+  refunds         Refund[]
+  payments        Payment[]
+  progress        LessonProgress[]
+  quizSubmissions QuizSubmission[]
+  tickets         SupportTicket[]  @relation("UserTickets")
+  assignedTickets SupportTicket[]  @relation("AssignedStaffTickets")
+  supportMessages SupportMessage[]
+  createdAt       DateTime         @default(now())
 }
 
 model CustomRole {
   id          String   @id @default(cuid())
   name        String   @unique
-  permissions Json                    // { courses: true, users: false, payments: false, ... }
+  permissions Json                    // { courses: true, categories: true, quizzes: true, support: true, users: false, ... }
   users       User[]
 }
 
 model Course {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   title       String
-  slug        String   @unique
+  slug        String       @unique
   description String
   thumbnail   String?
   price       Float
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
+  category    Category     @relation(fields: [categoryId], references: [id])
   lessons     Lesson[]
+  quizzes     Quiz[]
   enrollments Enrollment[]
   reviews     Review[]
   payments    Payment[]
   faqs        FaqItem[]
-  published   Boolean  @default(false)
-  type        CourseType @default(FULL)
-  createdAt   DateTime @default(now())
+  published   Boolean      @default(false)
+  type        CourseType   @default(FULL)
+  createdAt   DateTime     @default(now())
 }
 
 model Lesson {
-  id          String   @id @default(cuid())
+  id          String           @id @default(cuid())
   courseId    String
-  course      Course   @relation(fields: [courseId], references: [id])
+  course      Course           @relation(fields: [courseId], references: [id])
   title       String
   description String?
   videoUrl    String
   order       Int
-  duration    Int?     // seconds
+  duration    Int?             // seconds
   progress    LessonProgress[]
+  quiz        Quiz?
 }
 
 model Enrollment {
@@ -176,10 +182,130 @@ model IntroVideo {
   createdAt DateTime @default(now())
 }
 
+// ---------------- QUIZ SYSTEM ----------------
+
+model Quiz {
+  id           String           @id @default(cuid())
+  title        String
+  description  String?          @db.Text
+  courseId     String?
+  course       Course?          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessonId     String?          @unique
+  lesson       Lesson?          @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  timeLimit    Int              @default(0) // minutes, 0 = unlimited
+  passingScore Int              @default(50) // percentage
+  questions    QuizQuestion[]
+  submissions  QuizSubmission[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model QuizQuestion {
+  id          String                 @id @default(cuid())
+  quizId      String
+  quiz        Quiz                   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  question    String                 @db.Text
+  explanation String?                @db.Text
+  order       Int                    @default(0)
+  marks       Int                    @default(1)
+  options     QuizOption[]
+  answers     QuizSubmissionAnswer[]
+  createdAt   DateTime               @default(now())
+}
+
+model QuizOption {
+  id         String                 @id @default(cuid())
+  questionId String
+  question   QuizQuestion           @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String
+  isCorrect  Boolean                @default(false)
+  order      Int                    @default(0)
+  answers    QuizSubmissionAnswer[]
+}
+
+model QuizSubmission {
+  id          String                 @id @default(cuid())
+  quizId      String
+  quiz        Quiz                   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score       Float                  @default(0)
+  totalMarks  Float                  @default(0)
+  percentage  Float                  @default(0)
+  passed      Boolean                @default(false)
+  answers     QuizSubmissionAnswer[]
+  createdAt   DateTime               @default(now())
+}
+
+model QuizSubmissionAnswer {
+  id               String         @id @default(cuid())
+  submissionId     String
+  submission       QuizSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  questionId       String
+  question         QuizQuestion   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOptionId String?
+  selectedOption   QuizOption?    @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+  isCorrect        Boolean        @default(false)
+}
+
+// ---------------- CUSTOMER SUPPORT & LIVE MESSAGING ----------------
+
+model SupportTicket {
+  id           String           @id @default(cuid())
+  ticketNumber String           @unique @default(cuid())
+  userId       String
+  user         User             @relation("UserTickets", fields: [userId], references: [id], onDelete: Cascade)
+  assignedToId String?
+  assignedTo   User?            @relation("AssignedStaffTickets", fields: [assignedToId], references: [id])
+  subject      String
+  category     SupportCategory  @default(GENERAL)
+  priority     SupportPriority  @default(MEDIUM)
+  status       SupportStatus    @default(OPEN)
+  messages     SupportMessage[]
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+}
+
+model SupportMessage {
+  id          String        @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId    String
+  sender      User          @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  senderRole  Role          @default(STUDENT)
+  message     String        @db.Text
+  attachments String?
+  createdAt   DateTime      @default(now())
+}
+
 enum Role {
   ADMIN
+  MANAGER
+  TECHNICAL_TEAM
   SUB_ADMIN
   STUDENT
+}
+
+enum SupportCategory {
+  GENERAL
+  TECHNICAL
+  BILLING
+  COURSE_CONTENT
+  ACCOUNT
+}
+
+enum SupportPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum SupportStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
 }
 
 // FULL = complete paid pathway (e.g. ₹3,999 tier)
@@ -188,13 +314,16 @@ enum CourseType {
   FULL
   MODULE
 }
+
 enum PaymentStatus {
   PENDING
   PAID
   FAILED
 }
+
 enum RefundStatus {
   PENDING
   APPROVED
   REJECTED
 }
+

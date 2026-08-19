@@ -1,85 +1,42 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Lock, PlayCircle, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Lock, PlayCircle } from "lucide-react";
 import { Panel, PanelTitle, StatusTag } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { getAuthToken } from "@/lib/api";
-import { getUserProfile, getUserEnrollments, getHunterStats, type EnrolledCourse } from "@/lib/api-users";
+import { getCurrentUserFn } from "@/server/auth";
+import { getHunterStatsFn, getEnrolledCoursesFn } from "@/server/courses";
 
 export const Route = createFileRoute("/_student/dashboard")({
-  beforeLoad: async () => {
-    const token = getAuthToken();
-    if (!token) {
+  loader: async () => {
+    const user = await getCurrentUserFn();
+    if (!user) {
       throw redirect({ to: "/login" });
     }
+    const [stats, enrolledCourses] = await Promise.all([
+      getHunterStatsFn(),
+      getEnrolledCoursesFn(),
+    ]);
+    return { user, stats, enrolledCourses };
   },
+  head: () => ({
+    meta: [
+      { title: "Hunter Dashboard — Cyber Tech Academy" },
+      { name: "description", content: "View your stats, rank, and active courses." },
+    ],
+  }),
   component: Dashboard,
 });
 
 function Dashboard() {
-  const token = getAuthToken();
+  const { user: userProfile, stats, enrolledCourses } = Route.useLoaderData();
 
-  // Fetch user profile
-  const { data: userProfile, isLoading: profileLoading } = useQuery({
-    queryKey: ["userProfile"],
-    queryFn: getUserProfile,
-    enabled: !!token,
-  });
-
-  // Fetch enrolled courses
-  const { data: enrolledCourses = [], isLoading: coursesLoading } = useQuery({
-    queryKey: ["enrollments"],
-    queryFn: getUserEnrollments,
-    enabled: !!token,
-  });
-
-  // Fetch hunter stats
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ["hunterStats"],
-    queryFn: getHunterStats,
-    enabled: !!token,
-  });
-
-  const isLoading = profileLoading || coursesLoading || statsLoading;
-
-  if (isLoading) {
-    return (
-      <div className="animate-in fade-in duration-500 flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <Loader2 className="w-12 h-12 text-neon-cyan animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading your dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!userProfile || !stats) {
-    return (
-      <div className="animate-in fade-in duration-500 space-y-6">
-        <div className="text-center py-12 text-muted-foreground">
-          <Lock className="w-8 h-8 mb-4 opacity-20 mx-auto" />
-          <p>Unable to load dashboard</p>
-          <Link to="/login">
-            <Button variant="neonPurple" className="mt-6">
-              Back to Login
-            </Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  // Calculate completed courses from enrolled courses
-  const completedCourses = enrolledCourses.filter((c) => {
-    const enrollment = c as unknown as EnrolledCourse & {
-      course: { _count: { lessons: number } };
-    };
-    return enrollment.course._count.lessons > 0;
-  }).length;
+  const completedCourses =
+    stats.coursesCompleted ?? enrolledCourses.filter((c) => c.progress === 100).length;
 
   return (
     <div className="animate-in fade-in duration-500 space-y-6">
-      <h1 className="font-display text-2xl font-bold text-foreground">Welcome back, {userProfile.name}</h1>
+      <h1 className="font-display text-2xl font-bold text-foreground">
+        Welcome back, {userProfile.name}
+      </h1>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Panel accent="cyan" className="flex flex-col justify-center">
@@ -146,21 +103,18 @@ function Dashboard() {
         </PanelTitle>
         <div className="grid gap-4 sm:grid-cols-2 mt-4">
           {enrolledCourses.map((c) => {
-            const course = c.course;
-            const total = course._count.lessons || 0;
-            const expiresAt = c.expiresAt ? new Date(c.expiresAt) : null;
-            const expired = expiresAt && expiresAt.getTime() <= Date.now();
-            const status = expired ? "Expired" : "Active";
+            const total = c.totalLessons ?? 0;
+            const status = c.expired ? "Expired" : "Active";
             return (
               <div
                 key={c.id}
                 className="hover-glow flex flex-col rounded-2xl border border-border/70 bg-background/40 overflow-hidden"
               >
                 <div className="aspect-video bg-surface-2 relative overflow-hidden">
-                  {course.thumbnail ? (
+                  {c.thumbnail ? (
                     <img
-                      src={course.thumbnail}
-                      alt={course.title}
+                      src={c.thumbnail}
+                      alt={c.title}
                       className="absolute inset-0 w-full h-full object-cover opacity-70"
                     />
                   ) : (
@@ -177,12 +131,12 @@ function Dashboard() {
                   </div>
                 </div>
                 <div className="p-4 flex flex-col flex-1">
-                  <p className="font-display font-bold text-foreground line-clamp-1">{course.title}</p>
+                  <p className="font-display font-bold text-foreground line-clamp-1">{c.title}</p>
                   <p className="text-xs text-muted-foreground mt-1 mb-4">
-                    {total} lessons
+                    {total} lesson{total === 1 ? "" : "s"} · {c.progress ?? 0}% completed
                   </p>
                   <div className="mt-auto pt-2 border-t border-border/50">
-                    <Link to="/learn/$courseId" params={{ courseId: course.slug }}>
+                    <Link to="/learn/$courseId" params={{ courseId: c.slug }}>
                       <Button
                         variant="ghost"
                         size="sm"
@@ -211,6 +165,5 @@ function Dashboard() {
         )}
       </Panel>
     </div>
-
   );
 }

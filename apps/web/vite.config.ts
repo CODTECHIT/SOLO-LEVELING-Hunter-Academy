@@ -15,4 +15,10 @@ export default defineConfig({
     tailwindcss(),
     tsConfigPaths(),
   ],
+  optimizeDeps: {
+    exclude: ["@prisma/client", "@prisma/adapter-pg", "pg", "bcryptjs"],
+  },
+  ssr: {
+    external: ["@prisma/client", "@prisma/adapter-pg", "pg", "bcryptjs", "jose"],
+  },
 });

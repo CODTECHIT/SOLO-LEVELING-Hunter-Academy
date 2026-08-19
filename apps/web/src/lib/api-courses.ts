@@ -1,5 +1,7 @@
 import { api } from "./api";
-export type { Course, CourseDetail, Lesson, Review, Category } from "@lms/types";
+import type { Course, CourseDetail, Lesson, Review, Category } from "@lms/types";
+export type { Course, CourseDetail, Lesson, Review, Category };
+
 
 
 export async function getAllCourses(skip = 0, take = 10): Promise<Course[]> {

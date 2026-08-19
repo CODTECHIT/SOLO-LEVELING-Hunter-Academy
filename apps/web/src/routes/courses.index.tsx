@@ -1,19 +1,25 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Search, Layers, SlidersHorizontal, Boxes, Check, BookOpen, Loader2 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
 import { TopNav, SiteFooter } from "@/components/site/nav";
 import { HunterHero } from "@/components/site/catalog-hero";
 import { CourseCard } from "@/components/site/course-card";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { getAllCourses, getCategories } from "@/lib/api-courses";
-import { getUserEnrollments } from "@/lib/api-users";
-import { getAuthToken } from "@/lib/api";
+import { getCatalogFn, getEnrolledCoursesFn } from "@/server/courses";
+import { getCurrentUserFn } from "@/server/auth";
 import { HeroCtas } from "@/components/site/hero-ctas";
 import { useState, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/courses/")({
+  loader: async () => {
+    const [{ categories, courses }, user, enrolled] = await Promise.all([
+      getCatalogFn(),
+      getCurrentUserFn(),
+      getEnrolledCoursesFn(),
+    ]);
+    return { categories, courses, user, enrolledCourses: enrolled };
+  },
   head: () => ({
     meta: [
       { title: "Course Catalog — Cyber Tech Academy" },
@@ -24,31 +30,13 @@ export const Route = createFileRoute("/courses/")({
 });
 
 function Catalog() {
+  const { categories, courses, user, enrolledCourses } = Route.useLoaderData();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // Fetch courses and categories
-  const { data: courses = [], isLoading: coursesLoading } = useQuery({
-    queryKey: ["courses"],
-    queryFn: () => getAllCourses(0, 100),
-  });
+  const isLoading = false;
 
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
-    queryKey: ["categories"],
-    queryFn: getCategories,
-  });
-
-  // Only fetch enrollments if user is authenticated
-  const token = getAuthToken();
-  const { data: enrolledCourses = [] } = useQuery({
-    queryKey: ["enrollments"],
-    queryFn: getUserEnrollments,
-    enabled: !!token,
-  });
-
-  const isLoading = coursesLoading || categoriesLoading;
-  const user = token ? { id: "current", email: "user@example.com" } : null;
 
   const enrolledIds = useMemo(
     () => new Set(enrolledCourses.map((c: any) => c.courseId)),

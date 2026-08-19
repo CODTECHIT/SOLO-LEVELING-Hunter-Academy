@@ -101,14 +101,16 @@ export function CourseCard({
 
       <div className="flex flex-1 flex-col p-5 sm:p-6">
         <div className="mb-3 flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
-              t.badge,
-            )}
-          >
-            {course.category.name}
-          </span>
+          {course.category?.name && (
+            <span
+              className={cn(
+                "inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset",
+                t.badge,
+              )}
+            >
+              {course.category.name}
+            </span>
+          )}
           <span
             className={cn(
               "inline-flex items-center rounded-md px-2 py-1 text-[10px] font-display font-bold uppercase tracking-widest ring-1 ring-inset",

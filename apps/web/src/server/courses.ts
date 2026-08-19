@@ -45,8 +45,23 @@ export const getCourseFn = createServerFn({ method: "GET" })
       include: {
         lessons: {
           orderBy: { order: "asc" },
+          include: {
+            quiz: {
+              select: { id: true, title: true, timeLimit: true, passingScore: true },
+            },
+          },
+        },
+        quizzes: {
+          select: { id: true, title: true, lessonId: true, timeLimit: true, passingScore: true },
         },
         category: true,
+        reviews: {
+          include: {
+            user: {
+              select: { id: true, name: true },
+            },
+          },
+        },
       },
     });
 

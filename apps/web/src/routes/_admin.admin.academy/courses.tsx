@@ -373,7 +373,7 @@ function AdminCourses() {
                 </td>
                 <td className="px-6 py-4">
                   <span className="inline-flex items-center rounded-full border border-neon-purple/30 bg-neon-purple/10 px-2 py-0.5 text-xs text-neon-purple">
-                    {course.category.name}
+                    {course.category?.name || "Uncategorized"}
                   </span>
                 </td>
                 <td className="px-6 py-4">

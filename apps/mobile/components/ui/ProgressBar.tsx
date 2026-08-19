@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, StyleSheet } from "react-native";
-// import Animated, { useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { View, Text, StyleSheet, type DimensionValue } from "react-native";
 import { colors, fonts, fontSizes, radii, spacing } from "@/theme";
 
 type ProgressBarProps = {
@@ -18,15 +17,14 @@ export function ProgressBar({
   showPercent = false,
   height = 6,
 }: ProgressBarProps) {
-  // const progress = useSharedValue(0);
-
   useEffect(() => {
-    // progress.value = withTiming(Math.min(value, 100) / 100, { duration: 700 });
   }, [value]);
 
-  const barStyle = {
+  const barStyle: { width: DimensionValue } = {
     width: `${(Math.min(value, 100) / 100) * 100}%`,
   };
+
+
 
   return (
     <View style={styles.wrapper}>

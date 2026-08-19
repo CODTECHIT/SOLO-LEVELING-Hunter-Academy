@@ -72,6 +72,13 @@ export class CoursesService {
         lessons: {
           orderBy: { order: "asc" },
         },
+        reviews: {
+          include: {
+            user: {
+              select: { id: true, name: true },
+            },
+          },
+        },
         _count: {
           select: { enrollments: true },
         },

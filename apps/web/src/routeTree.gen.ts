@@ -30,15 +30,18 @@ import { Route as CoursesSlugRouteImport } from './routes/courses.$slug'
 import { Route as FeaturesInstructorRouteImport } from './routes/features.instructor'
 import { Route as FeaturesStudentRouteImport } from './routes/features.student'
 import { Route as StudentLearnCourseIdRouteImport } from './routes/_student.learn.$courseId'
+import { Route as StudentQuizQuizIdRouteImport } from './routes/_student.quiz.$quizId'
 import { Route as AdminAcademyLoginRouteImport } from './routes/admin.academy.login'
 import { Route as AdminAdminAcademyIndexRouteImport } from './routes/_admin.admin.academy/index'
 import { Route as AdminAdminAcademyCategoriesRouteImport } from './routes/_admin.admin.academy/categories'
 import { Route as AdminAdminAcademyCoursesRouteImport } from './routes/_admin.admin.academy/courses'
 import { Route as AdminAdminAcademyPaymentsRouteImport } from './routes/_admin.admin.academy/payments'
+import { Route as AdminAdminAcademyQuizzesRouteImport } from './routes/_admin.admin.academy/quizzes'
 import { Route as AdminAdminAcademyRefundsRouteImport } from './routes/_admin.admin.academy/refunds'
 import { Route as AdminAdminAcademyReportsRouteImport } from './routes/_admin.admin.academy/reports'
 import { Route as AdminAdminAcademyReviewsRouteImport } from './routes/_admin.admin.academy/reviews'
 import { Route as AdminAdminAcademyRolesRouteImport } from './routes/_admin.admin.academy/roles'
+import { Route as AdminAdminAcademySupportRouteImport } from './routes/_admin.admin.academy/support'
 import { Route as AdminAdminAcademyUsersRouteImport } from './routes/_admin.admin.academy/users'
 import { Route as AdminAdminAcademyCmsFaqRouteImport } from './routes/_admin.admin.academy/cms.faq'
 import { Route as AdminAdminAcademyCmsIntroVideoRouteImport } from './routes/_admin.admin.academy.cms.intro-video'
@@ -156,6 +159,11 @@ const StudentLearnCourseIdRoute = StudentLearnCourseIdRouteImport.update({
   path: '/learn/$courseId',
   getParentRoute: () => StudentRoute,
 } as any)
+const StudentQuizQuizIdRoute = StudentQuizQuizIdRouteImport.update({
+  id: '/quiz/$quizId',
+  path: '/quiz/$quizId',
+  getParentRoute: () => StudentRoute,
+} as any)
 const AdminAcademyLoginRoute = AdminAcademyLoginRouteImport.update({
   id: '/admin/academy/login',
   path: '/admin/academy/login',
@@ -184,6 +192,12 @@ const AdminAdminAcademyPaymentsRoute =
     path: '/admin/academy/payments',
     getParentRoute: () => AdminRoute,
   } as any)
+const AdminAdminAcademyQuizzesRoute =
+  AdminAdminAcademyQuizzesRouteImport.update({
+    id: '/admin/academy/quizzes',
+    path: '/admin/academy/quizzes',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminAcademyRefundsRoute =
   AdminAdminAcademyRefundsRouteImport.update({
     id: '/admin/academy/refunds',
@@ -207,6 +221,12 @@ const AdminAdminAcademyRolesRoute = AdminAdminAcademyRolesRouteImport.update({
   path: '/admin/academy/roles',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminAdminAcademySupportRoute =
+  AdminAdminAcademySupportRouteImport.update({
+    id: '/admin/academy/support',
+    path: '/admin/academy/support',
+    getParentRoute: () => AdminRoute,
+  } as any)
 const AdminAdminAcademyUsersRoute = AdminAdminAcademyUsersRouteImport.update({
   id: '/admin/academy/users',
   path: '/admin/academy/users',
@@ -304,14 +324,17 @@ export interface FileRoutesByFullPath {
   '/features/student': typeof FeaturesStudentRoute
   '/courses/': typeof CoursesIndexRoute
   '/learn/$courseId': typeof StudentLearnCourseIdRoute
+  '/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/admin/academy/login': typeof AdminAcademyLoginRoute
   '/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
   '/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
   '/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
+  '/admin/academy/quizzes': typeof AdminAdminAcademyQuizzesRoute
   '/admin/academy/refunds': typeof AdminAdminAcademyRefundsRoute
   '/admin/academy/reports': typeof AdminAdminAcademyReportsRoute
   '/admin/academy/reviews': typeof AdminAdminAcademyReviewsRoute
   '/admin/academy/roles': typeof AdminAdminAcademyRolesRoute
+  '/admin/academy/support': typeof AdminAdminAcademySupportRoute
   '/admin/academy/users': typeof AdminAdminAcademyUsersRouteWithChildren
   '/admin/academy/': typeof AdminAdminAcademyIndexRoute
   '/admin/academy/cms/faq': typeof AdminAdminAcademyCmsFaqRoute
@@ -347,14 +370,17 @@ export interface FileRoutesByTo {
   '/features/student': typeof FeaturesStudentRoute
   '/courses': typeof CoursesIndexRoute
   '/learn/$courseId': typeof StudentLearnCourseIdRoute
+  '/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/admin/academy/login': typeof AdminAcademyLoginRoute
   '/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
   '/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
   '/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
+  '/admin/academy/quizzes': typeof AdminAdminAcademyQuizzesRoute
   '/admin/academy/refunds': typeof AdminAdminAcademyRefundsRoute
   '/admin/academy/reports': typeof AdminAdminAcademyReportsRoute
   '/admin/academy/reviews': typeof AdminAdminAcademyReviewsRoute
   '/admin/academy/roles': typeof AdminAdminAcademyRolesRoute
+  '/admin/academy/support': typeof AdminAdminAcademySupportRoute
   '/admin/academy/users': typeof AdminAdminAcademyUsersRouteWithChildren
   '/admin/academy': typeof AdminAdminAcademyIndexRoute
   '/admin/academy/cms/faq': typeof AdminAdminAcademyCmsFaqRoute
@@ -393,14 +419,17 @@ export interface FileRoutesById {
   '/features/student': typeof FeaturesStudentRoute
   '/courses/': typeof CoursesIndexRoute
   '/_student/learn/$courseId': typeof StudentLearnCourseIdRoute
+  '/_student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/admin/academy/login': typeof AdminAcademyLoginRoute
   '/_admin/admin/academy/categories': typeof AdminAdminAcademyCategoriesRoute
   '/_admin/admin/academy/courses': typeof AdminAdminAcademyCoursesRouteWithChildren
   '/_admin/admin/academy/payments': typeof AdminAdminAcademyPaymentsRoute
+  '/_admin/admin/academy/quizzes': typeof AdminAdminAcademyQuizzesRoute
   '/_admin/admin/academy/refunds': typeof AdminAdminAcademyRefundsRoute
   '/_admin/admin/academy/reports': typeof AdminAdminAcademyReportsRoute
   '/_admin/admin/academy/reviews': typeof AdminAdminAcademyReviewsRoute
   '/_admin/admin/academy/roles': typeof AdminAdminAcademyRolesRoute
+  '/_admin/admin/academy/support': typeof AdminAdminAcademySupportRoute
   '/_admin/admin/academy/users': typeof AdminAdminAcademyUsersRouteWithChildren
   '/_admin/admin/academy/': typeof AdminAdminAcademyIndexRoute
   '/_admin/admin/academy/cms/faq': typeof AdminAdminAcademyCmsFaqRoute
@@ -438,14 +467,17 @@ export interface FileRouteTypes {
     | '/features/student'
     | '/courses/'
     | '/learn/$courseId'
+    | '/quiz/$quizId'
     | '/admin/academy/login'
     | '/admin/academy/categories'
     | '/admin/academy/courses'
     | '/admin/academy/payments'
+    | '/admin/academy/quizzes'
     | '/admin/academy/refunds'
     | '/admin/academy/reports'
     | '/admin/academy/reviews'
     | '/admin/academy/roles'
+    | '/admin/academy/support'
     | '/admin/academy/users'
     | '/admin/academy/'
     | '/admin/academy/cms/faq'
@@ -481,14 +513,17 @@ export interface FileRouteTypes {
     | '/features/student'
     | '/courses'
     | '/learn/$courseId'
+    | '/quiz/$quizId'
     | '/admin/academy/login'
     | '/admin/academy/categories'
     | '/admin/academy/courses'
     | '/admin/academy/payments'
+    | '/admin/academy/quizzes'
     | '/admin/academy/refunds'
     | '/admin/academy/reports'
     | '/admin/academy/reviews'
     | '/admin/academy/roles'
+    | '/admin/academy/support'
     | '/admin/academy/users'
     | '/admin/academy'
     | '/admin/academy/cms/faq'
@@ -526,14 +561,17 @@ export interface FileRouteTypes {
     | '/features/student'
     | '/courses/'
     | '/_student/learn/$courseId'
+    | '/_student/quiz/$quizId'
     | '/admin/academy/login'
     | '/_admin/admin/academy/categories'
     | '/_admin/admin/academy/courses'
     | '/_admin/admin/academy/payments'
+    | '/_admin/admin/academy/quizzes'
     | '/_admin/admin/academy/refunds'
     | '/_admin/admin/academy/reports'
     | '/_admin/admin/academy/reviews'
     | '/_admin/admin/academy/roles'
+    | '/_admin/admin/academy/support'
     | '/_admin/admin/academy/users'
     | '/_admin/admin/academy/'
     | '/_admin/admin/academy/cms/faq'
@@ -718,6 +756,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StudentLearnCourseIdRouteImport
       parentRoute: typeof StudentRoute
     }
+    '/_student/quiz/$quizId': {
+      id: '/_student/quiz/$quizId'
+      path: '/quiz/$quizId'
+      fullPath: '/quiz/$quizId'
+      preLoaderRoute: typeof StudentQuizQuizIdRouteImport
+      parentRoute: typeof StudentRoute
+    }
     '/admin/academy/login': {
       id: '/admin/academy/login'
       path: '/admin/academy/login'
@@ -753,6 +798,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAdminAcademyPaymentsRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/_admin/admin/academy/quizzes': {
+      id: '/_admin/admin/academy/quizzes'
+      path: '/admin/academy/quizzes'
+      fullPath: '/admin/academy/quizzes'
+      preLoaderRoute: typeof AdminAdminAcademyQuizzesRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/_admin/admin/academy/refunds': {
       id: '/_admin/admin/academy/refunds'
       path: '/admin/academy/refunds'
@@ -779,6 +831,13 @@ declare module '@tanstack/react-router' {
       path: '/admin/academy/roles'
       fullPath: '/admin/academy/roles'
       preLoaderRoute: typeof AdminAdminAcademyRolesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/_admin/admin/academy/support': {
+      id: '/_admin/admin/academy/support'
+      path: '/admin/academy/support'
+      fullPath: '/admin/academy/support'
+      preLoaderRoute: typeof AdminAdminAcademySupportRouteImport
       parentRoute: typeof AdminRoute
     }
     '/_admin/admin/academy/users': {
@@ -927,10 +986,12 @@ interface AdminRouteChildren {
   AdminAdminAcademyCategoriesRoute: typeof AdminAdminAcademyCategoriesRoute
   AdminAdminAcademyCoursesRoute: typeof AdminAdminAcademyCoursesRouteWithChildren
   AdminAdminAcademyPaymentsRoute: typeof AdminAdminAcademyPaymentsRoute
+  AdminAdminAcademyQuizzesRoute: typeof AdminAdminAcademyQuizzesRoute
   AdminAdminAcademyRefundsRoute: typeof AdminAdminAcademyRefundsRoute
   AdminAdminAcademyReportsRoute: typeof AdminAdminAcademyReportsRoute
   AdminAdminAcademyReviewsRoute: typeof AdminAdminAcademyReviewsRoute
   AdminAdminAcademyRolesRoute: typeof AdminAdminAcademyRolesRoute
+  AdminAdminAcademySupportRoute: typeof AdminAdminAcademySupportRoute
   AdminAdminAcademyUsersRoute: typeof AdminAdminAcademyUsersRouteWithChildren
   AdminAdminAcademyIndexRoute: typeof AdminAdminAcademyIndexRoute
   AdminAdminAcademyCmsFaqRoute: typeof AdminAdminAcademyCmsFaqRoute
@@ -946,10 +1007,12 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminAdminAcademyCategoriesRoute: AdminAdminAcademyCategoriesRoute,
   AdminAdminAcademyCoursesRoute: AdminAdminAcademyCoursesRouteWithChildren,
   AdminAdminAcademyPaymentsRoute: AdminAdminAcademyPaymentsRoute,
+  AdminAdminAcademyQuizzesRoute: AdminAdminAcademyQuizzesRoute,
   AdminAdminAcademyRefundsRoute: AdminAdminAcademyRefundsRoute,
   AdminAdminAcademyReportsRoute: AdminAdminAcademyReportsRoute,
   AdminAdminAcademyReviewsRoute: AdminAdminAcademyReviewsRoute,
   AdminAdminAcademyRolesRoute: AdminAdminAcademyRolesRoute,
+  AdminAdminAcademySupportRoute: AdminAdminAcademySupportRoute,
   AdminAdminAcademyUsersRoute: AdminAdminAcademyUsersRouteWithChildren,
   AdminAdminAcademyIndexRoute: AdminAdminAcademyIndexRoute,
   AdminAdminAcademyCmsFaqRoute: AdminAdminAcademyCmsFaqRoute,
@@ -972,6 +1035,7 @@ interface StudentRouteChildren {
   StudentPurchasesRoute: typeof StudentPurchasesRoute
   StudentRefundsRoute: typeof StudentRefundsRoute
   StudentLearnCourseIdRoute: typeof StudentLearnCourseIdRoute
+  StudentQuizQuizIdRoute: typeof StudentQuizQuizIdRoute
 }
 
 const StudentRouteChildren: StudentRouteChildren = {
@@ -981,6 +1045,7 @@ const StudentRouteChildren: StudentRouteChildren = {
   StudentPurchasesRoute: StudentPurchasesRoute,
   StudentRefundsRoute: StudentRefundsRoute,
   StudentLearnCourseIdRoute: StudentLearnCourseIdRoute,
+  StudentQuizQuizIdRoute: StudentQuizQuizIdRoute,
 }
 
 const StudentRouteWithChildren =

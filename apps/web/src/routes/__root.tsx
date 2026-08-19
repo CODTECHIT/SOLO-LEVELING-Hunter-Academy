@@ -15,6 +15,42 @@ import appCss from "../styles.css?url";
 import { DiagonalSplashIntro } from "@/components/site/DiagonalSplashIntro";
 
 if (typeof window !== "undefined") {
+  // Polyfill Buffer in browser if not provided by environment
+  const dummyBuffer = {
+    isBuffer: (obj: any) => obj instanceof Uint8Array,
+    from: (data: any, _encoding?: string) => {
+      if (typeof data === "string") return new TextEncoder().encode(data);
+      if (Array.isArray(data) || data instanceof ArrayBuffer) return new Uint8Array(data);
+      return new Uint8Array(0);
+    },
+    alloc: (size: number) => new Uint8Array(size),
+    allocUnsafe: (size: number) => new Uint8Array(size),
+    allocUnsafeSlow: (size: number) => new Uint8Array(size),
+    concat: (list: Uint8Array[]) => {
+      const totalLength = list.reduce((acc, curr) => acc + (curr?.length || 0), 0);
+      const res = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const item of list) {
+        if (item) {
+          res.set(item, offset);
+          offset += item.length;
+        }
+      }
+      return res;
+    },
+  };
+  (window as any).Buffer = Object.assign((window as any).Buffer || {}, dummyBuffer);
+
+
+  // Unregister stale service workers that may cause CSP/fetch errors
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister().catch(() => {});
+      }
+    });
+  }
+
   const originalRemoveChild = Node.prototype.removeChild;
   Node.prototype.removeChild = function <T extends Node>(child: T): T {
     if (child.parentNode !== this) {
@@ -112,6 +148,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/logo.png", type: "image/png" },
     ],
   }),
+
 
   shellComponent: RootShell,
   component: RootComponent,

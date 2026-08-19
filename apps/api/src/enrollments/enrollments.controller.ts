@@ -20,16 +20,18 @@ export class EnrollmentsController {
     @CurrentUser() user: any,
     @Param("courseId") courseId: string,
   ) {
+    const userId = user?.id || user?.userId;
     if (!courseId) {
       throw new BadRequestException("Course ID is required");
     }
-    return this.enrollmentsService.enrollUser(user.id, courseId);
+    return this.enrollmentsService.enrollUser(userId, courseId);
   }
 
   @Get()
   @UseGuards(JwtAuthGuard)
   async getMyEnrollments(@CurrentUser() user: any) {
-    return this.enrollmentsService.getUserEnrollments(user.id);
+    const userId = user?.id || user?.userId;
+    return this.enrollmentsService.getUserEnrollments(userId);
   }
 
   @Get(":courseId/enrolled")
@@ -38,8 +40,9 @@ export class EnrollmentsController {
     @CurrentUser() user: any,
     @Param("courseId") courseId: string,
   ) {
+    const userId = user?.id || user?.userId;
     const isEnrolled = await this.enrollmentsService.isUserEnrolled(
-      user.id,
+      userId,
       courseId,
     );
     return { isEnrolled };
