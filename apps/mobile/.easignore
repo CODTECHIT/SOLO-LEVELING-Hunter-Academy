@@ -1,16 +1,5 @@
 # EAS Build Ignore
 .git
-.agents
-.idea
-.vscode
-*.log
-dist
-dist-ssr
-.output
-.vinxi
-.tanstack
-.nitro
-.turbo
-apps/api/dist
-apps/web/dist
 node_modules
+*.log
+.expo

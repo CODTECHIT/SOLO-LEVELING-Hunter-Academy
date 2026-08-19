@@ -2,7 +2,28 @@ import { saveToken, getToken, clearToken } from "./token";
 export { saveToken, getToken, clearToken };
 import { api } from "./api";
 
-import type { SignUpRequest, SignInRequest, AuthResponse } from "@lms/types";
+export interface SignUpRequest {
+  name: string;
+  email: string;
+  password: string;
+  phone?: string;
+}
+
+export interface SignInRequest {
+  email: string;
+  password: string;
+}
+
+export interface AuthResponse {
+  user: {
+    id: string;
+    email: string;
+    name: string;
+    role: string;
+    phone?: string | null;
+  };
+  token: string;
+}
 
 export async function signUp(data: SignUpRequest): Promise<AuthResponse> {
   try {

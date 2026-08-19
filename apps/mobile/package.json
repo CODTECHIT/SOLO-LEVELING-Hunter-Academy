@@ -15,7 +15,6 @@
     "@expo-google-fonts/rajdhani": "^0.2.3",
     "@expo/metro-runtime": "~57.0.8",
     "@hookform/resolvers": "^3.9.0",
-    "@lms/types": "*",
     "@tanstack/react-query": "^5.51.23",
     "axios": "^1.7.3",
     "date-fns": "^3.6.0",
