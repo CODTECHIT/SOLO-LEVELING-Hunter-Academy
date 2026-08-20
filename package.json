@@ -9,7 +9,9 @@
     "build:web": "cd apps/web && npm run build"
   },
   "workspaces": [
-    "apps/*",
+    "apps/api",
+    "apps/web",
+    "apps/mobile",
     "packages/*"
   ],
   "devDependencies": {
