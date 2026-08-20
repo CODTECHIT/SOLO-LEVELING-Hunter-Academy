@@ -56,7 +56,7 @@ export function HunterStatsBar({
   return (
     <div
       className={cn(
-        "flex flex-col gap-3 w-full md:w-[420px] min-w-0 rounded-2xl border border-neon-purple/40 bg-surface-2/60 p-4 backdrop-blur-xl shadow-[0_0_30px_rgba(168,85,247,0.18)] relative overflow-hidden group",
+        "flex flex-col gap-3 w-full lg:w-[420px] max-w-full min-w-0 rounded-2xl border border-neon-purple/40 bg-surface-2/60 p-3.5 sm:p-4 backdrop-blur-xl shadow-[0_0_30px_rgba(168,85,247,0.18)] relative overflow-hidden group",
         className,
       )}
     >
@@ -66,7 +66,7 @@ export function HunterStatsBar({
 
       {/* 1. EXP Section */}
       <div className="space-y-1.5">
-        <div className="flex justify-between text-[11px] font-display uppercase tracking-widest text-muted-foreground font-bold">
+        <div className="flex justify-between items-center text-[10px] sm:text-[11px] font-display uppercase tracking-wider sm:tracking-widest text-muted-foreground font-bold">
           <span className="flex items-center gap-1.5 text-foreground">
             <span className="h-2 w-2 rounded-full bg-neon-cyan animate-ping" />
             EXP
@@ -87,15 +87,15 @@ export function HunterStatsBar({
       </div>
 
       {/* 2. HP & MP Section */}
-      <div className="flex gap-4 min-w-0">
+      <div className="flex gap-2.5 sm:gap-4 min-w-0">
         {/* HP • FOCUS Bar */}
         <div className="space-y-1.5 flex-1 min-w-0">
-          <div className="flex justify-between text-[10px] font-display uppercase tracking-widest text-muted-foreground font-bold">
-            <span className="flex items-center gap-1.5 text-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-neon-lime" />
+          <div className="flex justify-between items-center text-[9px] sm:text-[10px] font-display uppercase tracking-wider sm:tracking-widest text-muted-foreground font-bold">
+            <span className="flex items-center gap-1 sm:gap-1.5 text-foreground truncate">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-neon-lime" />
               HP • FOCUS
             </span>
-            <span className="text-neon-lime font-bold glow-text">{displayHp}%</span>
+            <span className="text-neon-lime font-bold glow-text shrink-0 ml-1">{displayHp}%</span>
           </div>
           <div className="h-2.5 w-full bg-surface-2 rounded-full overflow-hidden relative border border-neon-lime/30 p-0.5">
             <div
@@ -109,12 +109,12 @@ export function HunterStatsBar({
 
         {/* MP • STREAK Bar */}
         <div className="space-y-1.5 flex-1 min-w-0">
-          <div className="flex justify-between text-[10px] font-display uppercase tracking-widest text-muted-foreground font-bold">
-            <span className="flex items-center gap-1.5 text-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-neon-purple" />
+          <div className="flex justify-between items-center text-[9px] sm:text-[10px] font-display uppercase tracking-wider sm:tracking-widest text-muted-foreground font-bold">
+            <span className="flex items-center gap-1 sm:gap-1.5 text-foreground truncate">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-neon-purple" />
               MP • STREAK {streak > 0 ? `(🔥 ${streak}d)` : ""}
             </span>
-            <span className="text-neon-purple font-bold glow-text">{displayMp}%</span>
+            <span className="text-neon-purple font-bold glow-text shrink-0 ml-1">{displayMp}%</span>
           </div>
           <div className="h-2.5 w-full bg-surface-2 rounded-full overflow-hidden relative border border-neon-purple/30 p-0.5">
             <div

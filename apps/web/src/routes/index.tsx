@@ -37,21 +37,21 @@ function LandingPage() {
   const mockCourses = fullCourses.slice(0, 4);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background overflow-x-hidden w-full">
       <TopNav />
-      <main className="flex-1 w-full max-w-[1400px] mx-auto px-4 py-8 flex flex-col gap-6">
+      <main className="flex-1 w-full max-w-[1400px] mx-auto px-3 sm:px-4 py-6 sm:py-8 flex flex-col gap-6 min-w-0">
 
         {/* Profile Header / Slogan */}
-        <Panel accent="purple" className="flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 gap-6">
-          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4">
-            <div className="w-14 h-14 sm:w-16 sm:h-16 shrink-0 rounded-2xl border border-neon-cyan bg-neon-cyan/10 flex items-center justify-center font-display text-2xl font-bold text-neon-cyan glow-text shadow-[0_0_15px_-3px_var(--neon-cyan)]">
-              <Zap className="w-7 h-7 sm:w-8 sm:h-8" />
+        <Panel accent="purple" className="flex flex-col lg:flex-row items-center justify-between p-4 sm:p-6 gap-6 w-full">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 w-full lg:w-auto min-w-0">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 shrink-0 rounded-2xl border border-neon-cyan bg-neon-cyan/10 flex items-center justify-center font-display text-2xl font-bold text-neon-cyan glow-text shadow-[0_0_15px_-3px_var(--neon-cyan)]">
+              <Zap className="w-6 h-6 sm:w-8 sm:h-8" />
             </div>
-            <div>
-              <h1 className="font-display text-xl sm:text-2xl font-bold text-foreground tracking-wider">
+            <div className="min-w-0 max-w-full">
+              <h1 className="font-display text-lg sm:text-2xl font-bold text-foreground tracking-wide sm:tracking-wider break-words">
                 Unleash Your Inner Hunter
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground uppercase tracking-widest mt-1">
+              <p className="text-[11px] sm:text-sm text-muted-foreground uppercase tracking-wider sm:tracking-widest mt-1 break-words">
                 Dominate the digital realm with elite cyber security skills
               </p>
             </div>
@@ -60,7 +60,7 @@ function LandingPage() {
           <HunterStatsBar expCurrent={74999} expMax={75000} hpPercent={92} mpPercent={68} />
         </Panel>
 
-        <div className="grid lg:grid-cols-[1fr_400px] gap-6">
+        <div className="grid lg:grid-cols-[1fr_400px] gap-6 min-w-0 max-w-full">
           {/* Main Left Column */}
           <div className="flex flex-col gap-6">
 

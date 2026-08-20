@@ -24,6 +24,7 @@ const links = [
   { to: "/courses", label: "Courses" },
   { to: "/ranks", label: "Rank System" },
   { to: "/pricing", label: "Hunter Pass" },
+  { to: "/faq", label: "FAQ" },
 ] as const;
 
 export function TopNav() {
@@ -98,27 +99,27 @@ export function TopNav() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-neon-purple/25 bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto max-w-7xl px-4 py-2.5 flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 py-2 sm:py-2.5 flex items-center justify-between gap-2 sm:gap-4 w-full">
         {/* Left Side: Logo & Mobile Hamburger */}
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-3 min-w-0">
           {/* Mobile menu trigger */}
-          <div className="lg:hidden flex items-center">
-            <Button variant="ghost" size="icon" aria-label="Menu" onClick={() => setOpen((v) => !v)}>
+          <div className="lg:hidden flex items-center shrink-0">
+            <Button variant="ghost" size="icon" aria-label="Menu" className="h-9 w-9 p-0 text-foreground" onClick={() => setOpen((v) => !v)}>
               <Menu className="h-5 w-5" />
             </Button>
           </div>
 
-          <Link to="/" className="flex items-center gap-2.5 group py-0.5">
+          <Link to="/" className="flex items-center gap-2 sm:gap-2.5 group py-0.5 min-w-0">
             <img
               src="/logo.png"
               alt="CyberTech Hunter Academy Logo"
-              className="h-10 sm:h-12 w-auto object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_0_14px_rgba(0,243,255,0.45)]"
+              className="h-8 sm:h-12 w-auto shrink-0 object-contain transition-all duration-300 group-hover:scale-105 drop-shadow-[0_0_14px_rgba(0,243,255,0.45)]"
             />
-            <div>
-              <span className="block font-display text-sm sm:text-base font-black tracking-widest text-neon uppercase leading-none">
+            <div className="min-w-0">
+              <span className="block font-display text-xs sm:text-base font-black tracking-wider sm:tracking-widest text-neon uppercase leading-none truncate">
                 Cyber Tech
               </span>
-              <span className="block text-[9px] uppercase tracking-[0.3em] text-neon-cyan/80 font-bold mt-0.5">
+              <span className="block text-[8px] sm:text-[9px] uppercase tracking-[0.15em] sm:tracking-[0.3em] text-neon-cyan/80 font-bold mt-0.5 truncate">
                 Hunter Academy
               </span>
             </div>
@@ -146,8 +147,8 @@ export function TopNav() {
         </nav>
 
         {/* Right Side: Action Buttons & User Profile */}
-        <div className="flex items-center justify-end gap-2 shrink-0">
-          <Link to="/faq" aria-label="FAQ" title="Frequently Asked Questions">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2 shrink-0">
+          <Link to="/faq" aria-label="FAQ" title="Frequently Asked Questions" className="hidden sm:inline-flex">
             <Button variant="ghost" size="icon">
               <HelpCircle className="h-5 w-5 text-muted-foreground hover:text-neon-cyan" />
             </Button>
@@ -305,7 +306,7 @@ export function TopNav() {
           {user ? (
             <Link
               to="/profile"
-              className="group flex items-center gap-2 rounded-lg border border-neon-cyan/40 bg-neon-cyan/10 px-2 py-1 transition-colors hover:border-neon-cyan/60 hover:bg-neon-cyan/20"
+              className="group flex items-center gap-1.5 sm:gap-2 rounded-lg border border-neon-cyan/40 bg-neon-cyan/10 px-2 py-1 transition-colors hover:border-neon-cyan/60 hover:bg-neon-cyan/20 shrink-0"
             >
               <span className="grid h-6 w-6 place-items-center rounded-md bg-neon-purple/25 font-display text-[10px] font-bold uppercase text-neon-purple">
                 {user.name?.substring(0, 2)}
@@ -315,9 +316,9 @@ export function TopNav() {
               </span>
             </Link>
           ) : (
-            <Link to="/login">
-              <Button variant="neon" size="sm" className="font-display tracking-wider">
-                <Shield className="w-4 h-4" /> Sign in
+            <Link to="/login" className="shrink-0">
+              <Button variant="neon" size="sm" className="font-display tracking-wider text-xs px-2.5 py-1 sm:px-3 sm:py-2 h-8 sm:h-9">
+                <Shield className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> Sign in
               </Button>
             </Link>
           )}
