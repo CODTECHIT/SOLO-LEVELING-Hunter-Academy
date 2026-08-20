@@ -15,7 +15,7 @@ type AuthState = {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, phone?: string) => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
 };
@@ -46,11 +46,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     set({ user: data.user, isAuthenticated: true });
   },
 
-  signup: async (name, email, password) => {
+  signup: async (name, email, password, phone) => {
     const { data } = await api.post<{ token: string; user: User }>("/auth/signup", {
       name,
       email,
       password,
+      phone,
     });
     await saveToken(data.token);
     set({ user: data.user, isAuthenticated: true });

@@ -38,7 +38,7 @@ function Signup() {
 
     try {
       // 1. Register user and establish session cookie
-      const res = await registerUserFn({ data: { name, email, password } });
+      const res = await registerUserFn({ data: { name, email, password, phone: phone.trim() || undefined } });
 
       if (res.token) {
         const { setAuthToken } = await import("@/lib/api");

@@ -27,6 +27,11 @@ const schema = z
   .object({
     name: z.string().min(2, "Name must be at least 2 characters"),
     email: z.string().email("Enter a valid email"),
+    phone: z
+      .string()
+      .regex(/^[0-9+\s-]{10,15}$/, "Enter a valid 10-digit mobile number")
+      .optional()
+      .or(z.literal("")),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirm: z.string(),
   })
@@ -67,6 +72,7 @@ export default function SignupScreen() {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       password: "",
       confirm: "",
     }
@@ -75,11 +81,11 @@ export default function SignupScreen() {
   const onSubmit = async (values: SignupForm) => {
     setLoading(true);
     try {
-      await signup(values.name, values.email, values.password);
+      await signup(values.name, values.email, values.password, values.phone?.trim() || undefined);
       router.replace("/(tabs)");
     } catch (err: any) {
-      const msg = err?.response?.data?.error ?? err?.message ?? "Registration failed";
-      Alert.alert("Registration Failed", msg);
+      const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? "Registration failed";
+      Alert.alert("Registration Failed", typeof msg === "string" ? msg : JSON.stringify(msg));
     } finally {
       setLoading(false);
     }
@@ -121,6 +127,21 @@ export default function SignupScreen() {
                   autoCapitalize="none"
                   error={errors.email?.message}
                   placeholder="hunter@cybertech.com"
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="phone"
+              render={({ field: { onChange, value } }) => (
+                <Input
+                  label="Mobile Number"
+                  value={value}
+                  onChangeText={onChange}
+                  keyboardType="phone-pad"
+                  autoCapitalize="none"
+                  error={errors.phone?.message}
+                  placeholder="+91 98765 43210"
                 />
               )}
             />

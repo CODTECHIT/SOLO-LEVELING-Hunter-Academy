@@ -124,6 +124,7 @@ const registerSchema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
+  phone: z.string().optional(),
 });
 
 export const registerUserFn = createServerFn({ method: "POST" })
@@ -141,6 +142,7 @@ export const registerUserFn = createServerFn({ method: "POST" })
         name: data.name,
         email: data.email,
         password: passwordHash,
+        phone: data.phone || null,
         role: "STUDENT",
       },
     });
