@@ -15,7 +15,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Zap } from "lucide-react-native";
 import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -33,28 +32,23 @@ WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuthStore();
+  const { login, loginWithGoogle } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
-  // Google OAuth setup (Web client ID used for dev/testing)
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    androidClientId: "PLACEHOLDER_ANDROID_CLIENT_ID",
-    iosClientId: "PLACEHOLDER_IOS_CLIENT_ID",
-    webClientId: "PLACEHOLDER_WEB_CLIENT_ID",
-  });
-
-  React.useEffect(() => {
-    if (response?.type === "success") {
-      const { authentication } = response;
-      // In production, send authentication?.accessToken to your backend
-      console.log("Google Auth Success", authentication);
-      Alert.alert(
-        "Google Login Successful", 
-        "Waiting on backend API to issue session token. Since this is using placeholder client IDs, this shouldn't be reached yet!"
-      );
+  const handleGoogleLogin = async () => {
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle();
+      router.replace("/(tabs)");
+    } catch (err: any) {
+      if (!err?.message?.includes("cancelled")) {
+        Alert.alert("Google Login Failed", err?.message || "Could not complete Google authentication");
+      }
+    } finally {
+      setGoogleLoading(false);
     }
-  }, [response]);
+  };
 
   const { control, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -140,8 +134,9 @@ export default function LoginScreen() {
 
             <Button
               label="Continue with Google"
-              onPress={() => promptAsync()}
-              disabled={!request || loading}
+              onPress={handleGoogleLogin}
+              loading={googleLoading}
+              disabled={loading || googleLoading}
               variant="secondary"
               fullWidth
               style={styles.googleBtn}

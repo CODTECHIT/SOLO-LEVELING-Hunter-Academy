@@ -18,6 +18,11 @@ export class AuthController {
     return this.authService.signIn(dto);
   }
 
+  @Post("oauth/sync")
+  async syncOAuth(@Body() body: { email: string; name?: string }) {
+    return this.authService.syncOAuthUser(body);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Post("me")
   async getProfile(@Request() req) {

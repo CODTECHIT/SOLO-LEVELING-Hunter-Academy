@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { api } from "@/lib/api";
-import { saveToken, clearToken } from "@/lib/auth";
+import { saveToken, clearToken, signInWithGoogle } from "@/lib/auth";
 
 export type User = {
   id: string;
@@ -16,6 +16,7 @@ type AuthState = {
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string, phone?: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
 };
@@ -55,6 +56,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     });
     await saveToken(data.token);
     set({ user: data.user, isAuthenticated: true });
+  },
+
+  loginWithGoogle: async () => {
+    const res = await signInWithGoogle();
+    set({ user: res.user, isAuthenticated: true });
   },
 
   logout: async () => {

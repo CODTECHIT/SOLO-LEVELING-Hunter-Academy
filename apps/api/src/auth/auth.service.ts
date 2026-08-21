@@ -81,6 +81,46 @@ export class AuthService {
     };
   }
 
+  async syncOAuthUser(data: { email: string; name?: string }) {
+    const normalizedEmail = data.email.trim().toLowerCase();
+    let user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user) {
+      const randomPassword = await bcryptjs.hash(
+        Math.random().toString(36).slice(-10),
+        10,
+      );
+      user = await this.prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          name: data.name || "Hunter",
+          password: randomPassword,
+          role: "STUDENT",
+        },
+      });
+    }
+
+    const token = this.jwtService.sign({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return {
+      message: "OAuth sign in successful",
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        phone: user.phone,
+      },
+    };
+  }
+
   async validateUser(userId: string) {
     return this.prisma.user.findUnique({
       where: { id: userId },
