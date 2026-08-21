@@ -7,9 +7,14 @@ import {
   User,
 } from "lucide-react-native";
 
-console.log("Layout Imports:", { Tabs: !!Tabs, Home: !!Home });
+import { Platform } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
+  const bottomInset = insets.bottom > 0 ? insets.bottom : (Platform.OS === "android" ? 14 : 10);
+  const tabHeight = 56 + bottomInset;
+
   return (
     <Tabs
       screenOptions={{
@@ -18,9 +23,9 @@ export default function TabsLayout() {
           backgroundColor: "#070a14",
           borderTopWidth: 1,
           borderTopColor: "rgba(0, 243, 255, 0.2)",
-          paddingBottom: 8,
           paddingTop: 8,
-          height: 64,
+          paddingBottom: bottomInset,
+          height: tabHeight,
         },
         tabBarActiveTintColor: colors.neonCyan,
         tabBarInactiveTintColor: colors.mutedForeground,
@@ -29,6 +34,7 @@ export default function TabsLayout() {
           fontSize: 11,
           fontWeight: "600",
           letterSpacing: 0.3,
+          paddingBottom: 2,
         },
         tabBarHideOnKeyboard: true,
       }}

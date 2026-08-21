@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   chipText: { fontFamily: fonts.sans, fontSize: fontSizes.xs, color: colors.mutedForeground, letterSpacing: 1 },
   chipTextActive: { color: colors.neonPurple },
 
-  grid: { padding: spacing[4], gap: spacing[4] },
+  grid: { padding: spacing[4], gap: spacing[4], paddingBottom: 110 },
   row: { gap: spacing[4] },
   gridCard: {
     width: CARD_W,

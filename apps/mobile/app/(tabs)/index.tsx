@@ -405,7 +405,7 @@ export default function HomeScreen() {
 const CARD_W = SCREEN_W * 0.7;
 
 const styles = StyleSheet.create({
-  scroll: { paddingBottom: spacing[8] },
+  scroll: { paddingBottom: 110 },
 
   // Hero
   heroBanner: {

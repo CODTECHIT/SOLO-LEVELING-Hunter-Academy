@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-  list: { padding: spacing[4], gap: spacing[4] },
+  list: { padding: spacing[4], gap: spacing[4], paddingBottom: 110 },
   card: {
     backgroundColor: colors.card,
     borderRadius: radii.xl,

@@ -269,7 +269,7 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  content: { padding: spacing[4], gap: spacing[5] },
+  content: { padding: spacing[4], gap: spacing[5], paddingBottom: 110 },
   avatarSection: {
     flexDirection: "row",
     alignItems: "center",

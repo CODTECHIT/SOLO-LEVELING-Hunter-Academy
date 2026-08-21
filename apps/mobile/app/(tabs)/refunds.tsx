@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing[4],
-    paddingBottom: spacing[8],
+    paddingBottom: 110,
   },
   infoBanner: {
     flexDirection: "row",
