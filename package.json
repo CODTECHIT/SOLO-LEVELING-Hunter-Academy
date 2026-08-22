@@ -18,10 +18,10 @@
     "turbo": "^2.1.0"
   },
   "overrides": {
-    "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
     "react-native-screens": "4.26.0",
-    "react-native-worklets": "0.10.1"
+    "react-native-worklets": "0.10.4"
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "0.28.2",
