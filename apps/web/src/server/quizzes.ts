@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { prisma } from "./db";
 import { getCurrentUserFn } from "./auth";
 import { ensurePermission } from "./permissions";
+import { updateUserStreak } from "./courses";
 import { BulkImportQuestionRow } from "@lms/types";
 
 // Get all quizzes for admin management
@@ -445,6 +446,9 @@ export const submitQuizAttemptFn = createServerFn({ method: "POST" })
         },
       },
     });
+
+    // Update study streak on quiz completion
+    await updateUserStreak(user.id);
 
     return {
       submissionId: submission.id,

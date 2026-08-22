@@ -599,8 +599,25 @@ export const getHunterStatsFn = createServerFn({ method: "GET" }).handler(async 
     select: { currentStreak: true, longestStreak: true, lastStudyDate: true },
   });
 
-  const currentStreak = userRecord?.currentStreak || 0;
-  const longestStreak = userRecord?.longestStreak || currentStreak;
+  let currentStreak = userRecord?.currentStreak || 0;
+  if (userRecord?.lastStudyDate) {
+    const now = new Date();
+    const todayStr = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-${now.getUTCDate()}`;
+    const yesterday = new Date(now);
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const yesterdayStr = `${yesterday.getUTCFullYear()}-${yesterday.getUTCMonth() + 1}-${yesterday.getUTCDate()}`;
+
+    const d = new Date(userRecord.lastStudyDate);
+    const lastDateStr = `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;
+
+    if (lastDateStr !== todayStr && lastDateStr !== yesterdayStr) {
+      currentStreak = 0;
+    }
+  } else {
+    currentStreak = 0;
+  }
+
+  const longestStreak = Math.max(userRecord?.longestStreak || 0, currentStreak);
   const mpPercent = Math.min(Math.round((currentStreak / 7) * 100), 100);
 
   return {
