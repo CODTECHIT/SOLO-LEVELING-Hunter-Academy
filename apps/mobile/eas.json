@@ -14,7 +14,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://100.58.249.132:3001"
+        "EXPO_PUBLIC_API_URL": "http://100.58.249.132:3001",
+        "EAS_SKIP_AUTO_FINGERPRINT": "1"
       }
     },
     "production": {
