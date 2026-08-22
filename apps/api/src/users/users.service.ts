@@ -160,7 +160,25 @@ export class UsersService {
       select: { currentStreak: true, longestStreak: true, lastStudyDate: true },
     });
 
-    const userStreak = user?.currentStreak || 0;
+    let userStreak = user?.currentStreak || 0;
+    if (user?.lastStudyDate) {
+      const now = new Date();
+      const todayStr = `${now.getUTCFullYear()}-${now.getUTCMonth() + 1}-${now.getUTCDate()}`;
+      const yesterday = new Date(now);
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      const yesterdayStr = `${yesterday.getUTCFullYear()}-${yesterday.getUTCMonth() + 1}-${yesterday.getUTCDate()}`;
+
+      const d = new Date(user.lastStudyDate);
+      const lastDateStr = `${d.getUTCFullYear()}-${d.getUTCMonth() + 1}-${d.getUTCDate()}`;
+
+      if (lastDateStr !== todayStr && lastDateStr !== yesterdayStr) {
+        userStreak = 0;
+      }
+    } else {
+      userStreak = 0;
+    }
+
+    const longestStreak = Math.max(user?.longestStreak || 0, userStreak);
     const mpPercent = Math.min(100, Math.max(0, Math.round((userStreak / 7) * 100)));
 
     return {
@@ -172,7 +190,7 @@ export class UsersService {
       focusPct,
       mpPercent: mpPercent > 0 ? mpPercent : Math.min(100, Math.max(0, focusPct)),
       streak: userStreak,
-      longestStreak: user?.longestStreak || userStreak,
+      longestStreak,
       coursesTaken: courseIds.length,
       coursesCompleted: completedCourses,
       lessonsCompleted: completedLessons,
