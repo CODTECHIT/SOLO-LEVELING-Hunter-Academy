@@ -77,30 +77,36 @@ export default function MyLearningScreen() {
                 activeOpacity={0.85}
                 onPress={() => router.push(`/(tabs)/my-learning/${item.id}` as any)}
               >
-                <View style={styles.cardThumb}>
-                  {(item as any).thumbnail ? (
-                    <Image
-                      source={{ uri: (item as any).thumbnail }}
-                      style={styles.thumbImg}
-                    />
-                  ) : (
-                    <LinearGradient
-                      colors={[colors.neonPurple + "40", colors.neonCyan + "20"]}
-                      style={styles.thumbGrad}
-                    >
-                      <BookOpen color={colors.neonPurple} size={28} />
-                    </LinearGradient>
-                  )}
-                </View>
-                <View style={styles.cardBody}>
-                  <View style={styles.topRow}>
-                    <Badge label={(item as any).category?.name ?? "Course"} variant="purple" />
-                    {(item as any).expired && <Badge label="Expired" variant="pink" />}
+                <View style={styles.cardInner}>
+                  <View style={styles.cardThumb}>
+                    {(item as any).thumbnail ? (
+                      <Image
+                        source={{ uri: (item as any).thumbnail }}
+                        style={styles.thumbImg}
+                      />
+                    ) : (
+                      <LinearGradient
+                        colors={[colors.neonPurple + "40", colors.neonCyan + "20"]}
+                        style={styles.thumbGrad}
+                      >
+                        <BookOpen color={colors.neonPurple} size={28} />
+                      </LinearGradient>
+                    )}
                   </View>
-                  <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                  <View style={styles.cardBody}>
+                    <View style={styles.topRow}>
+                      <Badge label={(item as any).category?.name ?? "Course"} variant="purple" />
+                      {(item as any).expired && <Badge label="Expired" variant="pink" />}
+                    </View>
+                    <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                  </View>
+                </View>
+
+                {/* Progress Bar & Certificate Action */}
+                <View style={styles.cardFooter}>
                   <ProgressBar
                     value={item.progress}
-                    color={item.progress >= 100 ? colors.neonLime : colors.neonPurple}
+                    color={item.progress >= 100 ? colors.neonLime : colors.neonCyan}
                     label={`${item.completedLessons}/${item.totalLessons} lessons`}
                     showPercent
                     height={6}
@@ -242,21 +248,42 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(147, 51, 234, 0.3)",
     overflow: "hidden",
-    flexDirection: "row",
     shadowColor: colors.neonPurple,
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 3,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
   },
-  cardThumb: { width: 100 },
+  cardInner: {
+    flexDirection: "row",
+    padding: spacing[3],
+    gap: spacing[3],
+    alignItems: "center",
+  },
+  cardThumb: {
+    width: 100,
+    height: 76,
+    borderRadius: radii.lg,
+    overflow: "hidden",
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.2)",
+  },
   thumbImg: { width: "100%", height: "100%", resizeMode: "cover" },
   thumbGrad: { flex: 1, alignItems: "center", justifyContent: "center" },
-  cardBody: { flex: 1, padding: spacing[4], gap: spacing[2] },
-  topRow: { flexDirection: "row", gap: spacing[2] },
-  cardTitle: { fontFamily: fonts.sans, fontSize: fontSizes.base, color: colors.foreground, lineHeight: 20 },
+  cardBody: { flex: 1, gap: 4 },
+  topRow: { flexDirection: "row", gap: spacing[2], marginBottom: 2 },
+  cardTitle: { fontFamily: fonts.sans, fontSize: fontSizes.sm, color: colors.foreground, lineHeight: 18, fontWeight: "600" },
+  cardFooter: {
+    paddingHorizontal: spacing[3],
+    paddingBottom: spacing[3],
+    paddingTop: 2,
+    gap: spacing[2],
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.05)",
+  },
   courseSubtitle: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.mutedForeground },
   downloadDate: { fontFamily: fonts.body, fontSize: 10, color: colors.neonCyan },
 

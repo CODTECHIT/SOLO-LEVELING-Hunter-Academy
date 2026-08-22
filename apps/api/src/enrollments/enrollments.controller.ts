@@ -3,6 +3,7 @@ import {
   Post,
   Get,
   Param,
+  Body,
   UseGuards,
   BadRequestException,
 } from "@nestjs/common";
@@ -13,6 +14,19 @@ import { CurrentUser } from "../auth/current-user.decorator";
 @Controller("enrollments")
 export class EnrollmentsController {
   constructor(private enrollmentsService: EnrollmentsService) {}
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async enrollByBody(
+    @CurrentUser() user: any,
+    @Body("courseId") courseId: string,
+  ) {
+    const userId = user?.id || user?.userId;
+    if (!courseId) {
+      throw new BadRequestException("Course ID is required");
+    }
+    return this.enrollmentsService.enrollUser(userId, courseId);
+  }
 
   @Post(":courseId")
   @UseGuards(JwtAuthGuard)

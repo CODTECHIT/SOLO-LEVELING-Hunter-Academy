@@ -108,11 +108,14 @@ export default function HomeScreen() {
                 <CyberTechLogo size="sm" showText={false} />
               </View>
               <View style={styles.heroText}>
-                <Animated.Text style={[styles.heroTitle, animatedHeroTitle]}>
-                  UNLEASH YOUR INNER HUNTER
-                </Animated.Text>
+                <View style={styles.heroBrandRow}>
+                  <Text style={styles.heroBrand}>CYBER TECH</Text>
+                  <View style={styles.academyPill}>
+                    <Text style={styles.academyPillText}>ACADEMY</Text>
+                  </View>
+                </View>
                 <Text style={styles.heroSub}>
-                  {user ? `Welcome back, ${user.name.split(" ")[0]}` : "Dominate the digital realm"}
+                  {user ? `Hunter ${user.name.split(" ")[0]} • Level Up` : "Unleash Your Inner Hunter"}
                 </Text>
               </View>
 
@@ -123,7 +126,7 @@ export default function HomeScreen() {
                   onPress={() => setNotifModalVisible(true)}
                   activeOpacity={0.8}
                 >
-                  <Bell color={colors.neonAmber} size={22} />
+                  <Bell color={colors.neonAmber} size={20} />
                   {unreadCount > 0 && (
                     <View style={styles.notifBadge}>
                       <Text style={styles.notifBadgeText}>
@@ -427,37 +430,56 @@ const styles = StyleSheet.create({
   },
   heroTop: { flexDirection: "row", alignItems: "center", gap: spacing[3] },
   heroIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: radii.lg,
-    backgroundColor: colors.neonCyanAlpha20,
-    borderWidth: 1,
-    borderColor: colors.neonCyan + "50",
+    width: 44,
+    height: 44,
+    borderRadius: radii.xl,
+    backgroundColor: "rgba(0, 243, 255, 0.1)",
+    borderWidth: 1.5,
+    borderColor: "rgba(0, 243, 255, 0.4)",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: colors.neonCyan,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  heroText: { flex: 1 },
-  heroTitle: {
+  heroText: { flex: 1, gap: 2 },
+  heroBrandRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  heroBrand: {
     fontFamily: fonts.display,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.base,
     color: colors.foreground,
+    letterSpacing: 2,
+    fontWeight: "bold",
+  },
+  academyPill: {
+    backgroundColor: "rgba(147, 51, 234, 0.2)",
+    borderWidth: 1,
+    borderColor: "rgba(147, 51, 234, 0.5)",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radii.sm,
+  },
+  academyPillText: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    color: colors.neonPurple,
     letterSpacing: 1,
+    fontWeight: "bold",
   },
   heroSub: {
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
-    color: colors.mutedForeground,
-    textTransform: "uppercase",
-    letterSpacing: 1,
-    marginTop: 2,
+    color: colors.neonCyan,
+    letterSpacing: 0.5,
   },
   notifBtn: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: radii.full,
-    backgroundColor: colors.surface,
+    backgroundColor: "rgba(255, 184, 0, 0.08)",
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: "rgba(255, 184, 0, 0.3)",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",

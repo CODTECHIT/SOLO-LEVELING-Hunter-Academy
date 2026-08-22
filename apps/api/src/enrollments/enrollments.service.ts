@@ -21,7 +21,12 @@ export class EnrollmentsService {
     });
 
     if (existing) {
-      throw new BadRequestException("User already enrolled in this course");
+      return {
+        success: true,
+        alreadyEnrolled: true,
+        message: "You are already enrolled in this course",
+        enrollment: existing,
+      };
     }
 
     // Check if course exists

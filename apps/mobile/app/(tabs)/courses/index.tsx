@@ -8,7 +8,7 @@ import {
   Image,
   TextInput,
 } from "react-native";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { BookOpen, Search, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { SafeScreen } from "@/components/layout/SafeScreen";
@@ -19,8 +19,12 @@ import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
 export default function CoursesScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ type?: string; category?: string }>();
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("");
+  const [activeType, setActiveType] = useState<"ALL" | "FULL" | "MODULE">(
+    params.type === "MODULE" ? "MODULE" : params.type === "FULL" ? "FULL" : "ALL"
+  );
+  const [activeCategory, setActiveCategory] = useState(params.category ?? "");
 
   const { data: catalog, isLoading } = useCatalog();
 
@@ -32,9 +36,10 @@ export default function CoursesScreen() {
       const matchSearch = c.title.toLowerCase().includes(search.toLowerCase()) || 
                           c.description.toLowerCase().includes(search.toLowerCase());
       const matchCat = activeCategory ? c.category.id === activeCategory : true;
-      return matchSearch && matchCat;
+      const matchType = activeType === "ALL" ? true : c.type === activeType;
+      return matchSearch && matchCat && matchType;
     });
-  }, [courses, search, activeCategory]);
+  }, [courses, search, activeCategory, activeType]);
 
   return (
     <SafeScreen>
@@ -57,10 +62,39 @@ export default function CoursesScreen() {
             </TouchableOpacity>
           )}
         </View>
+
+        {/* Track Type Selector */}
+        <View style={styles.typeRow}>
+          <TouchableOpacity
+            style={[styles.typeBtn, activeType === "ALL" && styles.typeBtnActive]}
+            onPress={() => setActiveType("ALL")}
+          >
+            <Text style={[styles.typeBtnText, activeType === "ALL" && styles.typeBtnTextActive]}>
+              All Courses
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.typeBtn, activeType === "FULL" && styles.typeBtnActivePurple]}
+            onPress={() => setActiveType("FULL")}
+          >
+            <Text style={[styles.typeBtnText, activeType === "FULL" && styles.typeBtnTextActive]}>
+              Masterclasses
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.typeBtn, activeType === "MODULE" && styles.typeBtnActiveCyan]}
+            onPress={() => setActiveType("MODULE")}
+          >
+            <Text style={[styles.typeBtnText, activeType === "MODULE" && styles.typeBtnTextActive]}>
+              Hunter Modules
+            </Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Category filter chips */}
         <FlatList
           horizontal
-          data={[{ id: "", name: "All" }, ...categories]}
+          data={[{ id: "", name: "All Topics" }, ...categories]}
           renderItem={({ item }) => (
             <TouchableOpacity
               style={[styles.chip, activeCategory === item.id && styles.chipActive]}
@@ -173,6 +207,42 @@ const styles = StyleSheet.create({
     flex: 1,
     fontFamily: fonts.body,
     fontSize: fontSizes.base,
+    color: colors.foreground,
+  },
+  typeRow: {
+    flexDirection: "row",
+    gap: spacing[2],
+  },
+  typeBtn: {
+    flex: 1,
+    paddingVertical: spacing[2],
+    borderRadius: radii.md,
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  typeBtnActive: {
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: colors.foreground,
+  },
+  typeBtnActivePurple: {
+    backgroundColor: "rgba(147, 51, 234, 0.2)",
+    borderColor: colors.neonPurple,
+  },
+  typeBtnActiveCyan: {
+    backgroundColor: "rgba(0, 243, 255, 0.15)",
+    borderColor: colors.neonCyan,
+  },
+  typeBtnText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+  typeBtnTextActive: {
     color: colors.foreground,
   },
   chipList: { gap: spacing[2], paddingRight: spacing[4] },

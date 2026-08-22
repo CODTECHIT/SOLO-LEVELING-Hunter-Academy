@@ -43,14 +43,23 @@ export default function CourseDetailScreen() {
       router.push("/(auth)/login");
       return;
     }
+    if (!data?.course?.id) return;
     setEnrolling(true);
     try {
-      await api.post(`/enrollments/${data?.course.id}`);
-      await qc.invalidateQueries({ queryKey: ["course", slug] });
-      await qc.invalidateQueries({ queryKey: ["enrollments"] });
+      await api.post(`/enrollments/${data.course.id}`);
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["course", slug] }),
+        qc.invalidateQueries({ queryKey: ["enrollments"] }),
+        qc.invalidateQueries({ queryKey: ["user-stats"] }),
+      ]);
       Alert.alert("Enrolled! 🎉", "You now have access to this course. Start learning!");
     } catch (err: any) {
-      Alert.alert("Error", err?.response?.data?.error ?? "Enrollment failed");
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Enrollment failed";
+      Alert.alert("Notice", typeof msg === "string" ? msg : "Enrollment failed");
     } finally {
       setEnrolling(false);
     }
