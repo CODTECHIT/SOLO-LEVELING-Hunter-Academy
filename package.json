@@ -24,8 +24,12 @@
     "react-native-worklets": "0.10.1"
   },
   "optionalDependencies": {
+    "@esbuild/linux-x64": "0.28.2",
     "@rolldown/binding-linux-x64-gnu": "1.2.3",
     "@rolldown/binding-linux-x64-musl": "1.2.3",
-    "@rolldown/binding-win32-x64-msvc": "1.2.3"
+    "@rolldown/binding-win32-x64-msvc": "1.2.3",
+    "lightningcss-linux-x64-gnu": "1.32.0",
+    "lightningcss-linux-x64-musl": "1.32.0",
+    "lightningcss-win32-x64-msvc": "1.32.0"
   }
 }
