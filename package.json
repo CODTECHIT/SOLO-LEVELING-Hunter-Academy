@@ -6,8 +6,7 @@
   "scripts": {
     "build": "cd apps/web && npm run build",
     "dev": "cd apps/web && npm run dev",
-    "build:web": "cd apps/web && npm run build",
-    "eas-build-pre-install": "npm config set legacy-peer-deps true"
+    "build:web": "cd apps/web && npm run build"
   },
   "workspaces": [
     "apps/api",
