@@ -178,10 +178,11 @@ export default function CourseDetailScreen() {
 
           {/* Lesson List */}
           <View style={styles.lessonsSection}>
-            <Text style={styles.lessonsTitle}>Course Content</Text>
+            <Text style={styles.lessonsTitle}>Course Content ({course.lessons.length} lessons)</Text>
             {course.lessons.map((lesson: any, idx: number) => {
               const isCompleted = completedLessonIds.includes(lesson.id);
               const isAccessible = isEnrolled;
+              const hasQuiz = Boolean(lesson.quiz);
               return (
                 <TouchableOpacity
                   key={lesson.id}
@@ -209,17 +210,100 @@ export default function CourseDetailScreen() {
                     >
                       {idx + 1}. {lesson.title}
                     </Text>
-                    {lesson.duration && (
-                      <View style={styles.lessonMeta}>
-                        <Clock color={colors.mutedForeground} size={10} />
-                        <Text style={styles.lessonDuration}>{formatDuration(lesson.duration)}</Text>
-                      </View>
-                    )}
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 }}>
+                      {lesson.duration && (
+                        <View style={styles.lessonMeta}>
+                          <Clock color={colors.mutedForeground} size={10} />
+                          <Text style={styles.lessonDuration}>{formatDuration(lesson.duration)}</Text>
+                        </View>
+                      )}
+                      {hasQuiz && (
+                        <View style={styles.quizBadge}>
+                          <Text style={styles.quizBadgeText}>⚡ Quiz Included</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
                 </TouchableOpacity>
               );
             })}
           </View>
+
+          {/* Quizzes & Assessments Section */}
+          {((course.quizzes?.length ?? 0) > 0 || course.lessons.some((l: any) => l.quiz)) && (
+            <View style={styles.quizzesSection}>
+              <Text style={styles.lessonsTitle}>⚔️ Quizzes & Assessments</Text>
+              
+              {/* Standalone course quizzes */}
+              {course.quizzes?.map((quiz: any) => (
+                <TouchableOpacity
+                  key={quiz.id}
+                  style={styles.quizCard}
+                  activeOpacity={0.85}
+                  onPress={() => {
+                    if (isEnrolled) {
+                      router.push(`/quiz/${quiz.id}` as any);
+                    } else {
+                      Alert.alert("Enrollment Required", "Enroll in this course to attempt quizzes.");
+                    }
+                  }}
+                >
+                  <View style={styles.quizCardLeft}>
+                    <View style={styles.quizCardIconBox}>
+                      <BookOpen color={colors.neonPurple} size={18} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.quizCardTitle}>{quiz.title}</Text>
+                      <Text style={styles.quizCardSub}>
+                        {quiz._count?.questions ?? 0} Questions • Pass {quiz.passingScore}%
+                        {quiz.timeLimit > 0 ? ` • ⏱ ${quiz.timeLimit}m` : ""}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={isEnrolled ? styles.startQuizPill : styles.lockedQuizPill}>
+                    <Text style={isEnrolled ? styles.startQuizPillText : styles.lockedQuizPillText}>
+                      {isEnrolled ? "Attempt" : "Locked"}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+
+              {/* Lesson-attached quizzes */}
+              {course.lessons
+                .filter((l: any) => l.quiz)
+                .map((l: any) => (
+                  <TouchableOpacity
+                    key={l.quiz.id}
+                    style={styles.quizCard}
+                    activeOpacity={0.85}
+                    onPress={() => {
+                      if (isEnrolled) {
+                        router.push(`/quiz/${l.quiz.id}` as any);
+                      } else {
+                        Alert.alert("Enrollment Required", "Enroll in this course to attempt quizzes.");
+                      }
+                    }}
+                  >
+                    <View style={styles.quizCardLeft}>
+                      <View style={styles.quizCardIconBox}>
+                        <BookOpen color={colors.neonCyan} size={18} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.quizCardTitle}>{l.quiz.title}</Text>
+                        <Text style={styles.quizCardSub}>
+                          Lesson: {l.title} • Pass {l.quiz.passingScore}%
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={isEnrolled ? styles.startQuizPill : styles.lockedQuizPill}>
+                      <Text style={isEnrolled ? styles.startQuizPillText : styles.lockedQuizPillText}>
+                        {isEnrolled ? "Attempt" : "Locked"}
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+            </View>
+          )}
         </View>
       </ScrollView>
     </SafeScreen>
@@ -282,4 +366,88 @@ const styles = StyleSheet.create({
   lessonLocked: { color: colors.mutedForeground },
   lessonMeta: { flexDirection: "row", alignItems: "center", gap: 4 },
   lessonDuration: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.mutedForeground },
+  quizBadge: {
+    backgroundColor: "rgba(168, 85, 247, 0.15)",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radii.full,
+  },
+  quizBadgeText: {
+    fontFamily: fonts.sans,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: colors.neonPurple,
+  },
+
+  // Quizzes & Assessments Section
+  quizzesSection: {
+    gap: spacing[3],
+    marginTop: spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: spacing[4],
+  },
+  quizCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: spacing[3],
+    backgroundColor: colors.surface2,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: "rgba(168, 85, 247, 0.3)",
+    gap: spacing[3],
+  },
+  quizCardLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+    flex: 1,
+  },
+  quizCardIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: radii.lg,
+    backgroundColor: "rgba(168, 85, 247, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quizCardTitle: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: "bold",
+    color: colors.foreground,
+  },
+  quizCardSub: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.mutedForeground,
+    marginTop: 2,
+  },
+  startQuizPill: {
+    backgroundColor: colors.neonPurple,
+    paddingHorizontal: spacing[3],
+    paddingVertical: 6,
+    borderRadius: radii.md,
+  },
+  startQuizPillText: {
+    fontFamily: fonts.display,
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#ffffff",
+    letterSpacing: 0.5,
+  },
+  lockedQuizPill: {
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing[3],
+    paddingVertical: 6,
+    borderRadius: radii.md,
+  },
+  lockedQuizPillText: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.mutedForeground,
+  },
 });

@@ -38,11 +38,19 @@ export default function PurchasesScreen() {
     fetchPurchases();
   }, []);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/profile");
+    }
+  };
+
   return (
     <SafeScreen>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft color={colors.foreground} size={24} />
+        <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
+          <ArrowLeft color={colors.foreground} size={20} />
         </TouchableOpacity>
         <Text style={styles.title}>Purchase History</Text>
       </View>

@@ -39,15 +39,29 @@ export class CoursesService {
       where: { id },
       include: {
         category: true,
-        lessons: {
-          orderBy: { order: "asc" },
+        quizzes: {
           select: {
             id: true,
             title: true,
             description: true,
-            videoUrl: true,
-            duration: true,
-            order: true,
+            timeLimit: true,
+            passingScore: true,
+            _count: { select: { questions: true } },
+          },
+        },
+        lessons: {
+          orderBy: { order: "asc" },
+          include: {
+            quiz: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                timeLimit: true,
+                passingScore: true,
+                _count: { select: { questions: true } },
+              },
+            },
           },
         },
         reviews: {
@@ -65,12 +79,36 @@ export class CoursesService {
   }
 
   async findBySlug(slug: string) {
-    return this.prisma.course.findUnique({
-      where: { slug },
+    return this.prisma.course.findFirst({
+      where: {
+        OR: [{ slug }, { id: slug }],
+      },
       include: {
         category: true,
+        quizzes: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+            timeLimit: true,
+            passingScore: true,
+            _count: { select: { questions: true } },
+          },
+        },
         lessons: {
           orderBy: { order: "asc" },
+          include: {
+            quiz: {
+              select: {
+                id: true,
+                title: true,
+                description: true,
+                timeLimit: true,
+                passingScore: true,
+                _count: { select: { questions: true } },
+              },
+            },
+          },
         },
         reviews: {
           include: {

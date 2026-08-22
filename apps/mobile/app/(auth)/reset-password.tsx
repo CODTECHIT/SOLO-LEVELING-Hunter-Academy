@@ -1,185 +1,275 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
-import { ArrowLeft, Mail, Lock, ShieldCheck } from "lucide-react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { useRouter } from "expo-router";
+import { ArrowLeft, KeyRound, Lock, Mail, Sparkles, CheckCircle2 } from "lucide-react-native";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
+import { CyberTechLogo } from "@/components/ui/CyberTechLogo";
 import { api } from "@/lib/api";
+import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
+  const [step, setStep] = useState<1 | 2>(1);
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState<"EMAIL" | "OTP" | "NEW_PASSWORD">("EMAIL");
-  const [otp, setOtp] = useState("");
+  const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSendOtp = async () => {
-    if (!email) {
-      Alert.alert("Error", "Please enter your email");
+  const handleSendCode = async () => {
+    if (!email.trim()) {
+      Alert.alert("Required", "Please enter your email address");
       return;
     }
-    
-    // Simulating API call for OTP since actual reset API might not exist yet
-    // In production, this would call something like `api.post("/auth/forgot-password", { email })`
-    try {
-      setLoading(true);
-      // await api.post("/auth/forgot-password", { email });
-      setTimeout(() => {
-        setStep("OTP");
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      Alert.alert("Error", "Failed to send OTP");
-      setLoading(false);
-    }
-  };
 
-  const handleVerifyOtp = async () => {
-    if (!otp) {
-      Alert.alert("Error", "Please enter the OTP sent to your email");
-      return;
-    }
-    
+    setLoading(true);
     try {
-      setLoading(true);
-      // await api.post("/auth/verify-otp", { email, otp });
-      setTimeout(() => {
-        setStep("NEW_PASSWORD");
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      Alert.alert("Error", "Invalid OTP");
+      const res = await api.post("/auth/forgot-password", { email: email.trim() });
+      Alert.alert(
+        "Code Sent! ⚡",
+        res.data?.message || "A 6-digit verification code has been sent to your email.",
+      );
+      setStep(2);
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Could not send reset code";
+      Alert.alert("Notice", typeof msg === "string" ? msg : "Could not send reset code");
+    } finally {
       setLoading(false);
     }
   };
 
   const handleResetPassword = async () => {
-    if (!newPassword || newPassword.length < 6) {
-      Alert.alert("Error", "Password must be at least 6 characters long");
+    if (!code.trim()) {
+      Alert.alert("Required", "Please enter the 6-digit verification code");
+      return;
+    }
+    if (newPassword.length < 6) {
+      Alert.alert("Invalid Password", "Password must be at least 6 characters long");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      Alert.alert("Mismatch", "New password and confirmation do not match");
       return;
     }
 
+    setLoading(true);
     try {
-      setLoading(true);
-      // await api.post("/auth/reset-password", { email, otp, newPassword });
-      setTimeout(() => {
-        setLoading(false);
-        Alert.alert("Success", "Password reset successfully. Please login with your new password.", [
-          { text: "OK", onPress: () => router.replace("/(auth)/login") }
-        ]);
-      }, 1000);
-    } catch (error) {
-      Alert.alert("Error", "Failed to reset password");
+      const res = await api.post("/auth/reset-password", {
+        email: email.trim(),
+        code: code.trim(),
+        newPassword,
+      });
+      Alert.alert(
+        "Password Reset! 🎉",
+        res.data?.message || "Your password has been successfully updated. Please sign in.",
+        [
+          {
+            text: "Sign In",
+            onPress: () => router.replace("/(auth)/login" as any),
+          },
+        ],
+      );
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Password reset failed";
+      Alert.alert("Reset Failed", typeof msg === "string" ? msg : "Password reset failed");
+    } finally {
       setLoading(false);
     }
   };
 
   return (
     <SafeScreen>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft color={colors.foreground} size={24} />
-        </TouchableOpacity>
-      </View>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.flex}
+      >
+        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+          {/* Header */}
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <ArrowLeft color={colors.foreground} size={20} />
+            <Text style={styles.backText}>Back to Sign In</Text>
+          </TouchableOpacity>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Reset Password</Text>
-        <Text style={styles.subtitle}>
-          {step === "EMAIL" && "Enter your email address to receive a verification code."}
-          {step === "OTP" && `Enter the 6-digit verification code sent to ${email}.`}
-          {step === "NEW_PASSWORD" && "Create a new, strong password for your account."}
-        </Text>
+          {/* Logo & Brand */}
+          <View style={styles.brand}>
+            <CyberTechLogo size="lg" />
+            <Text style={styles.title}>
+              {step === 1 ? "Reset Password" : "Set New Password"}
+            </Text>
+            <Text style={styles.subtitle}>
+              {step === 1
+                ? "Enter your email to receive a 6-digit reset code"
+                : `Enter the code sent to ${email}`}
+            </Text>
+          </View>
 
-        <View style={styles.form}>
-          {step === "EMAIL" && (
-            <>
-              <Input
-                placeholder="Hunter Email Address"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-              <Button
-                label={loading ? "Sending..." : "Send Verification Code"}
-                onPress={handleSendOtp}
-                disabled={loading}
-                variant="primary"
-              />
-            </>
-          )}
+          {/* Form Card */}
+          <View style={styles.card}>
+            {step === 1 ? (
+              <>
+                <Input
+                  label="Hunter Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  placeholder="hunter@gmail.com"
+                />
 
-          {step === "OTP" && (
-            <>
-              <Input
-                placeholder="Enter 6-digit OTP"
-                value={otp}
-                onChangeText={setOtp}
-                keyboardType="number-pad"
-                maxLength={6}
-              />
-              <Button
-                label={loading ? "Verifying..." : "Verify Code"}
-                onPress={handleVerifyOtp}
-                disabled={loading}
-                variant="primary"
-              />
-            </>
-          )}
+                <Button
+                  label="Send Verification Code"
+                  onPress={handleSendCode}
+                  loading={loading}
+                  fullWidth
+                  style={styles.btn}
+                />
+              </>
+            ) : (
+              <>
+                <Input
+                  label="6-Digit Reset Code"
+                  value={code}
+                  onChangeText={setCode}
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  placeholder="654321"
+                />
 
-          {step === "NEW_PASSWORD" && (
-            <>
-              <Input
-                placeholder="New Password"
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry
-              />
-              <Button
-                label={loading ? "Resetting..." : "Reset Password"}
-                onPress={handleResetPassword}
-                disabled={loading}
-                variant="primary"
-              />
-            </>
-          )}
-        </View>
-      </ScrollView>
+                <Input
+                  label="New Password"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry
+                  autoComplete="password-new"
+                  placeholder="••••••••"
+                />
+
+                <Input
+                  label="Confirm New Password"
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                  secureTextEntry
+                  autoComplete="password-new"
+                  placeholder="••••••••"
+                />
+
+                <Button
+                  label="Reset Password"
+                  onPress={handleResetPassword}
+                  loading={loading}
+                  fullWidth
+                  style={styles.btn}
+                />
+
+                <TouchableOpacity
+                  onPress={() => setStep(1)}
+                  style={styles.resendBtn}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.resendText}>Didn't receive code? Resend</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
+            <TouchableOpacity
+              onPress={() => router.replace("/(auth)/login" as any)}
+              style={styles.link}
+            >
+              <Text style={styles.linkText}>
+                Remembered your password?{" "}
+                <Text style={{ color: colors.neonCyan }}>Sign In</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </SafeScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-  },
+  flex: { flex: 1 },
+  scroll: { flexGrow: 1, justifyContent: "center", padding: spacing[6] },
   backBtn: {
-    padding: spacing[2],
-    backgroundColor: colors.surface2,
-    borderRadius: radii.full,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
     alignSelf: "flex-start",
+    marginBottom: spacing[4],
   },
-  content: {
-    padding: spacing[6],
+  backText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    color: colors.mutedForeground,
   },
+  brand: { alignItems: "center", marginBottom: spacing[6], gap: spacing[2] },
   title: {
     fontFamily: fonts.display,
-    fontSize: 28,
+    fontSize: fontSizes.xl,
     color: colors.foreground,
-    marginBottom: spacing[2],
+    letterSpacing: 1,
+    marginTop: spacing[2],
+    textAlign: "center",
   },
   subtitle: {
     fontFamily: fonts.body,
-    fontSize: fontSizes.base,
+    fontSize: fontSizes.xs,
     color: colors.mutedForeground,
-    marginBottom: spacing[8],
-    lineHeight: 22,
+    textAlign: "center",
+    maxWidth: 280,
   },
-  form: {
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radii["2xl"],
+    borderWidth: 1,
+    borderColor: "rgba(147, 51, 234, 0.3)",
+    padding: spacing[6],
     gap: spacing[4],
+    shadowColor: colors.neonPurple,
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 0 },
+    elevation: 6,
+  },
+  btn: { marginTop: spacing[2] },
+  resendBtn: {
+    alignItems: "center",
+    paddingVertical: spacing[2],
+  },
+  resendText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.neonCyan,
+    textDecorationLine: "underline",
+  },
+  link: { alignItems: "center", marginTop: spacing[2] },
+  linkText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    color: colors.mutedForeground,
   },
 });

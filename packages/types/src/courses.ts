@@ -16,6 +16,14 @@ export interface Course {
 export interface CourseDetail extends Course {
   lessons: Lesson[];
   reviews: Review[];
+  quizzes?: {
+    id: string;
+    title: string;
+    description?: string | null;
+    timeLimit: number;
+    passingScore: number;
+    _count?: { questions: number };
+  }[];
   category: {
     id: string;
     name: string;
@@ -26,10 +34,18 @@ export interface CourseDetail extends Course {
 export interface Lesson {
   id: string;
   title: string;
-  description?: string;
+  description?: string | null;
   videoUrl: string;
-  duration?: number;
+  duration?: number | null;
   order: number;
+  quiz?: {
+    id: string;
+    title: string;
+    description?: string | null;
+    timeLimit: number;
+    passingScore: number;
+    _count?: { questions: number };
+  } | null;
 }
 
 export interface Review {

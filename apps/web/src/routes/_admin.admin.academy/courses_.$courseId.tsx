@@ -14,7 +14,7 @@ import {
 } from "@/server/cms";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Play, Plus, Trash2, Pencil, Upload, Loader2, HelpCircle, X } from "lucide-react";
+import { ArrowLeft, Play, Plus, Trash2, Pencil, Upload, Loader2, HelpCircle, X, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 
 export const Route = createFileRoute("/_admin/admin/academy/courses_/$courseId")({
@@ -37,6 +37,8 @@ function CourseLessonsAdmin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyLesson);
   const [isUploadingVideo, setIsUploadingVideo] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
+  const [uploadStatusText, setUploadStatusText] = useState<string>("");
 
   const [isCreatingFaq, setIsCreatingFaq] = useState(false);
   const [faqEditingId, setFaqEditingId] = useState<string | null>(null);
@@ -92,6 +94,8 @@ function CourseLessonsAdmin() {
   const startCreate = () => {
     setEditingId(null);
     setFormData(emptyLesson);
+    setUploadProgress(null);
+    setUploadStatusText("");
     setIsCreating(true);
   };
 
@@ -102,26 +106,53 @@ function CourseLessonsAdmin() {
       description: lesson.description ?? "",
       videoUrl: lesson.videoUrl,
     });
+    setUploadProgress(null);
+    setUploadStatusText("");
     setIsCreating(true);
   };
 
   const handleVideoUpload = async (file: File) => {
     const contentType = file.type || "video/mp4";
     setIsUploadingVideo(true);
+    setUploadProgress(0);
+    setUploadStatusText("Generating secure S3 upload ticket...");
 
     try {
-      // 1. Try Direct S3 Presigned URL upload (Zero server bandwidth)
+      // 1. Try Direct S3 Presigned URL upload with real-time XMLHttpRequest progress
       const { uploadUrl, publicUrl } = await getPresignedUrlFn({
         data: { filename: file.name, contentType, folder: "lesson-videos" },
       });
 
-      const res = await fetch(uploadUrl, {
-        method: "PUT",
-        headers: { "Content-Type": contentType },
-        body: file,
-      });
+      setUploadStatusText("Uploading directly to S3...");
 
-      if (!res.ok) throw new Error(`Direct upload status ${res.status}`);
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("PUT", uploadUrl, true);
+        xhr.setRequestHeader("Content-Type", contentType);
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percent);
+            const loadedMb = (event.loaded / (1024 * 1024)).toFixed(1);
+            const totalMb = (event.total / (1024 * 1024)).toFixed(1);
+            setUploadStatusText(`Uploading: ${loadedMb} MB / ${totalMb} MB (${percent}%)`);
+          }
+        };
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            setUploadProgress(100);
+            setUploadStatusText("Upload complete!");
+            resolve();
+          } else {
+            reject(new Error(`Direct upload status ${xhr.status}`));
+          }
+        };
+
+        xhr.onerror = () => reject(new Error("Network error during direct S3 upload"));
+        xhr.send(file);
+      });
 
       setFormData((prev) => ({ ...prev, videoUrl: publicUrl }));
     } catch (directErr: unknown) {
@@ -131,11 +162,23 @@ function CourseLessonsAdmin() {
       );
 
       try {
+        setUploadStatusText("Using server-side S3 stream fallback...");
+        setUploadProgress(20);
+
         // 2. Automatic Fallback: Server-side S3 upload (Bypasses CORS completely)
         const reader = new FileReader();
         const base64Promise = new Promise<string>((resolve, reject) => {
+          reader.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const readPercent = Math.round((event.loaded / event.total) * 50);
+              setUploadProgress(readPercent);
+              setUploadStatusText(`Processing video buffer: ${readPercent * 2}%`);
+            }
+          };
           reader.onload = () => {
             const result = reader.result as string;
+            setUploadProgress(60);
+            setUploadStatusText("Transmitting to server...");
             resolve(result.split(",")[1]);
           };
           reader.onerror = reject;
@@ -143,6 +186,8 @@ function CourseLessonsAdmin() {
         });
 
         const base64Data = await base64Promise;
+        setUploadProgress(80);
+        setUploadStatusText("Finalizing S3 cloud storage...");
 
         const { publicUrl } = await uploadFileToS3Fn({
           data: {
@@ -153,11 +198,15 @@ function CourseLessonsAdmin() {
           },
         });
 
+        setUploadProgress(100);
+        setUploadStatusText("Upload complete!");
         setFormData((prev) => ({ ...prev, videoUrl: publicUrl }));
       } catch (fallbackErr: unknown) {
         alert(
           `S3 Upload failed: ${fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr)}`,
         );
+        setUploadProgress(null);
+        setUploadStatusText("");
       }
     } finally {
       setIsUploadingVideo(false);
@@ -254,14 +303,17 @@ function CourseLessonsAdmin() {
                   required
                   type="url"
                   value={formData.videoUrl}
-                  onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
+                  onChange={(e) => {
+                    setFormData({ ...formData, videoUrl: e.target.value });
+                    setUploadProgress(null);
+                  }}
                   placeholder="https://... or upload a video file ->"
                   className="flex-1 rounded-md border border-border bg-background/50 px-3 py-2 text-sm text-foreground focus:border-neon-cyan focus:outline-none"
                 />
                 <label className="relative flex cursor-pointer items-center justify-center gap-2 rounded-md border border-neon-cyan/50 bg-neon-cyan/10 px-4 py-2 text-xs font-bold text-neon-cyan hover:bg-neon-cyan/20 transition-colors shrink-0">
                   {isUploadingVideo ? (
                     <>
-                      <Loader2 className="h-4 w-4 animate-spin" /> Uploading...
+                      <Loader2 className="h-4 w-4 animate-spin" /> {uploadProgress ?? 0}% Uploading...
                     </>
                   ) : (
                     <>
@@ -281,6 +333,34 @@ function CourseLessonsAdmin() {
                   />
                 </label>
               </div>
+
+              {/* Real-time Upload Progress Bar */}
+              {isUploadingVideo && uploadProgress !== null && (
+                <div className="mt-3 space-y-2 rounded-lg border border-neon-cyan/30 bg-surface-2/90 p-3.5 shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-top-1 duration-200">
+                  <div className="flex items-center justify-between text-xs font-semibold">
+                    <span className="flex items-center gap-2 text-neon-cyan">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-neon-cyan" />
+                      {uploadStatusText || "Uploading Video..."}
+                    </span>
+                    <span className="font-mono text-xs font-bold text-neon-cyan glow-text">
+                      {uploadProgress}%
+                    </span>
+                  </div>
+                  <div className="h-2.5 w-full overflow-hidden rounded-full bg-background/80 border border-neon-cyan/30">
+                    <div
+                      className="h-full bg-gradient-to-r from-neon-purple via-neon-cyan to-neon-lime transition-all duration-150 ease-out shadow-[0_0_12px_rgba(0,243,255,0.7)]"
+                      style={{ width: `${Math.max(uploadProgress, 2)}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {!isUploadingVideo && uploadProgress === 100 && (
+                <div className="mt-2.5 flex items-center gap-2 rounded-md border border-neon-lime/30 bg-neon-lime/10 px-3 py-2 text-xs font-semibold text-neon-lime animate-in fade-in duration-200">
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-neon-lime" />
+                  <span>Video uploaded successfully to S3 storage!</span>
+                </div>
+              )}
             </div>
             <div className="flex gap-2 justify-end pt-2">
               <Button
@@ -290,6 +370,8 @@ function CourseLessonsAdmin() {
                   setIsCreating(false);
                   setEditingId(null);
                   setFormData(emptyLesson);
+                  setUploadProgress(null);
+                  setUploadStatusText("");
                 }}
               >
                 Cancel

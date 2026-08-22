@@ -1,6 +1,17 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { ArrowLeft, CheckCircle2, Zap, Layers, Trophy, ShieldCheck } from "lucide-react-native";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Zap,
+  Layers,
+  Trophy,
+  ShieldCheck,
+  Sparkles,
+  ArrowRight,
+  Flame,
+  Award,
+} from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Button } from "@/components/ui/Button";
@@ -10,139 +21,172 @@ import { LinearGradient } from "expo-linear-gradient";
 export default function PricingScreen() {
   const router = useRouter();
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/profile");
+    }
+  };
+
   return (
     <SafeScreen>
       {/* Top Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
-          <ArrowLeft color={colors.foreground} size={22} />
+        <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
+          <ArrowLeft color={colors.foreground} size={20} />
         </TouchableOpacity>
-        <View>
-          <Text style={styles.title}>Pricing & Plans</Text>
+        <View style={styles.headerTitleBox}>
+          <Text style={styles.title} numberOfLines={1}>
+            Pricing & Plans
+          </Text>
           <Text style={styles.subtitle}>Choose your Hunter learning pathway</Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Module Track 1: Hunter Pass */}
+        {/* Guild Pathway Hero Banner */}
         <LinearGradient
-          colors={["rgba(0, 243, 255, 0.12)", "rgba(10, 10, 26, 0.9)"]}
+          colors={["rgba(168, 85, 247, 0.15)", "rgba(0, 243, 255, 0.1)", "#070a14"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.heroBanner}
+        >
+          <View style={styles.heroBadge}>
+            <Sparkles color={colors.neonCyan} size={12} />
+            <Text style={styles.heroBadgeText}>HUNTER GUILD ARSENAL</Text>
+          </View>
+          <Text style={styles.heroTitle}>
+            One Topic. <Text style={{ color: colors.neonCyan }}>One New Power.</Text>
+          </Text>
+          <Text style={styles.heroSub}>
+            Level up your engineering combat skills with targeted topic sprints or comprehensive career certifications.
+          </Text>
+        </LinearGradient>
+
+        {/* Plan 1: Hunter Pass (Module Skill Sprints) */}
+        <LinearGradient
+          colors={["rgba(0, 243, 255, 0.14)", "rgba(7, 10, 20, 0.95)"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.cyanPlanCard}
         >
-          <View style={styles.trackPillCyan}>
-            <Layers color={colors.neonCyan} size={12} />
-            <Text style={styles.trackPillTextCyan}>MODULE TRACK</Text>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.trackPillCyan}>
+              <Layers color={colors.neonCyan} size={12} />
+              <Text style={styles.trackPillTextCyan}>TOPIC MODULES</Text>
+            </View>
+            <View style={styles.priceTagBox}>
+              <Text style={styles.priceFromText}>FROM</Text>
+              <Text style={styles.priceValCyan}>₹399</Text>
+            </View>
           </View>
 
-          <View style={styles.planHeader}>
-            <View>
-              <Text style={styles.planNameCyan}>Hunter Pass</Text>
-              <Text style={styles.planSubtitle}>Fast-track Skill Sprints & Quests</Text>
-            </View>
-            <View style={styles.priceContainer}>
-              <View style={styles.priceRow}>
-                <Text style={styles.priceSymbol}>₹</Text>
-                <Text style={styles.priceValueCyan}>499</Text>
-                <Text style={styles.priceDuration}>/mo</Text>
-              </View>
-              <Text style={styles.billingText}>Cancel anytime</Text>
-            </View>
-          </View>
+          <Text style={styles.planTitleCyan}>Hunter Pass Sprint</Text>
+          <Text style={styles.planDesc}>
+            Targeted, bite-sized skill modules designed for hunters who need a specific superpower — fast.
+          </Text>
 
           <View style={styles.dividerCyan} />
 
           <View style={styles.featuresList}>
             <View style={styles.featureRow}>
-              <CheckCircle2 color={colors.neonCyan} size={18} />
-              <Text style={styles.featureText}>Instant access to all Hunter Module Courses</Text>
+              <CheckCircle2 color={colors.neonCyan} size={16} />
+              <Text style={styles.featureText}>1 Full Year of Access with seamless renewal</Text>
             </View>
             <View style={styles.featureRow}>
-              <CheckCircle2 color={colors.neonCyan} size={18} />
-              <Text style={styles.featureText}>Daily challenge quests & EXP multipliers</Text>
+              <CheckCircle2 color={colors.neonCyan} size={16} />
+              <Text style={styles.featureText}>Self-paced tactical video lessons & exercises</Text>
             </View>
             <View style={styles.featureRow}>
-              <CheckCircle2 color={colors.neonCyan} size={18} />
-              <Text style={styles.featureText}>Community Discord & hunter guild access</Text>
+              <CheckCircle2 color={colors.neonCyan} size={16} />
+              <Text style={styles.featureText}>Offline Sandboxed Download mode in mobile app</Text>
             </View>
             <View style={styles.featureRow}>
-              <CheckCircle2 color={colors.neonCyan} size={18} />
-              <Text style={styles.featureText}>Interactive quizzes & code challenges</Text>
+              <CheckCircle2 color={colors.neonCyan} size={16} />
+              <Text style={styles.featureText}>Topic-focused quizzes & EXP point gains</Text>
             </View>
           </View>
 
-          <Button
-            label="Explore Hunter Modules"
-            variant="secondary"
+          <TouchableOpacity
+            style={styles.cyanActionBtn}
+            activeOpacity={0.85}
             onPress={() => router.push("/(tabs)/courses?type=MODULE" as any)}
-            style={styles.cyanBtn}
-          />
+          >
+            <Text style={styles.cyanActionBtnText}>Explore Topic Modules</Text>
+            <ArrowRight color="#050810" size={16} />
+          </TouchableOpacity>
         </LinearGradient>
 
-        {/* Module Track 2: Full Masterclasses */}
+        {/* Plan 2: Full Career Masterclasses */}
         <LinearGradient
-          colors={["rgba(147, 51, 234, 0.25)", "rgba(20, 10, 35, 0.95)"]}
+          colors={["rgba(168, 85, 247, 0.22)", "rgba(10, 8, 24, 0.98)"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.purplePlanCard}
         >
+          {/* Top Floating Popular Badge */}
           <View style={styles.popularBadge}>
-            <Zap color="#000" size={12} fill="#000" />
-            <Text style={styles.popularText}>MOST POPULAR</Text>
+            <Flame color="#050810" size={12} fill="#050810" />
+            <Text style={styles.popularText}>MOST POPULAR • S-RANK</Text>
           </View>
 
-          <View style={styles.trackPillPurple}>
-            <Trophy color={colors.neonPurple} size={12} />
-            <Text style={styles.trackPillTextPurple}>CERTIFICATION TRACK</Text>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.trackPillPurple}>
+              <Trophy color={colors.neonPurple} size={12} />
+              <Text style={styles.trackPillTextPurple}>FULL MASTERCLASS</Text>
+            </View>
+            <View style={styles.priceTagBox}>
+              <Text style={styles.priceFromText}>PAY ONCE</Text>
+              <Text style={styles.priceValPurple}>LIFETIME</Text>
+            </View>
           </View>
 
-          <View style={styles.planHeader}>
-            <View>
-              <Text style={styles.planNamePurple}>Full Masterclasses</Text>
-              <Text style={styles.planSubtitle}>Comprehensive Career Certifications</Text>
-            </View>
-            <View style={styles.priceContainer}>
-              <Text style={styles.payOnceTag}>PAY ONCE</Text>
-              <Text style={styles.billingTextPurple}>Lifetime Ownership</Text>
-            </View>
-          </View>
+          <Text style={styles.planTitlePurple}>Career Awakening Path</Text>
+          <Text style={styles.planDesc}>
+            Comprehensive, end-to-end disciplines from zero to high-ranking production engineer.
+          </Text>
 
           <View style={styles.dividerPurple} />
 
           <View style={styles.featuresList}>
             <View style={styles.featureRow}>
-              <CheckCircle2 color={colors.neonPurple} size={18} />
-              <Text style={styles.featureText}>Lifetime access to entire curriculum & updates</Text>
+              <CheckCircle2 color={colors.neonPurple} size={16} />
+              <Text style={styles.featureText}>Lifetime Access + All Future Curriculum Updates</Text>
             </View>
             <View style={styles.featureRow}>
-              <CheckCircle2 color={colors.neonPurple} size={18} />
-              <Text style={styles.featureText}>Cryptographic verifiable Hunter Certificate</Text>
+              <CheckCircle2 color={colors.neonPurple} size={16} />
+              <Text style={styles.featureText}>Official Verifiable Guild Completion Certificate & PDF</Text>
             </View>
             <View style={styles.featureRow}>
-              <CheckCircle2 color={colors.neonPurple} size={18} />
-              <Text style={styles.featureText}>Full-scale capstone projects & code portfolio</Text>
+              <CheckCircle2 color={colors.neonPurple} size={16} />
+              <Text style={styles.featureText}>Production-scale Capstone Projects for Portfolios</Text>
             </View>
             <View style={styles.featureRow}>
-              <CheckCircle2 color={colors.neonPurple} size={18} />
-              <Text style={styles.featureText}>1-on-1 mentor guidance & resume review</Text>
+              <CheckCircle2 color={colors.neonPurple} size={16} />
+              <Text style={styles.featureText}>Priority Live Chat Support & Guild Discord Community</Text>
             </View>
           </View>
 
-          <Button
-            label="Explore Full Masterclasses"
-            variant="primary"
+          <TouchableOpacity
+            style={styles.purpleActionBtn}
+            activeOpacity={0.85}
             onPress={() => router.push("/(tabs)/courses?type=FULL" as any)}
-            style={styles.purpleBtn}
-          />
+          >
+            <Text style={styles.purpleActionBtnText}>Explore Full Masterclasses</Text>
+            <ArrowRight color="#ffffff" size={16} />
+          </TouchableOpacity>
         </LinearGradient>
 
-        {/* Guarantee Banner */}
+        {/* Security & Authenticity Guarantee Banner */}
         <View style={styles.guaranteeBox}>
           <ShieldCheck color={colors.neonLime} size={20} />
-          <Text style={styles.guaranteeText}>
-            100% Satisfaction Guarantee • Secure Cloud Access • 24/7 Support
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.guaranteeTitle}>Official Academy Guarantee</Text>
+            <Text style={styles.guaranteeText}>
+              Verifiable Certificates • Encrypted HD Streaming • Cross-Device Sync
+            </Text>
+          </View>
         </View>
       </ScrollView>
     </SafeScreen>
@@ -155,14 +199,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: spacing[4],
     paddingTop: spacing[4],
-    paddingBottom: spacing[2],
+    paddingBottom: spacing[3],
     gap: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(255, 255, 255, 0.05)",
+    borderBottomColor: colors.border,
   },
   backBtn: {
-    width: 40,
-    height: 40,
+    width: 38,
+    height: 38,
     borderRadius: radii.full,
     backgroundColor: colors.surface2,
     alignItems: "center",
@@ -170,35 +214,83 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  headerTitleBox: {
+    flex: 1,
+    justifyContent: "center",
+  },
   title: {
     fontFamily: fonts.display,
     fontSize: fontSizes.lg,
     color: colors.foreground,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     fontWeight: "bold",
   },
   subtitle: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     color: colors.mutedForeground,
+    marginTop: 1,
   },
   content: {
     padding: spacing[4],
     paddingBottom: 110,
-    gap: spacing[5],
+    gap: spacing[4],
   },
 
-  // Cyan Card (Hunter Pass)
+  // Hero Banner
+  heroBanner: {
+    padding: spacing[4],
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.2)",
+    gap: spacing[2],
+  },
+  heroBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0, 243, 255, 0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+    alignSelf: "flex-start",
+  },
+  heroBadgeText: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    color: colors.neonCyan,
+    fontWeight: "bold",
+    letterSpacing: 1,
+  },
+  heroTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.lg,
+    color: colors.foreground,
+    fontWeight: "bold",
+  },
+  heroSub: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    lineHeight: 18,
+  },
+
+  // Cyan Plan Card
   cyanPlanCard: {
     padding: spacing[5],
-    borderRadius: radii["2xl"],
+    borderRadius: radii.xl,
     borderWidth: 1.5,
     borderColor: "rgba(0, 243, 255, 0.35)",
     shadowColor: colors.neonCyan,
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
     elevation: 4,
+  },
+  cardHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: spacing[2],
   },
   trackPillCyan: {
     flexDirection: "row",
@@ -208,8 +300,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[3],
     paddingVertical: 3,
     borderRadius: radii.full,
-    alignSelf: "flex-start",
-    marginBottom: spacing[3],
   },
   trackPillTextCyan: {
     fontFamily: fonts.display,
@@ -218,75 +308,72 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     letterSpacing: 1,
   },
-  planHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+  priceTagBox: {
+    alignItems: "flex-end",
   },
-  planNameCyan: {
+  priceFromText: {
+    fontFamily: fonts.sans,
+    fontSize: 8,
+    color: colors.mutedForeground,
+    letterSpacing: 1,
+  },
+  priceValCyan: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xl,
+    color: colors.neonCyan,
+    fontWeight: "bold",
+  },
+  planTitleCyan: {
     fontFamily: fonts.display,
     fontSize: fontSizes.lg,
-    color: colors.neonCyan,
+    color: colors.foreground,
     fontWeight: "bold",
     letterSpacing: 0.5,
   },
-  planSubtitle: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colors.mutedForeground,
-    marginTop: 2,
-  },
-  priceContainer: {
-    alignItems: "flex-end",
-  },
-  priceRow: {
-    flexDirection: "row",
-    alignItems: "flex-end",
-  },
-  priceSymbol: {
+  planDesc: {
     fontFamily: fonts.sans,
-    fontSize: fontSizes.sm,
-    color: colors.foreground,
-    marginBottom: 4,
-  },
-  priceValueCyan: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes["2xl"],
-    color: colors.foreground,
-    fontWeight: "bold",
-  },
-  priceDuration: {
-    fontFamily: fonts.body,
     fontSize: fontSizes.xs,
     color: colors.mutedForeground,
-    marginBottom: 4,
-    marginLeft: 2,
-  },
-  billingText: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    color: colors.mutedForeground,
+    lineHeight: 18,
+    marginTop: 4,
   },
   dividerCyan: {
     height: 1,
     backgroundColor: "rgba(0, 243, 255, 0.15)",
     marginVertical: spacing[4],
   },
-  cyanBtn: {
+  cyanActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.neonCyan,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderRadius: radii.lg,
+    gap: spacing[2],
     marginTop: spacing[4],
-    borderColor: colors.neonCyan,
+    shadowColor: colors.neonCyan,
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  cyanActionBtnText: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    color: "#050810",
+    fontWeight: "bold",
+    letterSpacing: 0.5,
   },
 
-  // Purple Card (Full Masterclasses)
+  // Purple Plan Card
   purplePlanCard: {
     padding: spacing[5],
-    borderRadius: radii["2xl"],
+    borderRadius: radii.xl,
     borderWidth: 1.5,
-    borderColor: "rgba(147, 51, 234, 0.5)",
+    borderColor: "rgba(168, 85, 247, 0.5)",
     shadowColor: colors.neonPurple,
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.3,
     shadowRadius: 12,
-    shadowOffset: { width: 0, height: 4 },
     elevation: 5,
     position: "relative",
     marginTop: spacing[2],
@@ -310,20 +397,18 @@ const styles = StyleSheet.create({
   popularText: {
     fontFamily: fonts.display,
     fontSize: 9,
-    color: "#000",
+    color: "#050810",
     fontWeight: "bold",
-    letterSpacing: 1,
+    letterSpacing: 0.8,
   },
   trackPillPurple: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "rgba(147, 51, 234, 0.2)",
+    backgroundColor: "rgba(168, 85, 247, 0.2)",
     paddingHorizontal: spacing[3],
     paddingVertical: 3,
     borderRadius: radii.full,
-    alignSelf: "flex-start",
-    marginBottom: spacing[3],
   },
   trackPillTextPurple: {
     fontFamily: fonts.display,
@@ -332,45 +417,58 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     letterSpacing: 1,
   },
-  planNamePurple: {
+  priceValPurple: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.lg,
+    color: colors.neonPurple,
+    fontWeight: "bold",
+  },
+  planTitlePurple: {
     fontFamily: fonts.display,
     fontSize: fontSizes.lg,
     color: colors.foreground,
     fontWeight: "bold",
     letterSpacing: 0.5,
   },
-  payOnceTag: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes.base,
-    color: colors.neonPurple,
-    fontWeight: "bold",
-    letterSpacing: 1,
-  },
-  billingTextPurple: {
-    fontFamily: fonts.body,
-    fontSize: 10,
-    color: colors.mutedForeground,
-  },
   dividerPurple: {
     height: 1,
-    backgroundColor: "rgba(147, 51, 234, 0.2)",
+    backgroundColor: "rgba(168, 85, 247, 0.2)",
     marginVertical: spacing[4],
   },
-  purpleBtn: {
+  purpleActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.neonPurple,
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderRadius: radii.lg,
+    gap: spacing[2],
     marginTop: spacing[4],
+    shadowColor: colors.neonPurple,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  purpleActionBtnText: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    color: "#ffffff",
+    fontWeight: "bold",
+    letterSpacing: 0.5,
   },
 
-  // Shared Features List
+  // Shared Features
   featuresList: {
     gap: spacing[3],
   },
   featureRow: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: spacing[3],
   },
   featureText: {
-    fontFamily: fonts.body,
+    fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     color: colors.foreground,
     flex: 1,
@@ -381,19 +479,24 @@ const styles = StyleSheet.create({
   guaranteeBox: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing[2],
+    gap: spacing[3],
     backgroundColor: "rgba(34, 197, 94, 0.08)",
     borderWidth: 1,
     borderColor: "rgba(34, 197, 94, 0.25)",
-    padding: spacing[3],
+    padding: spacing[4],
     borderRadius: radii.xl,
-    justifyContent: "center",
+  },
+  guaranteeTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    color: colors.neonLime,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
   },
   guaranteeText: {
     fontFamily: fonts.sans,
     fontSize: 10,
-    color: colors.neonLime,
-    textAlign: "center",
-    letterSpacing: 0.3,
+    color: colors.mutedForeground,
+    marginTop: 2,
   },
 });

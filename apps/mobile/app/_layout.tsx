@@ -19,6 +19,7 @@ import {
 } from "@expo-google-fonts/inter";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
+import { usePreventScreenCapture } from "expo-screen-capture";
 import { colors } from "@/theme";
 
 SplashScreen.preventAutoHideAsync();
@@ -33,6 +34,8 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
+  usePreventScreenCapture("global_app_protection");
+
   const [fontsLoaded, fontError] = useFonts({
     Orbitron_700Bold,
     Rajdhani_600SemiBold,

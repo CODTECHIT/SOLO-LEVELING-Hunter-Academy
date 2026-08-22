@@ -16,6 +16,14 @@ export type Course = {
 
 export type CourseDetailResponse = {
   course: Course & {
+    quizzes?: {
+      id: string;
+      title: string;
+      description: string | null;
+      timeLimit: number;
+      passingScore: number;
+      _count?: { questions: number };
+    }[];
     lessons: {
       id: string;
       title: string;
@@ -23,6 +31,14 @@ export type CourseDetailResponse = {
       videoUrl: string;
       order: number;
       duration: number | null;
+      quiz?: {
+        id: string;
+        title: string;
+        description: string | null;
+        timeLimit: number;
+        passingScore: number;
+        _count?: { questions: number };
+      } | null;
     }[];
   };
   isEnrolled: boolean;
@@ -52,14 +68,14 @@ export function useCatalog(params?: { q?: string; category?: string }) {
   });
 }
 
-export function useCourse(slug: string) {
+export function useCourse(slugOrId: string) {
   return useQuery<CourseDetailResponse>({
-    queryKey: ["course", slug],
+    queryKey: ["course", slugOrId],
     queryFn: async () => {
-      const { data } = await api.get(`/courses/slug/${slug}`);
+      const { data } = await api.get(`/courses/slug/${encodeURIComponent(slugOrId)}`);
       return data;
     },
-    enabled: !!slug,
+    enabled: !!slugOrId,
   });
 }
 

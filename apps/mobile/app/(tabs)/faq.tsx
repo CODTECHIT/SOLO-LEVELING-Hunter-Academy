@@ -1,33 +1,82 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, LayoutAnimation } from "react-native";
-import { ChevronDown, ChevronUp, ArrowLeft } from "lucide-react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  LayoutAnimation,
+  Platform,
+  UIManager,
+} from "react-native";
+import { ChevronDown, ChevronUp, ArrowLeft, HelpCircle, Sparkles, BookOpen, ShieldCheck, CreditCard } from "lucide-react-native";
 import { useRouter } from "expo-router";
 import { SafeScreen } from "@/components/layout/SafeScreen";
-import { Card } from "@/components/ui/Card";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
+import { LinearGradient } from "expo-linear-gradient";
+
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 const faqs = [
   {
-    category: "General",
+    category: "General & Academy",
+    icon: Sparkles,
+    color: colors.neonCyan,
     items: [
-      { q: "What is Cyber Tech Academy?", a: "We provide industry-standard courses and tools for modern hunters to level up their skills in web development, mobile apps, and data science." },
-      { q: "Do I get a certificate?", a: "Yes! Every full course you complete grants you a verifiable completion certificate." }
-    ]
+      {
+        q: "What is Cyber Tech Academy?",
+        a: "Cyber Tech Academy is an elite Hunter-themed learning platform where engineers and developers conquer real-world masterclasses, level up combat skills in code, and earn cryptographic certificates of mastery.",
+      },
+      {
+        q: "Do I receive a verifiable certificate upon completion?",
+        a: "Yes! Conquering all dungeon lessons and assessments in a course automatically issues an authenticated, digitally verifiable Cyber Tech Guild Certificate with unique ID and PDF export.",
+      },
+      {
+        q: "Can I download lessons for offline study?",
+        a: "Yes! In the mobile app, tap 'Save Offline' on any lesson to store it encrypted in your local device sandbox and watch anywhere without an active internet connection.",
+      },
+    ],
   },
   {
-    category: "Account & Access",
+    category: "Hunter Pass & Courses",
+    icon: BookOpen,
+    color: colors.neonPurple,
     items: [
-      { q: "How long do I have access?", a: "Most full courses grant lifetime access. Modules via the Hunter Pass may expire based on your subscription." },
-      { q: "Can I use multiple devices?", a: "Yes, you can log in on both the web application and the mobile app to sync your progress." }
-    ]
+      {
+        q: "What is the difference between Hunter Pass Modules and Full Paths?",
+        a: "Hunter Pass Topic Modules are quick, targeted skill sprints (from ₹399) to learn one specific tool fast. Full Career Masterclasses provide complete end-to-end curriculum, capstones, and lifetime access.",
+      },
+      {
+        q: "How long is my course access valid?",
+        a: "Full Masterclass purchases grant lifetime access including all future updates. Module courses remain active for 1 full year with simple one-click renewal.",
+      },
+      {
+        q: "Can I switch between web and mobile devices?",
+        a: "Yes! Your account, EXP points, lesson watch progress, and unlocked badges synchronize automatically across the web platform and mobile app in real time.",
+      },
+    ],
   },
   {
-    category: "Payments",
+    category: "Billing & Security",
+    icon: ShieldCheck,
+    color: colors.neonLime,
     items: [
-      { q: "What payment methods do you accept?", a: "We accept all major credit cards, UPI, and internet banking via our secure Razorpay integration." },
-      { q: "Do you offer refunds?", a: "Yes, we have a 7-day money-back guarantee for most full courses if you have watched less than 20% of the content." }
-    ]
-  }
+      {
+        q: "Which payment options are supported?",
+        a: "We support all major payment methods including UPI (GPay, PhonePe, Paytm), Credit/Debit Cards, Net Banking, and International Cards via our secure encrypted gateway.",
+      },
+      {
+        q: "Why is screen recording restricted on video playback?",
+        a: "To protect intellectual property and proprietary syllabus material, our media player utilizes hardware-level secure window protection across full-screen playback.",
+      },
+      {
+        q: "How do I get help if I get stuck on a coding lesson?",
+        a: "You can open a live support ticket directly in the app via Help & Support, or ask questions in the community Hunter Guild discussion channels.",
+      },
+    ],
+  },
 ];
 
 export default function FAQScreen() {
@@ -39,37 +88,84 @@ export default function FAQScreen() {
     setExpanded(expanded === q ? null : q);
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/profile");
+    }
+  };
+
   return (
     <SafeScreen>
+      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft color={colors.foreground} size={24} />
+        <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
+          <ArrowLeft color={colors.foreground} size={20} />
         </TouchableOpacity>
-        <Text style={styles.title}>Frequently Asked Questions</Text>
+        <View style={styles.headerTitleBox}>
+          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+            Frequently Asked Questions
+          </Text>
+          <Text style={styles.subtitle}>Answers & Hunter Guild Intelligence</Text>
+        </View>
       </View>
+
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        {faqs.map((group, i) => (
-          <View key={i} style={styles.group}>
-            <Text style={styles.groupTitle}>{group.category}</Text>
-            {group.items.map((item, j) => (
-              <Card key={j} style={styles.faqCard}>
-                <TouchableOpacity style={styles.qRow} onPress={() => toggle(item.q)} activeOpacity={0.7}>
-                  <Text style={styles.qText}>{item.q}</Text>
-                  {expanded === item.q ? (
-                    <ChevronUp color={colors.neonPurple} size={20} />
-                  ) : (
-                    <ChevronDown color={colors.mutedForeground} size={20} />
-                  )}
-                </TouchableOpacity>
-                {expanded === item.q && (
-                  <View style={styles.aBox}>
-                    <Text style={styles.aText}>{item.a}</Text>
+        {faqs.map((group, i) => {
+          const IconComp = group.icon;
+          return (
+            <View key={i} style={styles.group}>
+              <View style={styles.groupHeader}>
+                <IconComp color={group.color} size={16} />
+                <Text style={[styles.groupTitle, { color: group.color }]}>
+                  {group.category}
+                </Text>
+              </View>
+
+              {group.items.map((item, j) => {
+                const isItemExpanded = expanded === item.q;
+                return (
+                  <View
+                    key={j}
+                    style={[
+                      styles.faqCard,
+                      isItemExpanded && styles.faqCardExpanded,
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={styles.qRow}
+                      onPress={() => toggle(item.q)}
+                      activeOpacity={0.75}
+                    >
+                      <Text
+                        style={[
+                          styles.qText,
+                          isItemExpanded && { color: colors.neonCyan, fontWeight: "600" },
+                        ]}
+                      >
+                        {item.q}
+                      </Text>
+                      <View style={styles.chevronWrapper}>
+                        {isItemExpanded ? (
+                          <ChevronUp color={colors.neonCyan} size={18} />
+                        ) : (
+                          <ChevronDown color={colors.mutedForeground} size={18} />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+
+                    {isItemExpanded && (
+                      <View style={styles.aBox}>
+                        <Text style={styles.aText}>{item.a}</Text>
+                      </View>
+                    )}
                   </View>
-                )}
-              </Card>
-            ))}
-          </View>
-        ))}
+                );
+              })}
+            </View>
+          );
+        })}
       </ScrollView>
     </SafeScreen>
   );
@@ -80,59 +176,98 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-    gap: spacing[4],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[3],
+    gap: spacing[3],
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   backBtn: {
     padding: spacing[2],
     backgroundColor: colors.surface2,
     borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  headerTitleBox: {
+    flex: 1,
+    justifyContent: "center",
   },
   title: {
     fontFamily: fonts.display,
-    fontSize: fontSizes.xl,
+    fontSize: fontSizes.lg,
     color: colors.foreground,
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+  },
+  subtitle: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    marginTop: 1,
   },
   content: {
     padding: spacing[4],
     paddingBottom: 110,
+    gap: spacing[5],
   },
   group: {
-    marginBottom: spacing[6],
+    gap: spacing[2],
+  },
+  groupHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+    marginBottom: spacing[2],
   },
   groupTitle: {
     fontFamily: fonts.display,
-    fontSize: fontSizes.lg,
-    color: colors.neonCyan,
-    marginBottom: spacing[3],
+    fontSize: fontSizes.sm,
     letterSpacing: 1,
+    fontWeight: "bold",
   },
   faqCard: {
-    marginBottom: spacing[3],
-    padding: spacing[3],
+    backgroundColor: "#070a14",
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    padding: spacing[4],
+    overflow: "hidden",
+  },
+  faqCardExpanded: {
+    borderColor: "rgba(0, 243, 255, 0.3)",
+    backgroundColor: "rgba(7, 10, 20, 0.95)",
   },
   qRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
+    gap: spacing[3],
   },
   qText: {
     flex: 1,
+    flexShrink: 1,
     fontFamily: fonts.sans,
-    fontSize: fontSizes.base,
+    fontSize: fontSizes.sm,
     color: colors.foreground,
+    lineHeight: 20,
+  },
+  chevronWrapper: {
+    padding: 2,
   },
   aBox: {
     marginTop: spacing[3],
     paddingTop: spacing[3],
     borderTopWidth: 1,
-    borderTopColor: colors.border,
+    borderTopColor: "rgba(255, 255, 255, 0.08)",
+    borderLeftWidth: 2,
+    borderLeftColor: colors.neonCyan,
+    paddingLeft: spacing[3],
   },
   aText: {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
-    color: colors.mutedForeground,
-    lineHeight: 20,
+    color: "#94a3b8",
+    lineHeight: 22,
+    flexShrink: 1,
   },
 });

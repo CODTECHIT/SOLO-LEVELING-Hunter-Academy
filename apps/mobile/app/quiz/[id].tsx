@@ -13,7 +13,7 @@ import { ArrowLeft, Clock, CheckCircle2, Trophy, RotateCcw, AlertCircle } from "
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import * as ScreenCapture from "expo-screen-capture";
+import { usePreventScreenCapture } from "expo-screen-capture";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 import { api } from "@/lib/api";
 
@@ -22,12 +22,7 @@ export default function MobileQuizScreen() {
   const router = useRouter();
 
   // Screen recording and screenshot restriction for exams
-  useEffect(() => {
-    ScreenCapture.preventScreenCaptureAsync().catch(() => {});
-    return () => {
-      ScreenCapture.allowScreenCaptureAsync().catch(() => {});
-    };
-  }, []);
+  usePreventScreenCapture("quiz_exam_screen");
 
   const [quiz, setQuiz] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);

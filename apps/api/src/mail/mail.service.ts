@@ -13,8 +13,11 @@ export class MailService {
   private initTransporter() {
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
-    const host = process.env.SMTP_HOST || "smtp.gmail.com";
-    const port = Number(process.env.SMTP_PORT || 587);
+    let host = process.env.SMTP_HOST || "smtp.gmail.com";
+    if (host.includes("@") || !host) {
+      host = "smtp.gmail.com";
+    }
+    const port = Number(process.env.SMTP_PORT || (host === "smtp.gmail.com" ? 465 : 587));
     const secure = process.env.SMTP_SECURE === "true" || port === 465;
 
     if (user && pass) {

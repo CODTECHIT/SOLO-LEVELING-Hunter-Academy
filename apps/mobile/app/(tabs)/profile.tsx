@@ -15,7 +15,8 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-import { ChevronRight, CreditCard, Receipt, HelpCircle, LifeBuoy, Tag } from "lucide-react-native";
+import { ChevronRight, CreditCard, HelpCircle, LifeBuoy, Tag } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
 import { useAuthStore } from "@/store/authStore";
 import { useHunterStats } from "@/hooks/useHunterStats";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -89,60 +90,89 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Hunter Stats */}
+        {/* Hunter Status Window */}
         {stats && (
-          <TouchableOpacity activeOpacity={0.9} onPress={() => router.push("/ranks" as any)}>
-            <Card accent="purple">
+          <TouchableOpacity
+            activeOpacity={0.9}
+            onPress={() => router.push("/ranks" as any)}
+            style={styles.statsWrapper}
+          >
+            <LinearGradient
+              colors={["rgba(168, 85, 247, 0.18)", "rgba(0, 243, 255, 0.08)", "#070a14"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.statsCard}
+            >
+              {/* Status Header */}
               <View style={styles.statsTitleRow}>
-                <Shield color={colors.neonPurple} size={16} />
-                <Text style={styles.statsTitle}>Hunter Stats</Text>
-                <View style={styles.rankPill}>
-                  <Text style={styles.rankLetter}>{stats.rankLetter}</Text>
+                <View style={styles.statsHeaderLeft}>
+                  <Shield color={colors.neonPurple} size={18} />
+                  <Text style={styles.statsTitle}>STATUS WINDOW</Text>
                 </View>
-                <Text style={[styles.statLabel, { color: colors.neonCyan, marginLeft: "auto", textDecorationLine: "underline" }]}>
-                  Rank Guide ➔
-                </Text>
+                <View style={styles.rankBadgeContainer}>
+                  <View style={styles.rankPill}>
+                    <Text style={styles.rankLetter}>{stats.rankLetter}</Text>
+                  </View>
+                  <Text style={styles.rankGuideChip}>Rank Guide ➔</Text>
+                </View>
               </View>
-            <View style={styles.statsGrid}>
-              <View style={styles.statItem}>
-                <Text style={styles.statVal}>{stats.coursesTaken}</Text>
-                <Text style={styles.statLabel}>Courses</Text>
+
+              {/* 4 Cyberpunk Stat Pods */}
+              <View style={styles.statsGrid}>
+                <View style={styles.statPod}>
+                  <Text style={styles.statVal}>{stats.coursesTaken}</Text>
+                  <Text style={styles.statLabel}>Courses</Text>
+                </View>
+                <View style={styles.statPod}>
+                  <Text style={styles.statVal}>{stats.lessonsCompleted}</Text>
+                  <Text style={styles.statLabel}>Lessons</Text>
+                </View>
+                <View style={styles.statPod}>
+                  <Text style={[styles.statVal, { color: colors.neonAmber }]}>
+                    🔥 {stats.streak}d
+                  </Text>
+                  <Text style={styles.statLabel}>Streak</Text>
+                </View>
+                <View style={styles.statPod}>
+                  <Text style={[styles.statVal, { color: colors.neonCyan }]}>
+                    {stats.expTotal > 9999 ? `${(stats.expTotal / 1000).toFixed(1)}k` : stats.expTotal}
+                  </Text>
+                  <Text style={styles.statLabel}>EXP</Text>
+                </View>
               </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statVal}>{stats.lessonsCompleted}</Text>
-                <Text style={styles.statLabel}>Lessons</Text>
+
+              {/* Status Gauges */}
+              <View style={styles.bars}>
+                <ProgressBar
+                  value={(stats.expCurrent / stats.expMax) * 100}
+                  color={colors.neonPurple}
+                  label={`EXP LVL • ${stats.expCurrent}/${stats.expMax}`}
+                  showPercent
+                  height={6}
+                />
+                <ProgressBar
+                  value={stats.focusPct}
+                  color={colors.neonCyan}
+                  label="HP FOCUS • COURSE ACCURACY"
+                  showPercent
+                  height={6}
+                />
+                <ProgressBar
+                  value={stats.mpPercent}
+                  color={colors.neonLime}
+                  label={`MP STREAK • ${stats.streak} DAYS ACTIVE`}
+                  showPercent
+                  height={6}
+                />
               </View>
-              <View style={styles.statItem}>
-                <Text style={[styles.statVal, { color: colors.neonAmber }]}>
-                  🔥 {stats.streak}d
-                </Text>
-                <Text style={styles.statLabel}>
-                  Streak (Max {stats.longestStreak || stats.streak}d)
-                </Text>
-              </View>
-              <View style={styles.statItem}>
-                <Text style={styles.statVal}>{stats.expTotal.toLocaleString()}</Text>
-                <Text style={styles.statLabel}>EXP</Text>
-              </View>
-            </View>
-            <View style={styles.bars}>
-              <ProgressBar value={(stats.expCurrent / stats.expMax) * 100} color={colors.neonPurple} label="EXP" height={6} />
-              <ProgressBar value={stats.focusPct} color={colors.neonCyan} label="HP Focus" height={6} />
-              <ProgressBar
-                value={stats.mpPercent}
-                color={colors.neonLime}
-                label={`MP Streak ${stats.streak > 0 ? `(🔥 ${stats.streak}d)` : ""}`}
-                height={6}
-              />
-            </View>
-          </Card>
-        </TouchableOpacity>
-      )}
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
 
         {/* Profile info */}
         <Card>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Profile</Text>
+            <Text style={styles.sectionTitle}>Profile Info</Text>
             {!editing ? (
               <TouchableOpacity onPress={() => { setEditing(true); setName(user.name); setPhone(user.phone ?? ""); }}>
                 <Edit2 color={colors.neonPurple} size={16} />
@@ -173,16 +203,16 @@ export default function ProfileScreen() {
           ) : (
             <View style={styles.infoList}>
               <View style={styles.infoRow}>
-                <User color={colors.neonCyan} size={14} />
+                <User color={colors.neonCyan} size={16} />
                 <Text style={styles.infoText}>{user.name}</Text>
               </View>
               <View style={styles.infoRow}>
-                <Mail color={colors.neonPurple} size={14} />
+                <Mail color={colors.neonPurple} size={16} />
                 <Text style={styles.infoText}>{user.email}</Text>
               </View>
               {user.phone && (
                 <View style={styles.infoRow}>
-                  <Phone color={colors.neonAmber} size={14} />
+                  <Phone color={colors.neonAmber} size={16} />
                   <Text style={styles.infoText}>{user.phone}</Text>
                 </View>
               )}
@@ -190,7 +220,7 @@ export default function ProfileScreen() {
           )}
         </Card>
 
-        {/* More Options */}
+        {/* More Options (Refunds Removed) */}
         <Card>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>More</Text>
@@ -207,15 +237,7 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(tabs)/purchases")}>
               <View style={styles.menuItemLeft}>
                 <CreditCard color={colors.neonCyan} size={20} />
-                <Text style={styles.menuItemText}>Purchases</Text>
-              </View>
-              <ChevronRight color={colors.mutedForeground} size={16} />
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(tabs)/refunds")}>
-              <View style={styles.menuItemLeft}>
-                <Receipt color={colors.neonAmber} size={20} />
-                <Text style={styles.menuItemText}>Refunds</Text>
+                <Text style={styles.menuItemText}>Purchases & Invoices</Text>
               </View>
               <ChevronRight color={colors.mutedForeground} size={16} />
             </TouchableOpacity>
@@ -239,7 +261,7 @@ export default function ProfileScreen() {
             <TouchableOpacity style={styles.menuItem} onPress={() => router.push("/(tabs)/support")}>
               <View style={styles.menuItemLeft}>
                 <LifeBuoy color={colors.foreground} size={20} />
-                <Text style={styles.menuItemText}>Support</Text>
+                <Text style={styles.menuItemText}>Help & Live Support</Text>
               </View>
               <ChevronRight color={colors.mutedForeground} size={16} />
             </TouchableOpacity>
@@ -295,21 +317,93 @@ const styles = StyleSheet.create({
   avatarInfo: { gap: spacing[2] },
   userName: { fontFamily: fonts.display, fontSize: fontSizes.lg, color: colors.foreground, letterSpacing: 2 },
 
-  statsTitleRow: { flexDirection: "row", alignItems: "center", gap: spacing[2], marginBottom: spacing[4] },
-  statsTitle: { fontFamily: fonts.display, fontSize: fontSizes.sm, color: colors.foreground, letterSpacing: 2, flex: 1 },
+  statsWrapper: {
+    borderRadius: radii.xl,
+    overflow: "hidden",
+    shadowColor: colors.neonPurple,
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  statsCard: {
+    padding: spacing[4],
+    borderRadius: radii.xl,
+    borderWidth: 1.5,
+    borderColor: "rgba(168, 85, 247, 0.4)",
+    backgroundColor: "#070a14",
+  },
+  statsTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: spacing[4],
+  },
+  statsHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  statsTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.sm,
+    color: colors.foreground,
+    letterSpacing: 2,
+    fontWeight: "bold",
+  },
+  rankBadgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
   rankPill: {
-    backgroundColor: colors.neonPurpleAlpha20,
+    backgroundColor: "rgba(168, 85, 247, 0.25)",
     borderWidth: 1,
     borderColor: colors.neonPurple,
     borderRadius: radii.sm,
-    paddingHorizontal: spacing[2],
+    paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  rankLetter: { fontFamily: fonts.display, fontSize: fontSizes.sm, color: colors.neonPurple },
-  statsGrid: { flexDirection: "row", marginBottom: spacing[4] },
-  statItem: { flex: 1, alignItems: "center" },
-  statVal: { fontFamily: fonts.display, fontSize: fontSizes.xl, color: colors.foreground },
-  statLabel: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.mutedForeground, textTransform: "uppercase", letterSpacing: 1 },
+  rankLetter: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    color: colors.neonPurple,
+    fontWeight: "bold",
+  },
+  rankGuideChip: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.neonCyan,
+    fontWeight: "bold",
+  },
+  statsGrid: {
+    flexDirection: "row",
+    gap: spacing[2],
+    marginBottom: spacing[4],
+  },
+  statPod: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    borderRadius: radii.lg,
+    paddingVertical: spacing[3],
+    paddingHorizontal: 4,
+  },
+  statVal: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.lg,
+    color: colors.foreground,
+    fontWeight: "bold",
+  },
+  statLabel: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.mutedForeground,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+    marginTop: 2,
+  },
   bars: { gap: spacing[3] },
 
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing[4] },

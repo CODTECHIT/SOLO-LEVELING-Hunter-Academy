@@ -144,11 +144,19 @@ export default function SupportScreen() {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/profile");
+    }
+  };
+
   return (
     <SafeScreen>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft color={colors.foreground} size={22} />
+        <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
+          <ArrowLeft color={colors.foreground} size={20} />
         </TouchableOpacity>
         <Text style={styles.title}>Help & Live Support</Text>
       </View>

@@ -136,12 +136,20 @@ export default function RanksScreen() {
   const { data: stats } = useHunterStats(isAuthenticated);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/profile");
+    }
+  };
+
   return (
     <SafeScreen>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft color={colors.foreground} size={22} />
+        <TouchableOpacity style={styles.backBtn} onPress={handleBack} activeOpacity={0.8}>
+          <ArrowLeft color={colors.foreground} size={20} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Hunter Rank Guide</Text>
       </View>

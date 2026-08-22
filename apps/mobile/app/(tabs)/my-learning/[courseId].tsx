@@ -20,9 +20,11 @@ import {
   HardDriveDownload,
   WifiOff,
   Award,
+  ChevronRight,
+  Sparkles,
 } from "lucide-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
-import * as ScreenCapture from "expo-screen-capture";
+import { usePreventScreenCapture, preventScreenCaptureAsync } from "expo-screen-capture";
 import { useCourse, useEnrolledCourses } from "@/hooks/useCourses";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { useAuthStore } from "@/store/authStore";
@@ -47,12 +49,7 @@ export default function LearningPlayerScreen() {
   const qc = useQueryClient();
 
   // Screen recording restriction (Active across the player screen)
-  useEffect(() => {
-    ScreenCapture.preventScreenCaptureAsync().catch(() => {});
-    return () => {
-      ScreenCapture.allowScreenCaptureAsync().catch(() => {});
-    };
-  }, []);
+  usePreventScreenCapture("learning_player_screen");
 
   const {
     isDownloaded,
@@ -65,22 +62,31 @@ export default function LearningPlayerScreen() {
 
   const { data: enrollments } = useEnrolledCourses();
   const { user } = useAuthStore();
-  const course = enrollments?.find((c: any) => c.id === courseId);
-  const slug = course?.slug;
+  const course = enrollments?.find((c: any) => c.id === courseId || c.slug === courseId);
+  const slug = course?.slug || courseId;
 
   const { data, isLoading } = useCourse(slug ?? "");
 
-  const lessons = data?.course.lessons ?? [];
+  const lessons = data?.course?.lessons ?? [];
   const [activeId, setActiveId] = useState<string>(
     initialLessonId ?? lessons[0]?.id ?? "",
   );
   const [showLessons, setShowLessons] = useState(false);
   const [certModalVisible, setCertModalVisible] = useState(false);
-  const progressRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [videoCurrentTime, setVideoCurrentTime] = useState<number>(0);
+  const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [isMarkingComplete, setIsMarkingComplete] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!activeId && lessons.length > 0) {
+      setActiveId(initialLessonId ?? lessons[0].id);
+    }
+  }, [lessons, initialLessonId, activeId]);
 
   const activeLesson: any = lessons.find((l: any) => l.id === activeId) ?? lessons[0];
   const isEnrolled = data?.isEnrolled ?? false;
   const completedIds = data?.completedLessonIds ?? [];
+  const isCurrentCompleted = completedIds.includes(activeLesson?.id ?? "");
   const progress = lessons.length > 0
     ? Math.round((completedIds.length / lessons.length) * 100)
     : 0;
@@ -96,27 +102,112 @@ export default function LearningPlayerScreen() {
     p.play();
   });
 
-  // Report progress every 10 seconds while playing
-  const reportProgress = useCallback(async (watchedSeconds: number, duration?: number) => {
-    if (!activeLesson) return;
+  // Report progress periodically to backend
+  const reportProgress = useCallback(
+    async (watchedSeconds: number, duration?: number, markComplete = false) => {
+      if (!activeLesson) return;
+      try {
+        await api.post("/users/progress", {
+          lessonId: activeLesson.id,
+          watchedSeconds,
+          duration,
+          completed: markComplete || undefined,
+        });
+        await Promise.all([
+          qc.invalidateQueries({ queryKey: ["course", slug] }),
+          qc.invalidateQueries({ queryKey: ["course", courseId] }),
+          qc.invalidateQueries({ queryKey: ["enrollments"] }),
+          qc.invalidateQueries({ queryKey: ["hunter-stats"] }),
+        ]);
+      } catch {
+        // Silent fail — progress will be retried
+      }
+    },
+    [activeLesson, slug, courseId, qc],
+  );
+
+  // Auto playback progress tracking & playToEnd listener
+  useEffect(() => {
+    if (!player || !isEnrolled || !activeLesson) return;
+
+    const interval = setInterval(() => {
+      try {
+        if (player.currentTime !== undefined && player.currentTime >= 0) {
+          const cur = Math.floor(player.currentTime);
+          const dur = Math.floor(player.duration || activeLesson.duration || 0);
+          setVideoCurrentTime(cur);
+          if (dur > 0) setVideoDuration(dur);
+
+          if (player.playing && cur > 0) {
+            const isAutoCompleted = dur > 0 && cur >= Math.floor(dur * 0.9);
+            reportProgress(cur, dur, isAutoCompleted);
+          }
+        }
+      } catch {
+        // player state transitioning
+      }
+    }, 4000);
+
+    const sub = player.addListener?.("playToEnd", () => {
+      handleMarkLessonComplete(true);
+    });
+
+    return () => {
+      clearInterval(interval);
+      sub?.remove?.();
+    };
+  }, [player, isEnrolled, activeLesson, reportProgress]);
+
+  // Mark lesson as complete handler
+  const handleMarkLessonComplete = async (autoAdvance = false) => {
+    if (!activeLesson || isMarkingComplete) return;
     try {
+      setIsMarkingComplete(true);
+      const dur = activeLesson.duration || videoDuration || 60;
       await api.post("/users/progress", {
         lessonId: activeLesson.id,
-        watchedSeconds,
-        duration,
+        watchedSeconds: dur,
+        duration: dur,
+        completed: true,
       });
-      await qc.invalidateQueries({ queryKey: ["course", slug] });
-      await qc.invalidateQueries({ queryKey: ["enrollments"] });
-    } catch {
-      // Silent fail — progress will be retried next tick
+
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["course", slug] }),
+        qc.invalidateQueries({ queryKey: ["course", courseId] }),
+        qc.invalidateQueries({ queryKey: ["enrollments"] }),
+        qc.invalidateQueries({ queryKey: ["hunter-stats"] }),
+      ]);
+
+      const wasAlreadyCompleted = completedIds.includes(activeLesson.id);
+      const newCompletedCount = wasAlreadyCompleted ? completedIds.length : completedIds.length + 1;
+
+      // If course is fully complete, trigger certificate modal!
+      if (newCompletedCount >= lessons.length && lessons.length > 0) {
+        setTimeout(() => {
+          setCertModalVisible(true);
+        }, 300);
+      } else if (autoAdvance) {
+        const curIndex = lessons.findIndex((l: any) => l.id === activeLesson.id);
+        if (curIndex !== -1 && curIndex + 1 < lessons.length) {
+          setActiveId(lessons[curIndex + 1].id);
+        }
+      }
+    } catch (err: any) {
+      Alert.alert("Error", err?.response?.data?.message || "Failed to update progress");
+    } finally {
+      setIsMarkingComplete(false);
     }
-  }, [activeLesson, slug, qc]);
+  };
+
+  const currentIndex = lessons.findIndex((l: any) => l.id === activeLesson?.id);
+  const nextLesson = currentIndex !== -1 && currentIndex + 1 < lessons.length ? lessons[currentIndex + 1] : null;
 
   if (isLoading || !data) {
     return (
       <SafeScreen>
         <View style={styles.center}>
-          <Text style={styles.loadingText}>Loading lesson...</Text>
+          <ActivityIndicator size="large" color={colors.neonCyan} />
+          <Text style={[styles.loadingText, { marginTop: 16 }]}>Loading lesson & dungeon tracks...</Text>
         </View>
       </SafeScreen>
     );
@@ -165,6 +256,14 @@ export default function LearningPlayerScreen() {
               player={player}
               nativeControls={true}
               contentFit="contain"
+              fullscreenOptions={{ enable: true }}
+              surfaceType="surfaceView"
+              onFullscreenEnter={() => {
+                preventScreenCaptureAsync("fullscreen_video_window").catch(() => {});
+              }}
+              onFullscreenExit={() => {
+                preventScreenCaptureAsync("fullscreen_video_window").catch(() => {});
+              }}
             />
           )
         ) : (
@@ -175,14 +274,54 @@ export default function LearningPlayerScreen() {
         )}
       </View>
 
-      {/* Progress bar */}
+      {/* Action Strip: Mark Lesson Complete / Next Lesson */}
+      {isEnrolled && activeLesson && (
+        <View style={styles.actionStrip}>
+          <TouchableOpacity
+            style={[
+              styles.completeActionBtn,
+              isCurrentCompleted ? styles.completeActionBtnDone : styles.completeActionBtnActive,
+            ]}
+            onPress={() => handleMarkLessonComplete(false)}
+            disabled={isMarkingComplete}
+            activeOpacity={0.85}
+          >
+            {isMarkingComplete ? (
+              <ActivityIndicator size="small" color={isCurrentCompleted ? colors.neonLime : "#050810"} />
+            ) : isCurrentCompleted ? (
+              <>
+                <CheckCircle2 color={colors.neonLime} size={16} />
+                <Text style={styles.completeActionTextDone}>Completed</Text>
+              </>
+            ) : (
+              <>
+                <CheckCircle2 color="#050810" size={16} />
+                <Text style={styles.completeActionTextActive}>Mark Complete</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {nextLesson && (
+            <TouchableOpacity
+              style={styles.nextLessonBtn}
+              onPress={() => setActiveId(nextLesson.id)}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.nextLessonText}>Next Lesson</Text>
+              <ChevronRight color={colors.neonCyan} size={16} />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Course Overall Progress bar */}
       <View style={styles.progressRow}>
         <ProgressBar
           value={progress}
-          color={progress >= 100 ? colors.neonLime : colors.neonPurple}
-          label={`${completedIds.length}/${lessons.length} lessons`}
+          color={progress >= 100 ? colors.neonLime : colors.neonCyan}
+          label={`${completedIds.length}/${lessons.length} lessons conquered`}
           showPercent
-          height={6}
+          height={7}
         />
       </View>
 
@@ -192,8 +331,8 @@ export default function LearningPlayerScreen() {
           <View style={styles.certBannerLeft}>
             <Award color={colors.neonLime} size={24} />
             <View style={{ flex: 1 }}>
-              <Text style={styles.certBannerTitle}>Course Conquered!</Text>
-              <Text style={styles.certBannerSub}>Official Certificate Ready</Text>
+              <Text style={styles.certBannerTitle}>Dungeon Cleared!</Text>
+              <Text style={styles.certBannerSub}>Official Academy Certificate Unlocked</Text>
             </View>
           </View>
           <TouchableOpacity
@@ -201,7 +340,7 @@ export default function LearningPlayerScreen() {
             onPress={() => setCertModalVisible(true)}
             activeOpacity={0.85}
           >
-            <Text style={styles.claimCertBtnText}>View / Download</Text>
+            <Text style={styles.claimCertBtnText}>View Certificate</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -219,7 +358,7 @@ export default function LearningPlayerScreen() {
         </View>
 
         <View style={styles.headerActions}>
-          {completedIds.includes(activeLesson?.id ?? "") && (
+          {isCurrentCompleted && (
             <CheckCircle2 color={colors.neonLime} size={20} />
           )}
 
@@ -283,6 +422,63 @@ export default function LearningPlayerScreen() {
         </View>
       </View>
 
+      {/* Lesson Quiz Banner (if active lesson has a quiz) */}
+      {activeLesson?.quiz && (
+        <TouchableOpacity
+          style={styles.quizBanner}
+          activeOpacity={0.85}
+          onPress={() => router.push(`/quiz/${activeLesson.quiz.id}` as any)}
+        >
+          <View style={styles.quizIconBox}>
+            <Sparkles color={colors.neonPurple} size={18} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <View style={styles.quizTagRow}>
+              <Text style={styles.quizBadgeText}>LESSON ASSESSMENT</Text>
+              {activeLesson.quiz.timeLimit > 0 && (
+                <Text style={styles.quizTimeText}>⏱ {activeLesson.quiz.timeLimit} mins</Text>
+              )}
+            </View>
+            <Text style={styles.quizTitleText} numberOfLines={1}>
+              {activeLesson.quiz.title}
+            </Text>
+          </View>
+          <View style={styles.takeQuizBtn}>
+            <Text style={styles.takeQuizBtnText}>Take Quiz</Text>
+            <ChevronRight color="#ffffff" size={14} />
+          </View>
+        </TouchableOpacity>
+      )}
+
+      {/* Standalone Course Quizzes List (if any) */}
+      {(data?.course?.quizzes?.length ?? 0) > 0 && (
+        <View style={styles.courseQuizzesBox}>
+          <Text style={styles.courseQuizzesTitle}>⚔️ Course Assessments</Text>
+          {data.course.quizzes?.map((q: any) => (
+            <TouchableOpacity
+              key={q.id}
+              style={styles.standaloneQuizItem}
+              activeOpacity={0.85}
+              onPress={() => router.push(`/quiz/${q.id}` as any)}
+            >
+              <View style={styles.standaloneQuizLeft}>
+                <Sparkles color={colors.neonCyan} size={16} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.standaloneQuizName} numberOfLines={1}>{q.title}</Text>
+                  <Text style={styles.standaloneQuizMeta}>
+                    {q._count?.questions ?? 0} Questions • Pass {q.passingScore}%
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.takeQuizBtnSmall}>
+                <Text style={styles.takeQuizBtnSmallText}>Start</Text>
+                <ChevronRight color="#050810" size={12} />
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
+
       {/* Toggle lesson list */}
       <TouchableOpacity
         style={styles.lessonToggle}
@@ -305,6 +501,7 @@ export default function LearningPlayerScreen() {
             const isAccessible = isEnrolled;
             const isLessonSaved = isDownloaded(lesson.id);
             const isLessonDownloading = isDownloading(lesson.id);
+            const hasQuiz = Boolean(lesson.quiz);
 
             return (
               <TouchableOpacity
@@ -327,16 +524,23 @@ export default function LearningPlayerScreen() {
                     </Text>
                   )}
                 </View>
-                <Text
-                  style={[
-                    styles.lessonName,
-                    isActive && styles.lessonNameActive,
-                    !isAccessible && styles.lessonLocked,
-                  ]}
-                  numberOfLines={2}
-                >
-                  {lesson.title}
-                </Text>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text
+                    style={[
+                      styles.lessonName,
+                      isActive && styles.lessonNameActive,
+                      !isAccessible && styles.lessonLocked,
+                    ]}
+                    numberOfLines={2}
+                  >
+                    {lesson.title}
+                  </Text>
+                  {hasQuiz && (
+                    <View style={styles.quizPill}>
+                      <Text style={styles.quizPillText}>⚡ Quiz Attached</Text>
+                    </View>
+                  )}
+                </View>
 
                 {isAccessible && (
                   isLessonSaved ? (
@@ -392,6 +596,74 @@ const styles = StyleSheet.create({
     gap: spacing[3],
   },
   lockedText: { fontFamily: fonts.sans, fontSize: fontSizes.base, color: colors.mutedForeground },
+  
+  // Interactive Action Strip
+  actionStrip: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    backgroundColor: colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    gap: spacing[3],
+  },
+  completeActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderRadius: radii.lg,
+    gap: spacing[2],
+  },
+  completeActionBtnActive: {
+    backgroundColor: colors.neonCyan,
+    shadowColor: colors.neonCyan,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  completeActionBtnDone: {
+    backgroundColor: "rgba(34, 197, 94, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(34, 197, 94, 0.5)",
+  },
+  completeActionTextActive: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: "#050810",
+    letterSpacing: 0.5,
+  },
+  completeActionTextDone: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: colors.neonLime,
+    letterSpacing: 0.5,
+  },
+  nextLessonBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[4],
+    borderRadius: radii.lg,
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: colors.neonCyan + "50",
+    gap: spacing[1],
+  },
+  nextLessonText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+  },
+
   progressRow: { paddingHorizontal: spacing[4], paddingVertical: spacing[3] },
 
   // Certificate banner
@@ -556,5 +828,148 @@ const styles = StyleSheet.create({
   },
   savedIconBadge: {
     padding: 2,
+  },
+
+  // Quiz Banner & Badges
+  quizBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: spacing[4],
+    marginBottom: spacing[3],
+    padding: spacing[3],
+    backgroundColor: "rgba(168, 85, 247, 0.12)",
+    borderRadius: radii.xl,
+    borderWidth: 1.5,
+    borderColor: "rgba(168, 85, 247, 0.4)",
+    gap: spacing[3],
+    shadowColor: colors.neonPurple,
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  quizIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.lg,
+    backgroundColor: "rgba(168, 85, 247, 0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  quizTagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 2,
+  },
+  quizBadgeText: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: colors.neonPurple,
+    letterSpacing: 0.8,
+  },
+  quizTimeText: {
+    fontFamily: fonts.sans,
+    fontSize: 9,
+    color: colors.mutedForeground,
+  },
+  quizTitleText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: "bold",
+    color: colors.foreground,
+  },
+  takeQuizBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    backgroundColor: colors.neonPurple,
+    paddingHorizontal: spacing[3],
+    paddingVertical: 6,
+    borderRadius: radii.md,
+  },
+  takeQuizBtnText: {
+    fontFamily: fonts.display,
+    fontSize: 10,
+    fontWeight: "bold",
+    color: "#ffffff",
+    letterSpacing: 0.5,
+  },
+
+  // Course Quizzes Box
+  courseQuizzesBox: {
+    marginHorizontal: spacing[4],
+    marginBottom: spacing[3],
+    padding: spacing[3],
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: spacing[2],
+  },
+  courseQuizzesTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    letterSpacing: 0.8,
+    marginBottom: 4,
+  },
+  standaloneQuizItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: spacing[2],
+    backgroundColor: colors.surface2,
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.15)",
+  },
+  standaloneQuizLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    flex: 1,
+  },
+  standaloneQuizName: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: colors.foreground,
+  },
+  standaloneQuizMeta: {
+    fontFamily: fonts.sans,
+    fontSize: 9,
+    color: colors.mutedForeground,
+    marginTop: 1,
+  },
+  takeQuizBtnSmall: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+    backgroundColor: colors.neonCyan,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radii.sm,
+  },
+  takeQuizBtnSmallText: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "#050810",
+  },
+  quizPill: {
+    alignSelf: "flex-start",
+    backgroundColor: "rgba(168, 85, 247, 0.15)",
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: radii.full,
+    marginTop: 2,
+  },
+  quizPillText: {
+    fontFamily: fonts.sans,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: colors.neonPurple,
   },
 });
