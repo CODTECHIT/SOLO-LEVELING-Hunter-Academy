@@ -1,5 +1,5 @@
 import React from "react";
-import { StatusBar, StyleSheet, ViewStyle, ScrollView } from "react-native";
+import { StatusBar, StyleSheet, ViewStyle, ScrollView, RefreshControlProps } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors } from "@/theme";
 
@@ -8,9 +8,16 @@ type SafeScreenProps = {
   scroll?: boolean;
   style?: ViewStyle;
   contentStyle?: ViewStyle;
+  refreshControl?: React.ReactElement<RefreshControlProps>;
 };
 
-export function SafeScreen({ children, scroll = false, style, contentStyle }: SafeScreenProps) {
+export function SafeScreen({
+  children,
+  scroll = false,
+  style,
+  contentStyle,
+  refreshControl,
+}: SafeScreenProps) {
   if (scroll) {
     return (
       <SafeAreaView style={[styles.safe, style]}>
@@ -18,6 +25,7 @@ export function SafeScreen({ children, scroll = false, style, contentStyle }: Sa
         <ScrollView
           contentContainerStyle={[styles.scrollContent, contentStyle]}
           showsVerticalScrollIndicator={false}
+          refreshControl={refreshControl}
         >
           {children}
         </ScrollView>

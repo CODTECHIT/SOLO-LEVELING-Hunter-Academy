@@ -9,6 +9,7 @@ import {
   Image,
   Dimensions,
   Modal,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -49,15 +50,33 @@ const { width: SCREEN_W } = Dimensions.get("window");
 export default function HomeScreen() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
-  const { data: catalog, isLoading: catalogLoading } = useCatalog();
-  const { data: stats } = useHunterStats(isAuthenticated);
-  const { data: introVideo } = useIntroVideo();
+  const { data: catalog, isLoading: catalogLoading, refetch: refetchCatalog } = useCatalog();
+  const { data: stats, refetch: refetchStats } = useHunterStats(isAuthenticated);
+  const { data: introVideo, refetch: refetchIntro } = useIntroVideo();
   const {
     notifications,
     unreadCount,
     markAllAsRead,
+    refetch: refetchNotifs,
   } = useNotifications(isAuthenticated);
   const [notifModalVisible, setNotifModalVisible] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchCatalog(),
+        refetchStats?.(),
+        refetchIntro?.(),
+        refetchNotifs?.(),
+      ]);
+    } catch (err) {
+      console.warn("Pull to refresh error:", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const glowOpacity = useSharedValue(0.4);
   const textScale = useSharedValue(1);
@@ -91,7 +110,18 @@ export default function HomeScreen() {
 
   return (
     <SafeScreen>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.neonCyan}
+            colors={[colors.neonCyan, colors.neonPurple]}
+          />
+        }
+      >
         {/* ── Hero Banner ── */}
         <View>
           <LinearGradient

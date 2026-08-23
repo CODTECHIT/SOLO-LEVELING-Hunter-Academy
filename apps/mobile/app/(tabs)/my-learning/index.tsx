@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { GraduationCap, BookOpen, HardDriveDownload, Trash2, Play, Award } from "lucide-react-native";
@@ -25,9 +26,19 @@ export default function MyLearningScreen() {
   const router = useRouter();
   const { user } = useAuthStore();
   const [tab, setTab] = useState<"ONLINE" | "OFFLINE">("ONLINE");
+  const [refreshing, setRefreshing] = useState(false);
   const [selectedCertCourse, setSelectedCertCourse] = useState<{ id: string; title: string } | null>(null);
-  const { data: courses, isLoading } = useEnrolledCourses();
+  const { data: courses, isLoading, refetch } = useEnrolledCourses();
   const { downloadedList, deleteDownload } = useOfflineDownloads();
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <SafeScreen>
@@ -128,6 +139,14 @@ export default function MyLearningScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={colors.neonCyan}
+                colors={[colors.neonCyan, colors.neonPurple]}
+              />
+            }
             ListEmptyComponent={
               <View style={styles.empty}>
                 <GraduationCap color={colors.mutedForeground} size={56} />

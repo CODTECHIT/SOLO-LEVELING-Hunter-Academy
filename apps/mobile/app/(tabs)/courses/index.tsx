@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   TextInput,
+  RefreshControl,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { BookOpen, Search, X } from "lucide-react-native";
@@ -25,8 +26,18 @@ export default function CoursesScreen() {
     params.type === "MODULE" ? "MODULE" : params.type === "FULL" ? "FULL" : "ALL"
   );
   const [activeCategory, setActiveCategory] = useState(params.category ?? "");
+  const [refreshing, setRefreshing] = useState(false);
 
-  const { data: catalog, isLoading } = useCatalog();
+  const { data: catalog, isLoading, refetch } = useCatalog();
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const courses = catalog?.courses ?? [];
   const categories = catalog?.categories ?? [];
@@ -161,6 +172,14 @@ export default function CoursesScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.grid}
           columnWrapperStyle={styles.row}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.neonCyan}
+              colors={[colors.neonCyan, colors.neonPurple]}
+            />
+          }
           ListEmptyComponent={
             <View style={styles.empty}>
               <BookOpen color={colors.mutedForeground} size={48} />

@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { User, Mail, Phone, Shield, LogOut, Edit2, Check, X } from "lucide-react-native";
@@ -28,13 +29,23 @@ import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 export default function ProfileScreen() {
   const router = useRouter();
   const { user, logout, isAuthenticated, loadUser } = useAuthStore();
-  const { data: stats } = useHunterStats(isAuthenticated);
+  const { data: stats, refetch: refetchStats } = useHunterStats(isAuthenticated);
   const qc = useQueryClient();
 
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(user?.name ?? "");
   const [phone, setPhone] = useState(user?.phone ?? "");
   const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([loadUser(), refetchStats?.()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -75,7 +86,17 @@ export default function ProfileScreen() {
   }
 
   return (
-    <SafeScreen scroll>
+    <SafeScreen
+      scroll
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={colors.neonCyan}
+          colors={[colors.neonCyan, colors.neonPurple]}
+        />
+      }
+    >
       <View style={styles.content}>
         {/* Avatar */}
         <View style={styles.avatarSection}>

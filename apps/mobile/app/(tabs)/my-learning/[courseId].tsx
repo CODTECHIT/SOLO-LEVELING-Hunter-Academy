@@ -8,6 +8,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -60,12 +61,12 @@ export default function LearningPlayerScreen() {
     isDownloading,
   } = useOfflineDownloads();
 
-  const { data: enrollments } = useEnrolledCourses();
+  const { data: enrollments, refetch: refetchEnrollments } = useEnrolledCourses();
   const { user } = useAuthStore();
   const course = enrollments?.find((c: any) => c.id === courseId || c.slug === courseId);
   const slug = course?.slug || courseId;
 
-  const { data, isLoading } = useCourse(slug ?? "");
+  const { data, isLoading, refetch: refetchCourse } = useCourse(slug ?? "");
 
   const lessons = data?.course?.lessons ?? [];
   const [activeId, setActiveId] = useState<string>(
@@ -76,6 +77,16 @@ export default function LearningPlayerScreen() {
   const [videoCurrentTime, setVideoCurrentTime] = useState<number>(0);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [isMarkingComplete, setIsMarkingComplete] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([refetchCourse(), refetchEnrollments()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   useEffect(() => {
     if (!activeId && lessons.length > 0) {
@@ -274,9 +285,21 @@ export default function LearningPlayerScreen() {
         )}
       </View>
 
-      {/* Action Strip: Mark Lesson Complete / Next Lesson */}
-      {isEnrolled && activeLesson && (
-        <View style={styles.actionStrip}>
+      <ScrollView
+        style={{ flex: 1 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.neonCyan}
+            colors={[colors.neonCyan, colors.neonPurple]}
+          />
+        }
+      >
+        {/* Action Strip: Mark Lesson Complete / Next Lesson */}
+        {isEnrolled && activeLesson && (
+          <View style={styles.actionStrip}>
           <TouchableOpacity
             style={[
               styles.completeActionBtn,
@@ -558,6 +581,7 @@ export default function LearningPlayerScreen() {
           })}
         </ScrollView>
       )}
+      </ScrollView>
 
       {/* Certificate Modal */}
       <CertificateModal

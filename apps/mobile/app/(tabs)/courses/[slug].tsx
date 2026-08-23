@@ -8,6 +8,7 @@ import {
   Image,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -40,10 +41,20 @@ export default function CourseDetailScreen() {
   const router = useRouter();
   const qc = useQueryClient();
   const { isAuthenticated } = useAuthStore();
-  const { data, isLoading } = useCourse(slug);
+  const { data, isLoading, refetch } = useCourse(slug);
   const [enrolling, setEnrolling] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [razorpayOrder, setRazorpayOrder] = useState<MobileRazorpayOrderData | null>(null);
   const [checkoutVisible, setCheckoutVisible] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleEnroll = async () => {
     if (!isAuthenticated) {
@@ -155,7 +166,17 @@ export default function CourseDetailScreen() {
 
   return (
     <SafeScreen>
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.neonCyan}
+            colors={[colors.neonCyan, colors.neonPurple]}
+          />
+        }
+      >
         {/* Back button */}
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <ArrowLeft color={colors.foreground} size={20} />
