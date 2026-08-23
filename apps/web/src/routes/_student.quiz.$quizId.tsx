@@ -345,7 +345,17 @@ function StudentQuizPage() {
                     : "bg-neon-amber/20 text-neon-amber border border-neon-amber/40"
                 }`}
               >
-                {result.passed ? "🎉 Congratulations, You Passed!" : "Needs Improvement"}
+                {result.passed ? (
+                  <>
+                    <Award className="h-3.5 w-3.5" />
+                    <span>Congratulations, You Passed!</span>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-3.5 w-3.5" />
+                    <span>Needs Improvement</span>
+                  </>
+                )}
               </span>
               <h2 className="font-display text-3xl font-bold text-foreground mt-3">
                 Score: {result.score} / {result.totalMarks} ({result.percentage}%)

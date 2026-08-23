@@ -232,7 +232,7 @@ function LearnCourse() {
       }
 
       if (orderRes.isFree) {
-        toast.success("🎉 Access granted to free course!");
+        toast.success("Access granted to course!");
         router.invalidate();
         return;
       }
@@ -257,7 +257,7 @@ function LearnCourse() {
                 courseId: course.id,
               },
             });
-            toast.success(verifyRes.message || "🎉 Payment confirmed! Access unlocked.");
+            toast.success(verifyRes.message || "Payment confirmed! Access unlocked.");
             router.invalidate();
           } catch (verifyErr: any) {
             toast.error(verifyErr.message || "Payment verification failed");

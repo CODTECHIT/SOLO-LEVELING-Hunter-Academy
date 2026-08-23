@@ -17,8 +17,9 @@ export class AuthService {
   ) {}
 
   async signUp(dto: SignUpDto) {
+    const normalizedEmail = dto.email.trim().toLowerCase();
     const existing = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email: normalizedEmail },
     });
 
     if (existing) {
@@ -29,7 +30,7 @@ export class AuthService {
 
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email,
+        email: normalizedEmail,
         password: hashedPassword,
         name: dto.name,
         phone: dto.phone,
@@ -58,8 +59,9 @@ export class AuthService {
   }
 
   async signIn(dto: SignInDto) {
+    const normalizedEmail = dto.email.trim().toLowerCase();
     const user = await this.prisma.user.findUnique({
-      where: { email: dto.email },
+      where: { email: normalizedEmail },
     });
 
     if (!user || !(await bcryptjs.compare(dto.password, user.password))) {

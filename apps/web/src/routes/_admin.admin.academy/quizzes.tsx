@@ -358,7 +358,7 @@ function AdminQuizzesPage() {
           rows: importRows,
         },
       });
-      alert(`🎉 Successfully imported ${res.count} questions into the quiz!`);
+      alert(`Successfully imported ${res.count} questions into the quiz!`);
       setIsImportModalOpen(false);
       setImportRows([]);
       if (selectedQuizId === importTargetQuizId) {

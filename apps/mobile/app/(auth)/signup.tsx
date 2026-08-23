@@ -41,6 +41,8 @@ const schema = z
 
 type SignupForm = z.infer<typeof schema>;
 
+import { cyberAlert } from "@/store/alertStore";
+
 WebBrowser.maybeCompleteAuthSession();
 
 export default function SignupScreen() {
@@ -56,7 +58,7 @@ export default function SignupScreen() {
       router.replace("/(tabs)");
     } catch (err: any) {
       if (!err?.message?.includes("cancelled")) {
-        Alert.alert("Google Signup Failed", err?.message || "Could not complete Google authentication");
+        cyberAlert("Google Signup Failed", err?.message || "Could not complete Google authentication", undefined, "error");
       }
     } finally {
       setGoogleLoading(false);
@@ -81,7 +83,7 @@ export default function SignupScreen() {
       router.replace("/(tabs)");
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? "Registration failed";
-      Alert.alert("Registration Failed", typeof msg === "string" ? msg : JSON.stringify(msg));
+      cyberAlert("Registration Failed", typeof msg === "string" ? msg : JSON.stringify(msg), undefined, "error");
     } finally {
       setLoading(false);
     }

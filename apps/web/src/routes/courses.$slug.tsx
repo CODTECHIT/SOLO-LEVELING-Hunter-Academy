@@ -139,7 +139,7 @@ function CourseDetail() {
       }
 
       if (orderRes.isFree) {
-        toast.success("🎉 Enrolled successfully in free course!");
+        toast.success("Enrolled successfully in course!");
         router.invalidate();
         router.navigate({ to: "/learn/$courseId", params: { courseId: course.slug } });
         return;
@@ -166,7 +166,7 @@ function CourseDetail() {
                 courseId: course.id,
               },
             });
-            toast.success(verifyRes.message || "🎉 Payment successful! Course unlocked.");
+            toast.success(verifyRes.message || "Payment successful! Course unlocked.");
             router.invalidate();
             router.navigate({ to: "/learn/$courseId", params: { courseId: course.slug } });
           } catch (verifyErr: any) {

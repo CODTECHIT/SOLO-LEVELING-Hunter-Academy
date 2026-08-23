@@ -28,6 +28,8 @@ const loginSchema = z.object({
 });
 type LoginForm = z.infer<typeof loginSchema>;
 
+import { cyberAlert } from "@/store/alertStore";
+
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
@@ -43,7 +45,7 @@ export default function LoginScreen() {
       router.replace("/(tabs)");
     } catch (err: any) {
       if (!err?.message?.includes("cancelled")) {
-        Alert.alert("Google Login Failed", err?.message || "Could not complete Google authentication");
+        cyberAlert("Google Login Failed", err?.message || "Could not complete Google authentication", undefined, "error");
       }
     } finally {
       setGoogleLoading(false);
@@ -65,7 +67,7 @@ export default function LoginScreen() {
       router.replace("/(tabs)");
     } catch (err: any) {
       const msg = err?.response?.data?.error ?? err?.message ?? "Login failed";
-      Alert.alert("Login Failed", msg);
+      cyberAlert("Login Failed", msg, undefined, "error");
     } finally {
       setLoading(false);
     }

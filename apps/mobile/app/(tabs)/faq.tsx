@@ -8,6 +8,7 @@ import {
   LayoutAnimation,
   Platform,
   UIManager,
+  RefreshControl,
 } from "react-native";
 import { ChevronDown, ChevronUp, ArrowLeft, HelpCircle, Sparkles, BookOpen, ShieldCheck, CreditCard } from "lucide-react-native";
 import { useRouter } from "expo-router";
@@ -88,6 +89,13 @@ export default function FAQScreen() {
     setExpanded(expanded === q ? null : q);
   };
 
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 500);
+  };
+
   const handleBack = () => {
     if (router.canGoBack()) {
       router.back();
@@ -111,7 +119,18 @@ export default function FAQScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.neonCyan}
+            colors={[colors.neonCyan, colors.neonPurple]}
+          />
+        }
+      >
         {faqs.map((group, i) => {
           const IconComp = group.icon;
           return (

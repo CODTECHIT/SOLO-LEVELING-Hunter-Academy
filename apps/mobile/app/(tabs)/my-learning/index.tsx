@@ -20,6 +20,7 @@ import { CertificateModal } from "@/components/ui/CertificateModal";
 import { useEnrolledCourses } from "@/hooks/useCourses";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { useAuthStore } from "@/store/authStore";
+import { cyberAlert } from "@/store/alertStore";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
 export default function MyLearningScreen() {
@@ -198,9 +199,9 @@ export default function MyLearningScreen() {
               <TouchableOpacity
                 style={styles.deleteBtn}
                 onPress={() => {
-                  Alert.alert(
+                  cyberAlert(
                     "Delete Offline Download",
-                    `Delete "${item.title}" from storage?`,
+                    `Delete "${item.title}" from local device storage?`,
                     [
                       { text: "Cancel", style: "cancel" },
                       {
@@ -208,7 +209,8 @@ export default function MyLearningScreen() {
                         style: "destructive",
                         onPress: () => deleteDownload(item.id),
                       },
-                    ]
+                    ],
+                    "warning"
                   );
                 }}
               >

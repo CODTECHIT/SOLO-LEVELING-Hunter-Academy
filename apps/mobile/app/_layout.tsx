@@ -22,6 +22,8 @@ import { StatusBar } from "expo-status-bar";
 import { usePreventScreenCapture } from "expo-screen-capture";
 import { colors } from "@/theme";
 
+import { CyberAlertModal } from "@/components/ui/CyberAlertModal";
+
 SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
@@ -75,6 +77,7 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
           </Stack>
+          <CyberAlertModal />
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -12,6 +12,7 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  RefreshControl,
 } from "react-native";
 import {
   ArrowLeft,
@@ -35,6 +36,7 @@ import { Badge } from "@/components/ui/Badge";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
+import { cyberAlert } from "@/store/alertStore";
 
 export default function SupportScreen() {
   const router = useRouter();
@@ -75,8 +77,8 @@ export default function SupportScreen() {
     try {
       const res = await api.get(`/support/tickets/${ticketId}`);
       setSelectedTicket(res.data);
-    } catch (e) {
-      console.log("Fetch ticket details error:", e);
+    } catch (e: any) {
+      cyberAlert("Support Error", "Could not load ticket messages.", undefined, "error");
     }
   };
 
@@ -112,7 +114,7 @@ export default function SupportScreen() {
       const res = await api.get(`/support/tickets/${selectedTicket.id}`);
       setSelectedTicket(res.data);
     } catch (e) {
-      alert("Failed to send message");
+      cyberAlert("Message Failed", "Failed to deliver message.", undefined, "error");
     } finally {
       setIsSending(false);
     }
@@ -120,7 +122,7 @@ export default function SupportScreen() {
 
   const handleCreateTicket = async () => {
     if (!subject.trim() || !message.trim()) {
-      alert("Please fill in subject and description");
+      cyberAlert("Required Fields", "Please fill in both a subject and issue description.", undefined, "warning");
       return;
     }
 
@@ -137,8 +139,9 @@ export default function SupportScreen() {
       setMessage("");
       fetchTickets();
       setSelectedTicket(res.data);
+      cyberAlert("Ticket Created", "Support ticket opened. A specialist will assist you shortly.", undefined, "success");
     } catch (e: any) {
-      alert(e.response?.data?.message || "Failed to create support ticket");
+      cyberAlert("Ticket Failed", e.response?.data?.message || "Failed to create support ticket.", undefined, "error");
     } finally {
       setIsCreating(false);
     }
@@ -261,6 +264,14 @@ export default function SupportScreen() {
           <ScrollView
             contentContainerStyle={styles.content}
             showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={isLoading}
+                onRefresh={fetchTickets}
+                tintColor={colors.neonCyan}
+                colors={[colors.neonCyan, colors.neonPurple]}
+              />
+            }
           >
             {/* Start Live Chat Card */}
             <Card style={styles.heroCard}>

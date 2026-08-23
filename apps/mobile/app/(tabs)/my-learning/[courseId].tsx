@@ -23,6 +23,8 @@ import {
   Award,
   ChevronRight,
   Sparkles,
+  Swords,
+  Zap,
 } from "lucide-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { usePreventScreenCapture, preventScreenCaptureAsync } from "expo-screen-capture";
@@ -476,7 +478,10 @@ export default function LearningPlayerScreen() {
       {/* Standalone Course Quizzes List (if any) */}
       {(data?.course?.quizzes?.length ?? 0) > 0 && (
         <View style={styles.courseQuizzesBox}>
-          <Text style={styles.courseQuizzesTitle}>⚔️ Course Assessments</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <Swords color={colors.neonPurple} size={16} />
+            <Text style={[styles.courseQuizzesTitle, { marginBottom: 0 }]}>Course Assessments</Text>
+          </View>
           {data.course.quizzes?.map((q: any) => (
             <TouchableOpacity
               key={q.id}
@@ -560,7 +565,8 @@ export default function LearningPlayerScreen() {
                   </Text>
                   {hasQuiz && (
                     <View style={styles.quizPill}>
-                      <Text style={styles.quizPillText}>⚡ Quiz Attached</Text>
+                      <Zap color={colors.neonCyan} size={10} style={{ marginRight: 3 }} />
+                      <Text style={styles.quizPillText}>Quiz Attached</Text>
                     </View>
                   )}
                 </View>

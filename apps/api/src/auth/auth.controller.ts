@@ -2,6 +2,9 @@ import { Controller, Post, Body, UseGuards, Request } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { SignUpDto } from "./dto/sign-up.dto";
 import { SignInDto } from "./dto/sign-in.dto";
+import { ForgotPasswordDto } from "./dto/forgot-password.dto";
+import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { OAuthSyncDto } from "./dto/oauth-sync.dto";
 import { JwtAuthGuard } from "./jwt-auth.guard";
 
 @Controller("auth")
@@ -19,20 +22,18 @@ export class AuthController {
   }
 
   @Post("oauth/sync")
-  async syncOAuth(@Body() body: { email: string; name?: string }) {
-    return this.authService.syncOAuthUser(body);
+  async syncOAuth(@Body() dto: OAuthSyncDto) {
+    return this.authService.syncOAuthUser(dto);
   }
 
   @Post("forgot-password")
-  async forgotPassword(@Body() body: { email: string }) {
-    return this.authService.forgotPassword(body.email);
+  async forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto.email);
   }
 
   @Post("reset-password")
-  async resetPassword(
-    @Body() body: { email: string; code: string; newPassword: string },
-  ) {
-    return this.authService.resetPassword(body);
+  async resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 
   @UseGuards(JwtAuthGuard)

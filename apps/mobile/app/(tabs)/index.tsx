@@ -225,7 +225,7 @@ export default function HomeScreen() {
                 <ProgressBar
                   value={stats.mpPercent}
                   color={colors.neonLime}
-                  label={`MP  Streak ${stats.streak > 0 ? `🔥 ${stats.streak}d` : `${stats.mpPercent}%`}`}
+                  label={`MP  Streak ${stats.streak > 0 ? `(${stats.streak}d)` : `${stats.mpPercent}%`}`}
                   height={6}
                 />
               </TouchableOpacity>
@@ -237,7 +237,10 @@ export default function HomeScreen() {
                 onPress={() => router.push("/(auth)/login")}
                 activeOpacity={0.8}
               >
-                <Text style={styles.ctaBtnText}>⚡ Begin Your Journey</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <Zap color={colors.white} size={16} />
+                  <Text style={styles.ctaBtnText}>Begin Your Journey</Text>
+                </View>
               </TouchableOpacity>
             )}
           </LinearGradient>

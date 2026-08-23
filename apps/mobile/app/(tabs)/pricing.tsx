@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, RefreshControl } from "react-native";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -20,6 +20,12 @@ import { LinearGradient } from "expo-linear-gradient";
 
 export default function PricingScreen() {
   const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 500);
+  };
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -44,7 +50,18 @@ export default function PricingScreen() {
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.neonCyan}
+            colors={[colors.neonCyan, colors.neonPurple]}
+          />
+        }
+      >
         {/* Guild Pathway Hero Banner */}
         <LinearGradient
           colors={["rgba(168, 85, 247, 0.15)", "rgba(0, 243, 255, 0.1)", "#070a14"]}

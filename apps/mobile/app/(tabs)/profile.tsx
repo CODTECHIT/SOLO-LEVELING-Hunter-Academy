@@ -10,7 +10,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { User, Mail, Phone, Shield, LogOut, Edit2, Check, X } from "lucide-react-native";
+import { User, Mail, Phone, Shield, LogOut, Edit2, Check, X, Flame } from "lucide-react-native";
 import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -24,6 +24,7 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { CyberTechLogo } from "@/components/ui/CyberTechLogo";
 import { api } from "@/lib/api";
 import { useQueryClient } from "@tanstack/react-query";
+import { cyberAlert } from "@/store/alertStore";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
 export default function ProfileScreen() {
@@ -53,26 +54,32 @@ export default function ProfileScreen() {
       await api.patch("/users/profile", { name: name || undefined, phone: phone || undefined });
       await loadUser();
       setEditing(false);
+      cyberAlert("Profile Updated", "Your profile details have been saved successfully.", undefined, "success");
     } catch (err: any) {
-      Alert.alert("Error", err?.response?.data?.error ?? "Save failed");
+      cyberAlert("Save Failed", err?.response?.data?.error ?? "Could not save profile changes.", undefined, "error");
     } finally {
       setSaving(false);
     }
   };
 
   const handleLogout = () => {
-    Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign Out",
-        style: "destructive",
-        onPress: async () => {
-          await logout();
-          qc.clear();
-          router.replace("/(auth)/login");
+    cyberAlert(
+      "Sign Out",
+      "Are you sure you want to end your current session?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            qc.clear();
+            router.replace("/(auth)/login");
+          },
         },
-      },
-    ]);
+      ],
+      "warning"
+    );
   };
 
   if (!user) {
@@ -149,9 +156,12 @@ export default function ProfileScreen() {
                   <Text style={styles.statLabel}>Lessons</Text>
                 </View>
                 <View style={styles.statPod}>
-                  <Text style={[styles.statVal, { color: colors.neonAmber }]}>
-                    🔥 {stats.streak}d
-                  </Text>
+                  <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 3 }}>
+                    <Flame color={colors.neonAmber} size={15} />
+                    <Text style={[styles.statVal, { color: colors.neonAmber }]}>
+                      {stats.streak}d
+                    </Text>
+                  </View>
                   <Text style={styles.statLabel}>Streak</Text>
                 </View>
                 <View style={styles.statPod}>

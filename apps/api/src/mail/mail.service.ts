@@ -21,16 +21,26 @@ export class MailService {
     const secure = process.env.SMTP_SECURE === "true" || port === 465;
 
     if (user && pass) {
-      this.transporter = nodemailer.createTransport({
-        host,
-        port,
-        secure,
-        auth: {
-          user,
-          pass,
-        },
-      });
-      this.logger.log(`SMTP Mail Transporter configured for ${user} (${host}:${port})`);
+      if (host === "smtp.gmail.com" || user.endsWith("@gmail.com")) {
+        this.transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: user.trim(),
+            pass: pass.trim(),
+          },
+        });
+      } else {
+        this.transporter = nodemailer.createTransport({
+          host,
+          port,
+          secure,
+          auth: {
+            user: user.trim(),
+            pass: pass.trim(),
+          },
+        });
+      }
+      this.logger.log(`SMTP Mail Transporter configured for ${user}`);
     } else {
       this.logger.warn(
         "SMTP credentials not fully configured (SMTP_USER / SMTP_PASS). Password reset emails will log OTP to console as fallback.",

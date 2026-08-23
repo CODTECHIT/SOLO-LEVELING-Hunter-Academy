@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { ArrowLeft, Clock, CheckCircle2, Trophy, RotateCcw, AlertCircle } from "lucide-react-native";
@@ -17,6 +18,8 @@ import { usePreventScreenCapture } from "expo-screen-capture";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 import { api } from "@/lib/api";
 
+import { cyberAlert } from "@/store/alertStore";
+
 export default function MobileQuizScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -26,6 +29,7 @@ export default function MobileQuizScreen() {
 
   const [quiz, setQuiz] = useState<any | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [stage, setStage] = useState<"PREVIEW" | "IN_PROGRESS" | "RESULT">("PREVIEW");
   const [currentQIndex, setCurrentQIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string>>({});
@@ -33,22 +37,33 @@ export default function MobileQuizScreen() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState(0);
 
-  useEffect(() => {
+  const fetchQuiz = async () => {
     if (!id) return;
+    try {
+      const res = await api.get(`/quizzes/${id}`);
+      setQuiz(res.data);
+      if (res.data.timeLimit > 0) {
+        setSecondsRemaining(res.data.timeLimit * 60);
+      }
+    } catch (err) {
+      cyberAlert("Assessment Error", "Could not load quiz details from server.", undefined, "error");
+    } finally {
+      setIsLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     setIsLoading(true);
-    api
-      .get(`/quizzes/${id}`)
-      .then((res) => {
-        setQuiz(res.data);
-        if (res.data.timeLimit > 0) {
-          setSecondsRemaining(res.data.timeLimit * 60);
-        }
-      })
-      .catch((err) => {
-        Alert.alert("Error", "Could not load quiz details");
-      })
-      .finally(() => setIsLoading(false));
+    fetchQuiz();
   }, [id]);
+
+  const onRefresh = () => {
+    if (stage === "PREVIEW") {
+      setRefreshing(true);
+      fetchQuiz();
+    }
+  };
 
   useEffect(() => {
     if (stage !== "IN_PROGRESS" || !quiz || quiz.timeLimit <= 0) return;
@@ -95,7 +110,7 @@ export default function MobileQuizScreen() {
       setResult(res.data);
       setStage("RESULT");
     } catch (err: any) {
-      Alert.alert("Error", "Failed to submit assessment");
+      cyberAlert("Submission Failed", "Failed to submit assessment answers. Please try again.", undefined, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -141,7 +156,20 @@ export default function MobileQuizScreen() {
         </Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          stage === "PREVIEW" ? (
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={colors.neonCyan}
+              colors={[colors.neonCyan, colors.neonPurple]}
+            />
+          ) : undefined
+        }
+      >
         {/* ---------------- PREVIEW ---------------- */}
         {stage === "PREVIEW" && (
           <View style={styles.previewContainer}>

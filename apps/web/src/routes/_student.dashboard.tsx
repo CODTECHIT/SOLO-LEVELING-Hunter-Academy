@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
-import { Lock, PlayCircle, Award, CheckCircle2 } from "lucide-react";
+import { Lock, PlayCircle, Award, CheckCircle2, Flame } from "lucide-react";
 import { Panel, PanelTitle, StatusTag } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
 import { getCurrentUserFn } from "@/server/auth";
@@ -94,7 +94,7 @@ function Dashboard() {
         <Panel accent="purple" className="flex flex-col justify-center relative overflow-hidden">
           <div className="text-sm text-muted-foreground mb-1 uppercase tracking-wider flex items-center justify-between">
             <span>Study Streak</span>
-            <span className="text-lg">🔥</span>
+            <Flame className="h-5 w-5 text-neon-amber" />
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-4xl font-display font-bold text-neon-purple glow-text">

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface HunterStatsBarProps {
@@ -112,7 +113,11 @@ export function HunterStatsBar({
           <div className="flex justify-between items-center text-[9px] sm:text-[10px] font-display uppercase tracking-wider sm:tracking-widest text-muted-foreground font-bold">
             <span className="flex items-center gap-1 sm:gap-1.5 text-foreground truncate">
               <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-neon-purple" />
-              MP • STREAK {streak > 0 ? `(🔥 ${streak}d)` : ""}
+              MP • STREAK {streak > 0 && (
+                <span className="inline-flex items-center gap-0.5 text-neon-amber">
+                  (<Flame className="h-3 w-3" />{streak}d)
+                </span>
+              )}
             </span>
             <span className="text-neon-purple font-bold glow-text shrink-0 ml-1">{displayMp}%</span>
           </div>

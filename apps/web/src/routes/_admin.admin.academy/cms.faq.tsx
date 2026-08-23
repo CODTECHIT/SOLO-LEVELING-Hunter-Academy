@@ -174,11 +174,11 @@ function AdminFaqPage() {
                 onChange={(e) => setSelectedCourseId(e.target.value)}
                 className="w-full rounded-xl border border-border bg-background px-4 py-2 text-sm text-foreground focus:border-neon-cyan focus:outline-none cursor-pointer"
               >
-                <option value="GLOBAL">🌐 Global Academy FAQ (Displayed on Main Portal)</option>
+                <option value="GLOBAL">Global Academy FAQ (Displayed on Main Portal)</option>
                 <optgroup label="Course-Specific FAQs">
                   {courses.map((c: any) => (
                     <option key={c.id} value={c.id}>
-                      📚 Course: {c.title}
+                      Course: {c.title}
                     </option>
                   ))}
                 </optgroup>
@@ -277,11 +277,11 @@ function AdminFaqPage() {
               className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-neon-cyan focus:outline-none max-w-[240px] truncate"
             >
               <option value="ALL">All FAQ Locations</option>
-              <option value="GLOBAL">🌐 Global Academy FAQs Only</option>
+              <option value="GLOBAL">Global Academy FAQs Only</option>
               <optgroup label="Course-Specific">
                 {courses.map((c: any) => (
                   <option key={c.id} value={c.id}>
-                    📚 {c.title}
+                    {c.title}
                   </option>
                 ))}
               </optgroup>

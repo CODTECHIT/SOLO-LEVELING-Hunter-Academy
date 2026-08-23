@@ -193,10 +193,10 @@ export function DiagonalSplashIntro() {
       >
         <span className="inline-block animate-pulse font-bold">
           {stage === "meteor"
-            ? "⚡ METEORIC GATE DESCENDING..."
+            ? "METEORIC GATE DESCENDING..."
             : stage === "impact" || stage === "crack"
-              ? "💥 FRACTURING SYSTEM BARRIER..."
-              : "🔓 ARISE, HUNTER..."}
+              ? "FRACTURING SYSTEM BARRIER..."
+              : "ARISE, HUNTER..."}
         </span>
       </div>
     </div>

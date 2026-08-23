@@ -5,6 +5,7 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { useRouter } from "expo-router";
 import {
@@ -133,8 +134,18 @@ const FAQS = [
 export default function RanksScreen() {
   const router = useRouter();
   const { user, isAuthenticated } = useAuthStore();
-  const { data: stats } = useHunterStats(isAuthenticated);
+  const { data: stats, refetch } = useHunterStats(isAuthenticated);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await refetch?.();
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const handleBack = () => {
     if (router.canGoBack()) {
@@ -154,7 +165,18 @@ export default function RanksScreen() {
         <Text style={styles.headerTitle}>Hunter Rank Guide</Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.neonCyan}
+            colors={[colors.neonCyan, colors.neonPurple]}
+          />
+        }
+      >
         {/* Active Status Card (if logged in) */}
         {isAuthenticated && stats && (
           <Card style={styles.userCard}>
@@ -175,7 +197,10 @@ export default function RanksScreen() {
               </View>
               <View style={styles.statDivider} />
               <View style={styles.statCol}>
-                <Text style={[styles.statNum, { color: colors.neonAmber }]}>🔥 {stats.streak}d</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 3 }}>
+                  <Flame color={colors.neonAmber} size={14} />
+                  <Text style={[styles.statNum, { color: colors.neonAmber }]}>{stats.streak}d</Text>
+                </View>
                 <Text style={styles.statLabel}>Streak</Text>
               </View>
               <View style={styles.statDivider} />
@@ -256,7 +281,10 @@ export default function RanksScreen() {
           </View>
           <View style={styles.metaDivider} />
           <View style={styles.metaRow}>
-            <Text style={[styles.metaTag, { color: colors.neonPurple }]}>MP • Streak Mana 🔥</Text>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginBottom: 4 }}>
+              <Flame color={colors.neonAmber} size={14} />
+              <Text style={[styles.metaTag, { color: colors.neonPurple }]}>MP • Streak Mana</Text>
+            </View>
             <Text style={styles.metaDesc}>
               Increments for every consecutive day you study. 7 consecutive days unlocks full 100% MP Overdrive!
             </Text>

@@ -272,8 +272,8 @@ function RankExplanationPage() {
 
                   {/* Streak Badge */}
                   <div className="flex items-center gap-2.5 rounded-xl border border-neon-amber/40 bg-surface p-2.5 sm:px-4 sm:py-3 shadow-lg">
-                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-neon-amber/15 text-xl sm:text-2xl border border-neon-amber/40">
-                      🔥
+                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl bg-neon-amber/15 border border-neon-amber/40">
+                      <Flame className="h-5 w-5 sm:h-6 sm:w-6 text-neon-amber" />
                     </div>
                     <div className="min-w-0">
                       <div className="text-[9px] sm:text-[10px] uppercase tracking-widest text-muted-foreground font-bold truncate">
@@ -455,8 +455,8 @@ function RankExplanationPage() {
           {/* MP Streak Card */}
           <Panel accent="purple" className="space-y-4 p-6">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-xl bg-neon-purple/20 border border-neon-purple flex items-center justify-center font-display font-bold text-neon-purple text-lg">
-                🔥
+              <div className="h-10 w-10 rounded-xl bg-neon-purple/20 border border-neon-purple flex items-center justify-center">
+                <Flame className="h-5 w-5 text-neon-purple" />
               </div>
               <div>
                 <h3 className="font-display text-lg font-bold text-foreground">

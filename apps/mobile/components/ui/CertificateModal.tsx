@@ -15,6 +15,7 @@ import {
 import { Award, Download, Share2, X, Shield, CheckCircle2, RefreshCw } from "lucide-react-native";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
+import { cyberAlert } from "@/store/alertStore";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 import { api } from "@/lib/api";
 
@@ -330,10 +331,10 @@ export function CertificateModal({
           UTI: "com.adobe.pdf",
         });
       } else {
-        Alert.alert("Success", `Certificate generated: ${uri}`);
+        cyberAlert("Certificate Ready", `Official certificate PDF generated successfully. File stored in sandbox: ${uri}`, undefined, "success");
       }
     } catch (err: any) {
-      Alert.alert("Download Failed", err?.message ?? "Could not generate certificate");
+      cyberAlert("Download Failed", err?.message ?? "Could not generate certificate PDF.", undefined, "error");
     } finally {
       setDownloading(false);
     }

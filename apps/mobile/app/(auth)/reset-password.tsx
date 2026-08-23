@@ -18,6 +18,8 @@ import { CyberTechLogo } from "@/components/ui/CyberTechLogo";
 import { api } from "@/lib/api";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
+import { cyberAlert } from "@/store/alertStore";
+
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2>(1);
@@ -29,16 +31,18 @@ export default function ResetPasswordScreen() {
 
   const handleSendCode = async () => {
     if (!email.trim()) {
-      Alert.alert("Required", "Please enter your email address");
+      cyberAlert("Email Required", "Please enter your email address to receive the verification code.", undefined, "warning");
       return;
     }
 
     setLoading(true);
     try {
       const res = await api.post("/auth/forgot-password", { email: email.trim() });
-      Alert.alert(
-        "Code Sent! ⚡",
+      cyberAlert(
+        "Verification Code Sent",
         res.data?.message || "A 6-digit verification code has been sent to your email.",
+        undefined,
+        "success"
       );
       setStep(2);
     } catch (err: any) {
@@ -47,7 +51,7 @@ export default function ResetPasswordScreen() {
         err?.response?.data?.error ||
         err?.message ||
         "Could not send reset code";
-      Alert.alert("Notice", typeof msg === "string" ? msg : "Could not send reset code");
+      cyberAlert("Notice", typeof msg === "string" ? msg : "Could not send reset code", undefined, "error");
     } finally {
       setLoading(false);
     }
@@ -55,15 +59,15 @@ export default function ResetPasswordScreen() {
 
   const handleResetPassword = async () => {
     if (!code.trim()) {
-      Alert.alert("Required", "Please enter the 6-digit verification code");
+      cyberAlert("Code Required", "Please enter the 6-digit verification code sent to your email.", undefined, "warning");
       return;
     }
     if (newPassword.length < 6) {
-      Alert.alert("Invalid Password", "Password must be at least 6 characters long");
+      cyberAlert("Invalid Password", "Password must be at least 6 characters long.", undefined, "warning");
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert("Mismatch", "New password and confirmation do not match");
+      cyberAlert("Password Mismatch", "New password and confirmation do not match.", undefined, "warning");
       return;
     }
 
@@ -74,8 +78,8 @@ export default function ResetPasswordScreen() {
         code: code.trim(),
         newPassword,
       });
-      Alert.alert(
-        "Password Reset! 🎉",
+      cyberAlert(
+        "Password Reset Successful",
         res.data?.message || "Your password has been successfully updated. Please sign in.",
         [
           {
@@ -83,6 +87,7 @@ export default function ResetPasswordScreen() {
             onPress: () => router.replace("/(auth)/login" as any),
           },
         ],
+        "success"
       );
     } catch (err: any) {
       const msg =
@@ -90,7 +95,7 @@ export default function ResetPasswordScreen() {
         err?.response?.data?.error ||
         err?.message ||
         "Password reset failed";
-      Alert.alert("Reset Failed", typeof msg === "string" ? msg : "Password reset failed");
+      cyberAlert("Reset Failed", typeof msg === "string" ? msg : "Password reset failed", undefined, "error");
     } finally {
       setLoading(false);
     }

@@ -19,6 +19,10 @@ import {
   Lock,
   PlayCircle,
   ShoppingCart,
+  Receipt,
+  Swords,
+  Zap,
+  Sparkles,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useCourse } from "@/hooks/useCourses";
@@ -29,6 +33,7 @@ import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import { cyberAlert } from "@/store/alertStore";
 import {
   RazorpayCheckoutModal,
   MobileRazorpayOrderData,
@@ -80,7 +85,7 @@ export default function CourseDetailScreen() {
           qc.invalidateQueries({ queryKey: ["enrollments"] }),
           qc.invalidateQueries({ queryKey: ["user-stats"] }),
         ]);
-        Alert.alert("Enrolled! 🎉", "You now have access to this free course. Start learning!");
+        cyberAlert("Enrolled Successfully", "You now have access to this course. Start learning!", undefined, "success");
         return;
       }
 
@@ -93,7 +98,7 @@ export default function CourseDetailScreen() {
         err?.response?.data?.error ||
         err?.message ||
         "Failed to initiate checkout";
-      Alert.alert("Notice", typeof msg === "string" ? msg : "Checkout initialization failed");
+      cyberAlert("Checkout Notice", typeof msg === "string" ? msg : "Checkout initialization failed", undefined, "warning");
     } finally {
       setEnrolling(false);
     }
@@ -116,9 +121,11 @@ export default function CourseDetailScreen() {
         qc.invalidateQueries({ queryKey: ["user-stats"] }),
       ]);
 
-      Alert.alert(
-        "Payment Confirmed! 🎉",
+      cyberAlert(
+        "Payment Confirmed",
         "Your payment was successful and full access to this course is now unlocked.",
+        undefined,
+        "success"
       );
     } catch (err: any) {
       const msg =
@@ -126,7 +133,7 @@ export default function CourseDetailScreen() {
         err?.response?.data?.error ||
         err?.message ||
         "Payment verification failed";
-      Alert.alert("Verification Error", typeof msg === "string" ? msg : "Failed to verify payment");
+      cyberAlert("Verification Error", typeof msg === "string" ? msg : "Failed to verify payment", undefined, "error");
     } finally {
       setEnrolling(false);
       setRazorpayOrder(null);
@@ -244,14 +251,26 @@ export default function CourseDetailScreen() {
               />
             </View>
           ) : (
-            <Button
-              label="Continue Learning"
-              onPress={() =>
-                router.push(`/(tabs)/my-learning/${course.id}` as any)
-              }
-              fullWidth
-              variant="ghost"
-            />
+            <View style={{ gap: spacing[2] }}>
+              <Button
+                label="Continue Learning"
+                onPress={() =>
+                  router.push(`/(tabs)/my-learning/${course.id}` as any)
+                }
+                fullWidth
+                variant="ghost"
+              />
+              {course.price > 0 && (
+                <TouchableOpacity
+                  style={styles.viewReceiptBtn}
+                  onPress={() => router.push("/(tabs)/purchases")}
+                  activeOpacity={0.8}
+                >
+                  <Receipt color={colors.neonCyan} size={15} />
+                  <Text style={styles.viewReceiptText}>Download Payment Receipt</Text>
+                </TouchableOpacity>
+              )}
+            </View>
           )}
 
           {/* Lesson List */}
@@ -297,7 +316,8 @@ export default function CourseDetailScreen() {
                       )}
                       {hasQuiz && (
                         <View style={styles.quizBadge}>
-                          <Text style={styles.quizBadgeText}>⚡ Quiz Included</Text>
+                          <Zap color={colors.neonCyan} size={10} style={{ marginRight: 3 }} />
+                          <Text style={styles.quizBadgeText}>Quiz Included</Text>
                         </View>
                       )}
                     </View>
@@ -310,7 +330,10 @@ export default function CourseDetailScreen() {
           {/* Quizzes & Assessments Section */}
           {((course.quizzes?.length ?? 0) > 0 || course.lessons.some((l: any) => l.quiz)) && (
             <View style={styles.quizzesSection}>
-              <Text style={styles.lessonsTitle}>⚔️ Quizzes & Assessments</Text>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 }}>
+                <Swords color={colors.neonPurple} size={18} />
+                <Text style={[styles.lessonsTitle, { marginBottom: 0 }]}>Quizzes & Assessments</Text>
+              </View>
               
               {/* Standalone course quizzes */}
               {course.quizzes?.map((quiz: any) => (
@@ -322,7 +345,7 @@ export default function CourseDetailScreen() {
                     if (isEnrolled) {
                       router.push(`/quiz/${quiz.id}` as any);
                     } else {
-                      Alert.alert("Enrollment Required", "Enroll in this course to attempt quizzes.");
+                      cyberAlert("Enrollment Required", "Enroll in this course to attempt quizzes.", undefined, "warning");
                     }
                   }}
                 >
@@ -334,7 +357,7 @@ export default function CourseDetailScreen() {
                       <Text style={styles.quizCardTitle}>{quiz.title}</Text>
                       <Text style={styles.quizCardSub}>
                         {quiz._count?.questions ?? 0} Questions • Pass {quiz.passingScore}%
-                        {quiz.timeLimit > 0 ? ` • ⏱ ${quiz.timeLimit}m` : ""}
+                        {quiz.timeLimit > 0 ? ` • ${quiz.timeLimit}m` : ""}
                       </Text>
                     </View>
                   </View>
@@ -358,7 +381,7 @@ export default function CourseDetailScreen() {
                       if (isEnrolled) {
                         router.push(`/quiz/${l.quiz.id}` as any);
                       } else {
-                        Alert.alert("Enrollment Required", "Enroll in this course to attempt quizzes.");
+                        cyberAlert("Enrollment Required", "Enroll in this course to attempt quizzes.", undefined, "warning");
                       }
                     }}
                   >
@@ -537,5 +560,21 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontSize: 10,
     color: colors.mutedForeground,
+  },
+  viewReceiptBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: spacing[2],
+    paddingVertical: spacing[3],
+    backgroundColor: "rgba(0, 243, 255, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
+    borderRadius: radii.md,
+  },
+  viewReceiptText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    color: colors.neonCyan,
   },
 });
