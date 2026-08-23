@@ -373,30 +373,43 @@ function LearnCourse() {
         {/* Left Pane: Video Player */}
         <div className="space-y-6">
           <Panel accent="cyan" className="overflow-hidden p-0 flex flex-col">
-            {isEnrolled && currentLesson ? (
-              <div className="relative aspect-video w-full bg-black flex items-center justify-center">
-                {currentLesson.videoUrl && getYouTubeVideoId(currentLesson.videoUrl) ? (
-                  <YouTubePlayer videoUrl={currentLesson.videoUrl} onProgress={handleProgress} />
-                ) : currentLesson.videoUrl ? (
-                  <video
-                    key={currentLesson.id}
-                    src={getCloudFrontUrl(currentLesson.videoUrl.trim())}
-                    controls
-                    playsInline
-                    preload="metadata"
-                    className="h-full w-full object-contain"
-                    poster={course.thumbnail ? getCloudFrontUrl(course.thumbnail) : undefined}
-                    onTimeUpdate={(e) =>
-                      handleProgress(e.currentTarget.currentTime, e.currentTarget.duration)
-                    }
-                  />
-                ) : (
-                  <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
-                    <Play className="mb-2 h-10 w-10 opacity-50" />
-                    <p className="text-sm font-medium">No video uploaded for this lesson yet.</p>
-                  </div>
-                )}
-              </div>
+            {isEnrolled ? (
+              currentLesson ? (
+                <div className="relative aspect-video w-full bg-black flex items-center justify-center">
+                  {currentLesson.videoUrl && getYouTubeVideoId(currentLesson.videoUrl) ? (
+                    <YouTubePlayer videoUrl={currentLesson.videoUrl} onProgress={handleProgress} />
+                  ) : currentLesson.videoUrl ? (
+                    <video
+                      key={currentLesson.id}
+                      src={getCloudFrontUrl(currentLesson.videoUrl.trim())}
+                      controls
+                      playsInline
+                      preload="metadata"
+                      className="h-full w-full object-contain"
+                      poster={course.thumbnail ? getCloudFrontUrl(course.thumbnail) : undefined}
+                      onTimeUpdate={(e) =>
+                        handleProgress(e.currentTarget.currentTime, e.currentTarget.duration)
+                      }
+                    />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
+                      <Play className="mb-2 h-10 w-10 opacity-50" />
+                      <p className="text-sm font-medium">No video uploaded for this lesson yet.</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="relative flex aspect-video w-full flex-col items-center justify-center bg-background/70 p-8 text-center">
+                  <div className="grid-runes absolute inset-0 opacity-40" />
+                  <CheckCircle2 className="relative z-10 mb-4 h-12 w-12 text-neon-lime" />
+                  <h3 className="relative z-10 font-display text-xl text-foreground">
+                    Enrolled & Unlocked!
+                  </h3>
+                  <p className="relative z-10 mt-2 max-w-md text-sm text-muted-foreground">
+                    You have active access to this course. The instructor has not uploaded any video feeds or lessons yet. They will appear here as soon as they are added!
+                  </p>
+                </div>
+              )
             ) : (
               <div className="relative flex aspect-video w-full flex-col items-center justify-center bg-background/70 p-8 text-center">
                 <div className="grid-runes absolute inset-0 opacity-40" />
@@ -409,20 +422,18 @@ function LearnCourse() {
                     ? "Your 1-year access to this course has ended. Renew it to continue where you left off."
                     : "You must be enrolled in this course to view the restricted dungeon feeds."}
                 </p>
-                {!isEnrolled && (
-                  <Button
-                    variant="hero"
-                    className="relative z-10 mt-6"
-                    onClick={handleEnroll}
-                    disabled={isEnrolling}
-                  >
-                    {isEnrolling
-                      ? "Processing Checkout..."
-                      : hasAccessExpired
-                        ? "Renew Access via Razorpay"
-                        : "Unlock Course via Razorpay"}
-                  </Button>
-                )}
+                <Button
+                  variant="hero"
+                  className="relative z-10 mt-6"
+                  onClick={handleEnroll}
+                  disabled={isEnrolling}
+                >
+                  {isEnrolling
+                    ? "Processing Checkout..."
+                    : hasAccessExpired
+                      ? "Renew Access via Razorpay"
+                      : "Unlock Course via Razorpay"}
+                </Button>
               </div>
             )}
 
