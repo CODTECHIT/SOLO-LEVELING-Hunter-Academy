@@ -61,7 +61,7 @@ export function RazorpayCheckoutModal({
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Cyber Tech Razorpay Checkout</title>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js" onload="initCheckout()"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -112,20 +112,11 @@ export function RazorpayCheckoutModal({
       font-weight: 700;
       width: 100%;
       cursor: pointer;
-      margin-bottom: 12px;
-    }
-    .dev-box {
-      margin-top: 16px;
-      padding: 12px;
-      border: 1px dashed #fbbf24;
-      border-radius: 8px;
-      background: rgba(251, 191, 36, 0.1);
-      font-size: 12px;
-      color: #fbbf24;
+      margin-top: 12px;
     }
     .spinner {
-      width: 32px;
-      height: 32px;
+      width: 36px;
+      height: 36px;
       border: 3px solid rgba(103, 232, 249, 0.2);
       border-top-color: #67e8f9;
       border-radius: 50%;
@@ -137,55 +128,38 @@ export function RazorpayCheckoutModal({
 </head>
 <body>
   <div class="card">
-    <div id="loading-state">
-      <div class="spinner"></div>
-      <div class="title">${orderData.courseTitle}</div>
-      <div class="desc">Launching secure Razorpay gateway...</div>
-      <div class="price">₹${((orderData.amount || 0) / 100).toLocaleString("en-IN")}</div>
-    </div>
-
-    ${
-      isDevOrder
-        ? `
-      <div class="dev-box">
-        <strong>⚡ Developer Test Mode</strong>
-        <p style="margin-top: 4px;">Placeholder keys active. Tap below to simulate instant payment verification:</p>
-        <button class="btn" style="margin-top: 12px; background: #fbbf24; color: #000;" onclick="simulateDevPayment()">
-          Simulate Payment Success
-        </button>
-      </div>
-      `
-        : ""
-    }
+    <div class="spinner"></div>
+    <div class="title">${orderData.courseTitle}</div>
+    <div class="desc">Connecting to Razorpay Secure Gateway...</div>
+    <div class="price">₹${((orderData.amount || 0) / 100).toLocaleString("en-IN")}</div>
+    <button class="btn" id="pay-btn" onclick="initCheckout()">
+      Open Razorpay Gateway
+    </button>
   </div>
 
   <script>
+    var rzpInstance = null;
+    var attempts = 0;
+
     function sendMessage(msg) {
       if (window.ReactNativeWebView) {
         window.ReactNativeWebView.postMessage(JSON.stringify(msg));
       }
     }
 
-    function simulateDevPayment() {
-      const ts = Date.now();
-      sendMessage({
-        type: 'PAYMENT_SUCCESS',
-        payload: {
-          razorpay_order_id: ${JSON.stringify(orderData.orderId)},
-          razorpay_payment_id: 'pay_dev_' + ts,
-          razorpay_signature: 'dev_sig_' + ts
-        }
-      });
-    }
-
     function initCheckout() {
-      try {
-        if (!window.Razorpay) {
-          console.warn("Razorpay script not loaded yet");
-          return;
+      if (!window.Razorpay) {
+        attempts++;
+        if (attempts < 30) {
+          setTimeout(initCheckout, 200);
+        } else {
+          console.error("Razorpay script timeout");
         }
+        return;
+      }
 
-        const options = {
+      try {
+        var options = {
           key: ${JSON.stringify(orderData.keyId)},
           amount: ${orderData.amount},
           currency: ${JSON.stringify(orderData.currency || "INR")},
@@ -214,25 +188,27 @@ export function RazorpayCheckoutModal({
           }
         };
 
-        const rzp = new window.Razorpay(options);
-        rzp.on('payment.failed', function(res) {
+        rzpInstance = new window.Razorpay(options);
+        rzpInstance.on('payment.failed', function(res) {
           sendMessage({
             type: 'PAYMENT_ERROR',
             payload: res.error || res
           });
         });
-        rzp.open();
+        rzpInstance.open();
       } catch (err) {
         console.error("Razorpay open error:", err);
       }
     }
 
-    // Auto-launch if real keys
-    window.onload = function() {
-      if (!${isDevOrder}) {
-        setTimeout(initCheckout, 500);
-      }
-    };
+    // Auto-launch checkout once DOM and script are ready
+    if (document.readyState === 'complete') {
+      setTimeout(initCheckout, 300);
+    } else {
+      window.addEventListener('load', function() {
+        setTimeout(initCheckout, 300);
+      });
+    }
   </script>
 </body>
 </html>
