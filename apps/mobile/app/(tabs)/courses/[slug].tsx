@@ -28,6 +28,11 @@ import { SafeScreen } from "@/components/layout/SafeScreen";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { ProgressBar } from "@/components/ui/ProgressBar";
+import {
+  RazorpayCheckoutModal,
+  MobileRazorpayOrderData,
+  MobileRazorpaySuccessPayload,
+} from "@/components/payments/RazorpayCheckoutModal";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
 export default function CourseDetailScreen() {
@@ -37,6 +42,8 @@ export default function CourseDetailScreen() {
   const { isAuthenticated } = useAuthStore();
   const { data, isLoading } = useCourse(slug);
   const [enrolling, setEnrolling] = useState(false);
+  const [razorpayOrder, setRazorpayOrder] = useState<MobileRazorpayOrderData | null>(null);
+  const [checkoutVisible, setCheckoutVisible] = useState(false);
 
   const handleEnroll = async () => {
     if (!isAuthenticated) {
@@ -46,22 +53,72 @@ export default function CourseDetailScreen() {
     if (!data?.course?.id) return;
     setEnrolling(true);
     try {
-      await api.post(`/enrollments/${data.course.id}`);
-      await Promise.all([
-        qc.invalidateQueries({ queryKey: ["course", slug] }),
-        qc.invalidateQueries({ queryKey: ["enrollments"] }),
-        qc.invalidateQueries({ queryKey: ["user-stats"] }),
-      ]);
-      Alert.alert("Enrolled! 🎉", "You now have access to this course. Start learning!");
+      const res = await api.post("/payments/create-order", {
+        courseId: data.course.id,
+      });
+
+      if (res.data.alreadyEnrolled) {
+        Alert.alert("Notice", res.data.message || "You are already enrolled in this course.");
+        await qc.invalidateQueries({ queryKey: ["course", slug] });
+        return;
+      }
+
+      if (res.data.isFree) {
+        await Promise.all([
+          qc.invalidateQueries({ queryKey: ["course", slug] }),
+          qc.invalidateQueries({ queryKey: ["enrollments"] }),
+          qc.invalidateQueries({ queryKey: ["user-stats"] }),
+        ]);
+        Alert.alert("Enrolled! 🎉", "You now have access to this free course. Start learning!");
+        return;
+      }
+
+      // Paid course -> Open Razorpay Modal
+      setRazorpayOrder(res.data);
+      setCheckoutVisible(true);
     } catch (err: any) {
       const msg =
         err?.response?.data?.message ||
         err?.response?.data?.error ||
         err?.message ||
-        "Enrollment failed";
-      Alert.alert("Notice", typeof msg === "string" ? msg : "Enrollment failed");
+        "Failed to initiate checkout";
+      Alert.alert("Notice", typeof msg === "string" ? msg : "Checkout initialization failed");
     } finally {
       setEnrolling(false);
+    }
+  };
+
+  const handlePaymentSuccess = async (payload: MobileRazorpaySuccessPayload) => {
+    try {
+      setCheckoutVisible(false);
+      setEnrolling(true);
+      await api.post("/payments/verify", {
+        razorpayOrderId: payload.razorpay_order_id,
+        razorpayPaymentId: payload.razorpay_payment_id,
+        razorpaySignature: payload.razorpay_signature,
+        courseId: data?.course?.id,
+      });
+
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: ["course", slug] }),
+        qc.invalidateQueries({ queryKey: ["enrollments"] }),
+        qc.invalidateQueries({ queryKey: ["user-stats"] }),
+      ]);
+
+      Alert.alert(
+        "Payment Confirmed! 🎉",
+        "Your payment was successful and full access to this course is now unlocked.",
+      );
+    } catch (err: any) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Payment verification failed";
+      Alert.alert("Verification Error", typeof msg === "string" ? msg : "Failed to verify payment");
+    } finally {
+      setEnrolling(false);
+      setRazorpayOrder(null);
     }
   };
 
@@ -306,6 +363,16 @@ export default function CourseDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      <RazorpayCheckoutModal
+        visible={checkoutVisible}
+        orderData={razorpayOrder}
+        onClose={() => setCheckoutVisible(false)}
+        onSuccess={handlePaymentSuccess}
+        onFailure={(err) => {
+          Alert.alert("Payment Failed", err?.description || "Razorpay transaction was not completed.");
+        }}
+      />
     </SafeScreen>
   );
 }

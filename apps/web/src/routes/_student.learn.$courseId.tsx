@@ -1,10 +1,11 @@
 import { createFileRoute, useRouter, Link } from "@tanstack/react-router";
 import {
   getCourseFn,
-  enrollUserFn,
   markLessonCompletedFn,
   updateLessonProgressFn,
 } from "@/server/courses";
+import { createRazorpayOrderFn, verifyRazorpayPaymentFn } from "@/server/payments";
+import { openRazorpayCheckout } from "@/lib/razorpay";
 import { issueOrGetCertificateFn } from "@/server/certificate";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
 import { Button } from "@/components/ui/button";
@@ -222,10 +223,55 @@ function LearnCourse() {
   const handleEnroll = async () => {
     try {
       setIsEnrolling(true);
-      await enrollUserFn({ data: { courseId: course.id } });
-      router.invalidate(); // refresh loader to see enrolled state
-    } catch (err) {
-      console.error(err);
+      const orderRes = await createRazorpayOrderFn({ data: { courseId: course.id } });
+
+      if (orderRes.alreadyEnrolled) {
+        toast.info(orderRes.message || "You already have active access.");
+        router.invalidate();
+        return;
+      }
+
+      if (orderRes.isFree) {
+        toast.success("🎉 Access granted to free course!");
+        router.invalidate();
+        return;
+      }
+
+      await openRazorpayCheckout({
+        orderData: {
+          orderId: orderRes.orderId,
+          amount: orderRes.amount,
+          currency: orderRes.currency,
+          keyId: orderRes.keyId,
+          courseTitle: orderRes.courseTitle,
+          courseDescription: orderRes.courseDescription,
+          user: orderRes.user,
+        },
+        onSuccess: async (response) => {
+          try {
+            const verifyRes = await verifyRazorpayPaymentFn({
+              data: {
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                courseId: course.id,
+              },
+            });
+            toast.success(verifyRes.message || "🎉 Payment confirmed! Access unlocked.");
+            router.invalidate();
+          } catch (verifyErr: any) {
+            toast.error(verifyErr.message || "Payment verification failed");
+          }
+        },
+        onError: (err) => {
+          toast.error(err?.description || err?.message || "Payment failed");
+        },
+        onDismiss: () => {
+          toast.info("Payment dismissed");
+        },
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initiate checkout");
     } finally {
       setIsEnrolling(false);
     }
@@ -371,10 +417,10 @@ function LearnCourse() {
                     disabled={isEnrolling}
                   >
                     {isEnrolling
-                      ? "Unlocking..."
+                      ? "Processing Checkout..."
                       : hasAccessExpired
-                        ? "Renew Access (1 Year)"
-                        : "Unlock Course (Mock Free)"}
+                        ? "Renew Access via Razorpay"
+                        : "Unlock Course via Razorpay"}
                   </Button>
                 )}
               </div>

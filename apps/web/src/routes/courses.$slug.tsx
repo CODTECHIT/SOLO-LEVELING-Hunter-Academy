@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useMutation } from "@tanstack/react-query";
 import { getCourseFn, submitReviewFn } from "@/server/courses";
-import { enrollInCourse } from "@/lib/api-enrollments";
+import { createRazorpayOrderFn, verifyRazorpayPaymentFn } from "@/server/payments";
+import { openRazorpayCheckout } from "@/lib/razorpay";
 import { getAuthToken } from "@/lib/api";
 import { TopNav, SiteFooter } from "@/components/site/nav";
 import { Panel, PanelTitle } from "@/components/site/ui-bits";
@@ -16,6 +16,7 @@ import {
   Send,
   LogIn,
   MessageSquare,
+  ShieldCheck,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -65,14 +66,8 @@ function CourseDetail() {
   const [comment, setComment] = useState<string>(existingReview?.comment || "");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
-  // Enrollment mutation
-  const enrollMutation = useMutation({
-    mutationFn: (courseId: string) => enrollInCourse(courseId),
-    onSuccess: () => {
-      router.invalidate();
-      router.navigate({ to: "/dashboard" });
-    },
-  });
+  // Enrollment state
+  const [isEnrolling, setIsEnrolling] = useState(false);
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,11 +123,68 @@ function CourseDetail() {
 
   const handleEnroll = async () => {
     if (!token && !currentUser) {
+      toast.info("Please log in to enroll");
       router.navigate({ to: "/login" });
       return;
     }
 
-    enrollMutation.mutate(course.id);
+    try {
+      setIsEnrolling(true);
+      const orderRes = await createRazorpayOrderFn({ data: { courseId: course.id } });
+
+      if (orderRes.alreadyEnrolled) {
+        toast.info(orderRes.message || "You already have active access to this course.");
+        router.navigate({ to: "/learn/$courseId", params: { courseId: course.slug } });
+        return;
+      }
+
+      if (orderRes.isFree) {
+        toast.success("🎉 Enrolled successfully in free course!");
+        router.invalidate();
+        router.navigate({ to: "/learn/$courseId", params: { courseId: course.slug } });
+        return;
+      }
+
+      // Paid course -> Open Razorpay Checkout Modal
+      await openRazorpayCheckout({
+        orderData: {
+          orderId: orderRes.orderId,
+          amount: orderRes.amount,
+          currency: orderRes.currency,
+          keyId: orderRes.keyId,
+          courseTitle: orderRes.courseTitle,
+          courseDescription: orderRes.courseDescription,
+          user: orderRes.user,
+        },
+        onSuccess: async (response) => {
+          try {
+            const verifyRes = await verifyRazorpayPaymentFn({
+              data: {
+                razorpayOrderId: response.razorpay_order_id,
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpaySignature: response.razorpay_signature,
+                courseId: course.id,
+              },
+            });
+            toast.success(verifyRes.message || "🎉 Payment successful! Course unlocked.");
+            router.invalidate();
+            router.navigate({ to: "/learn/$courseId", params: { courseId: course.slug } });
+          } catch (verifyErr: any) {
+            toast.error(verifyErr.message || "Payment verification failed");
+          }
+        },
+        onError: (err) => {
+          toast.error(err?.description || err?.message || "Payment was cancelled or failed");
+        },
+        onDismiss: () => {
+          toast.info("Payment window dismissed");
+        },
+      });
+    } catch (err: any) {
+      toast.error(err.message || "Failed to initiate payment");
+    } finally {
+      setIsEnrolling(false);
+    }
   };
 
   return (
@@ -220,22 +272,25 @@ function CourseDetail() {
               ) : (
                 <Button
                   variant="hero"
-                  className="w-full py-6 text-lg"
+                  className="w-full py-6 text-lg flex items-center justify-center gap-2"
                   onClick={handleEnroll}
-                  disabled={enrollMutation.isPending}
+                  disabled={isEnrolling}
                 >
-                  {enrollMutation.isPending ? (
+                  {isEnrolling ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin text-neon-cyan" />
+                      Processing Checkout...
                     </>
                   ) : (
-                    "Enroll Now"
+                    <>
+                      <ShieldCheck className="w-5 h-5 text-neon-cyan" />
+                      Enroll Now
+                    </>
                   )}
                 </Button>
               )}
               <p className="text-center text-xs text-muted-foreground mt-4">
-                Secure Razorpay checkout. Immediate access upon registration.
+                Secure Razorpay checkout. Immediate access upon verification.
               </p>
             </Panel>
           </div>

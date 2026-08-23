@@ -38,12 +38,22 @@ export class EnrollmentsService {
       throw new BadRequestException("Course not found");
     }
 
-    // Create enrollment
+    // If course is not free, payment is required through Razorpay
+    if (course.price > 0) {
+      throw new BadRequestException(
+        "This course requires payment. Please complete checkout via Razorpay.",
+      );
+    }
+
+    const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+
+    // Create enrollment for free course
     const enrollment = await this.prisma.enrollment.create({
       data: {
         userId,
         courseId,
         enrolledAt: new Date(),
+        expiresAt,
       },
       include: {
         course: {

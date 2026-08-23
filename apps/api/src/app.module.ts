@@ -8,6 +8,7 @@ import { CoursesModule } from "./courses/courses.module";
 import { AdminModule } from "./admin/admin.module";
 import { UsersModule } from "./users/users.module";
 import { EnrollmentsModule } from "./enrollments/enrollments.module";
+import { PaymentsModule } from "./payments/payments.module";
 import { QuizzesModule } from "./quizzes/quizzes.module";
 import { SupportModule } from "./support/support.module";
 import { NotificationsModule } from "./notifications/notifications.module";
@@ -34,6 +35,7 @@ import { AppService } from "./app.service";
     AdminModule,
     UsersModule,
     EnrollmentsModule,
+    PaymentsModule,
     QuizzesModule,
     SupportModule,
     NotificationsModule,
