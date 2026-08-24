@@ -25,6 +25,7 @@ import {
   Sparkles,
   Swords,
   Zap,
+  Bot,
 } from "lucide-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { usePreventScreenCapture, preventScreenCaptureAsync } from "expo-screen-capture";
@@ -32,6 +33,7 @@ import { useCourse, useEnrolledCourses } from "@/hooks/useCourses";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { useAuthStore } from "@/store/authStore";
 import { CertificateModal } from "@/components/ui/CertificateModal";
+import { CourseAssistantModal } from "@/components/ui/CourseAssistantModal";
 import { api } from "@/lib/api";
 import { getCloudFrontUrl, getYouTubeVideoId } from "@/lib/cdn";
 import { WebView } from "react-native-webview";
@@ -76,6 +78,7 @@ export default function LearningPlayerScreen() {
   );
   const [showLessons, setShowLessons] = useState(false);
   const [certModalVisible, setCertModalVisible] = useState(false);
+  const [assistantModalVisible, setAssistantModalVisible] = useState(false);
   const [videoCurrentTime, setVideoCurrentTime] = useState<number>(0);
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [isMarkingComplete, setIsMarkingComplete] = useState<boolean>(false);
@@ -270,7 +273,7 @@ export default function LearningPlayerScreen() {
               nativeControls={true}
               contentFit="contain"
               fullscreenOptions={{ enable: true }}
-              surfaceType="surfaceView"
+              surfaceType="textureView"
               onFullscreenEnter={() => {
                 preventScreenCaptureAsync("fullscreen_video_window").catch(() => {});
               }}
@@ -299,7 +302,7 @@ export default function LearningPlayerScreen() {
           />
         }
       >
-        {/* Action Strip: Mark Lesson Complete / Next Lesson */}
+        {/* Action Strip: Mark Lesson Complete / Ask AI / Next Lesson */}
         {isEnrolled && activeLesson && (
           <View style={styles.actionStrip}>
           <TouchableOpacity
@@ -326,13 +329,22 @@ export default function LearningPlayerScreen() {
             )}
           </TouchableOpacity>
 
+          <TouchableOpacity
+            style={styles.assistantActionBtn}
+            onPress={() => setAssistantModalVisible(true)}
+            activeOpacity={0.85}
+          >
+            <Bot color={colors.neonCyan} size={16} />
+            <Text style={styles.assistantActionBtnText}>Ask AI</Text>
+          </TouchableOpacity>
+
           {nextLesson && (
             <TouchableOpacity
               style={styles.nextLessonBtn}
               onPress={() => setActiveId(nextLesson.id)}
               activeOpacity={0.85}
             >
-              <Text style={styles.nextLessonText}>Next Lesson</Text>
+              <Text style={styles.nextLessonText}>Next</Text>
               <ChevronRight color={colors.neonCyan} size={16} />
             </TouchableOpacity>
           )}
@@ -446,6 +458,27 @@ export default function LearningPlayerScreen() {
           )}
         </View>
       </View>
+
+      {/* AI Lesson Knowledge Assistant Banner */}
+      {isEnrolled && (
+        <TouchableOpacity
+          style={styles.assistantBanner}
+          activeOpacity={0.85}
+          onPress={() => setAssistantModalVisible(true)}
+        >
+          <View style={styles.assistantIconBox}>
+            <Bot color={colors.neonCyan} size={18} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.assistantBannerTitle}>AI Lesson Assistant</Text>
+            <Text style={styles.assistantBannerSub}>Instant FAQ answers & 1-tap support escalation</Text>
+          </View>
+          <View style={styles.assistantOpenBadge}>
+            <Text style={styles.assistantOpenBadgeText}>Ask</Text>
+            <ChevronRight color={colors.neonCyan} size={14} />
+          </View>
+        </TouchableOpacity>
+      )}
 
       {/* Lesson Quiz Banner (if active lesson has a quiz) */}
       {activeLesson?.quiz && (
@@ -589,6 +622,16 @@ export default function LearningPlayerScreen() {
       )}
       </ScrollView>
 
+      {/* Course Knowledge Assistant Modal */}
+      <CourseAssistantModal
+        visible={assistantModalVisible}
+        onClose={() => setAssistantModalVisible(false)}
+        courseId={courseId}
+        courseTitle={data?.course?.title ?? course?.title}
+        lessonId={activeLesson?.id}
+        lessonTitle={activeLesson?.title}
+      />
+
       {/* Certificate Modal */}
       <CertificateModal
         visible={certModalVisible}
@@ -679,22 +722,89 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[4],
-    borderRadius: radii.lg,
-    backgroundColor: colors.surface2,
+    backgroundColor: "rgba(103, 232, 249, 0.1)",
     borderWidth: 1,
-    borderColor: colors.neonCyan + "50",
-    gap: spacing[1],
+    borderColor: "rgba(103, 232, 249, 0.3)",
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    borderRadius: radii.lg,
+    gap: 4,
   },
   nextLessonText: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    letterSpacing: 0.5,
+  },
+  assistantActionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(176, 96, 240, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(176, 96, 240, 0.4)",
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    borderRadius: radii.lg,
+    gap: 5,
+  },
+  assistantActionBtnText: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    letterSpacing: 0.5,
+  },
+  assistantBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(176, 96, 240, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(103, 232, 249, 0.3)",
+    borderRadius: radii.lg,
+    padding: spacing[3],
+    marginHorizontal: spacing[4],
+    marginBottom: spacing[3],
+    gap: spacing[3],
+  },
+  assistantIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: radii.md,
+    backgroundColor: "rgba(103, 232, 249, 0.15)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(103, 232, 249, 0.3)",
+  },
+  assistantBannerTitle: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    letterSpacing: 0.5,
+  },
+  assistantBannerSub: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+  },
+  assistantOpenBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(103, 232, 249, 0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radii.sm,
+    gap: 2,
+  },
+  assistantOpenBadgeText: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     fontWeight: "bold",
     color: colors.neonCyan,
-  },
-
-  progressRow: { paddingHorizontal: spacing[4], paddingVertical: spacing[3] },
+  }, progressRow: { paddingHorizontal: spacing[4], paddingVertical: spacing[3] },
 
   // Certificate banner
   certBanner: {

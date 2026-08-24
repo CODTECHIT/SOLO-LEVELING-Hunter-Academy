@@ -23,6 +23,9 @@ import {
   X,
   Flame,
   CheckCircle2,
+  Bot,
+  Sparkles,
+  Trophy,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -39,6 +42,7 @@ import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import { CyberTechLogo } from "@/components/ui/CyberTechLogo";
+import { CourseAssistantModal } from "@/components/ui/CourseAssistantModal";
 import { useCatalog, useIntroVideo } from "@/hooks/useCourses";
 import { useHunterStats } from "@/hooks/useHunterStats";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -61,6 +65,8 @@ export default function HomeScreen() {
   } = useNotifications(isAuthenticated);
   const [notifModalVisible, setNotifModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [assistantVisible, setAssistantVisible] = useState(false);
+  const [assistantQuery, setAssistantQuery] = useState("");
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -176,7 +182,7 @@ export default function HomeScreen() {
                 nativeControls={true}
                 contentFit="contain"
                 fullscreenOptions={{ enable: true }}
-                surfaceType="surfaceView"
+                surfaceType="textureView"
               />
               <View style={styles.videoOverlay}>
                 <Text style={styles.videoTitle}>{introVideo?.title ?? "Welcome to the Academy"}</Text>
@@ -245,6 +251,88 @@ export default function HomeScreen() {
             )}
           </LinearGradient>
         </View>
+
+        {/* ── Combat Achievements & Badges ── */}
+        <View style={styles.achievementsRow}>
+          {[
+            { title: "Shadow Monarch", icon: Crown, color: colors.neonAmber, border: colors.neonAmberAlpha20, bg: "rgba(251, 191, 36, 0.08)" },
+            { title: "Dungeon Raider", icon: Swords, color: colors.neonLime, border: colors.neonLimeAlpha20, bg: "rgba(74, 222, 128, 0.08)" },
+            { title: "Swift Blade", icon: Shield, color: colors.neonCyan, border: colors.neonCyanAlpha20, bg: "rgba(56, 189, 248, 0.08)" },
+          ].map((item, idx) => {
+            const Icon = item.icon;
+            return (
+              <View
+                key={idx}
+                style={[
+                  styles.achievementCard,
+                  { borderColor: item.border, backgroundColor: item.bg },
+                ]}
+              >
+                <Icon color={item.color} size={20} />
+                <Text style={[styles.achievementTitle, { color: item.color }]}>
+                  {item.title}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
+        {/* ── AI Teacher Assistant Card ── */}
+        <TouchableOpacity
+          activeOpacity={0.9}
+          onPress={() => {
+            setAssistantQuery("");
+            setAssistantVisible(true);
+          }}
+          style={styles.aiCardContainer}
+        >
+          <LinearGradient
+            colors={["rgba(56, 189, 248, 0.18)", "rgba(192, 132, 252, 0.12)", colors.surface]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.aiCard}
+          >
+            <View style={styles.aiCardGlowLine} />
+            <View style={styles.aiCardHeader}>
+              <View style={styles.aiAvatar}>
+                <Bot color={colors.neonCyan} size={22} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <View style={styles.aiTitleRow}>
+                  <Text style={styles.aiTitle}>AI TEACHER ASSISTANT</Text>
+                  <View style={styles.onlineBadge}>
+                    <Text style={styles.onlineText}>ONLINE</Text>
+                  </View>
+                </View>
+                <Text style={styles.aiSubtitle}>
+                  ALEX • 24/7 Tactical Syllabus & FAQ Guide
+                </Text>
+              </View>
+              <ChevronRight color={colors.neonCyan} size={18} />
+            </View>
+
+            {/* Quick Prompt Chips */}
+            <View style={styles.aiChipRow}>
+              {[
+                "🎓 Certificates",
+                "📚 Courses Catalog",
+                "💳 Payment Options",
+              ].map((chip, idx) => (
+                <TouchableOpacity
+                  key={idx}
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setAssistantQuery(chip.replace(/^[^\w]+/, ""));
+                    setAssistantVisible(true);
+                  }}
+                  style={styles.aiChip}
+                >
+                  <Text style={styles.aiChipText}>{chip}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </LinearGradient>
+        </TouchableOpacity>
 
         {/* ── Full Courses ── */}
         <View style={styles.section}>
@@ -436,6 +524,13 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* ── AI Assistant Modal ── */}
+      <CourseAssistantModal
+        visible={assistantVisible}
+        onClose={() => setAssistantVisible(false)}
+        initialQuery={assistantQuery}
+      />
     </SafeScreen>
   );
 }
@@ -610,6 +705,125 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   ctaBtnText: { fontFamily: fonts.sans, fontSize: fontSizes.base, color: colors.white, letterSpacing: 2 },
+
+  // Combat Achievements Row
+  achievementsRow: {
+    flexDirection: "row",
+    gap: spacing[2],
+    paddingHorizontal: spacing[4],
+    marginTop: spacing[1],
+  },
+  achievementCard: {
+    flex: 1,
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[1],
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    gap: 4,
+  },
+  achievementTitle: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    letterSpacing: 0.5,
+    textAlign: "center",
+    fontWeight: "bold",
+  },
+
+  // AI Teacher Assistant Card
+  aiCardContainer: {
+    marginHorizontal: spacing[4],
+    marginTop: spacing[4],
+  },
+  aiCard: {
+    borderRadius: radii["2xl"],
+    borderWidth: 1,
+    borderColor: colors.neonCyanAlpha40,
+    padding: spacing[4],
+    overflow: "hidden",
+    shadowColor: colors.neonCyan,
+    shadowOpacity: 0.25,
+    shadowRadius: 16,
+    elevation: 6,
+    gap: spacing[3],
+  },
+  aiCardGlowLine: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 2,
+    backgroundColor: colors.neonCyan,
+  },
+  aiCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+  },
+  aiAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: radii.lg,
+    backgroundColor: colors.neonCyanAlpha10,
+    borderWidth: 1,
+    borderColor: colors.neonCyanAlpha40,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  aiTitle: {
+    fontFamily: fonts.display,
+    fontSize: 11,
+    color: colors.neonCyan,
+    fontWeight: "bold",
+    letterSpacing: 1.5,
+  },
+  onlineBadge: {
+    backgroundColor: "rgba(74, 222, 128, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(74, 222, 128, 0.4)",
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: radii.sm,
+  },
+  onlineText: {
+    fontFamily: fonts.sans,
+    fontSize: 8,
+    color: colors.neonLime,
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
+  aiSubtitle: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    marginTop: 1,
+  },
+  aiChipRow: {
+    flexDirection: "row",
+    gap: spacing[2],
+    flexWrap: "wrap",
+  },
+  aiChip: {
+    backgroundColor: "rgba(22, 19, 41, 0.8)",
+    borderWidth: 1,
+    borderColor: "rgba(56, 189, 248, 0.3)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radii.full,
+  },
+  aiChipText: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.foreground,
+    fontWeight: "600",
+  },
 
   // Sections
   section: { marginTop: spacing[6] },

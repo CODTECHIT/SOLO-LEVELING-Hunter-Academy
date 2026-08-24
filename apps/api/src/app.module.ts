@@ -12,6 +12,7 @@ import { PaymentsModule } from "./payments/payments.module";
 import { CertificatesModule } from "./certificates/certificates.module";
 import { QuizzesModule } from "./quizzes/quizzes.module";
 import { SupportModule } from "./support/support.module";
+import { AssistantModule } from "./assistant/assistant.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { MailModule } from "./mail/mail.module";
 import { AppController } from "./app.controller";
@@ -40,6 +41,7 @@ import { AppService } from "./app.service";
     CertificatesModule,
     QuizzesModule,
     SupportModule,
+    AssistantModule,
     NotificationsModule,
   ],
   controllers: [AppController],

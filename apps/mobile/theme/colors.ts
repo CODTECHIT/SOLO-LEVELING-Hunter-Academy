@@ -1,40 +1,63 @@
 /**
  * Design tokens — OKLCH from the web converted to hex.
- * These are the single source of truth for all mobile styling.
+ * Single source of truth for all mobile styling.
  */
 export const colors = {
   // Backgrounds
-  background: "#1a1629",   // oklch(0.16 0.03 265)
-  surface:    "#1e1d3a",   // oklch(0.21 0.035 267)
-  surface2:   "#252446",   // oklch(0.26 0.045 270)
-  card:       "#1e1d3a",
+  background: "#0d0b18",   // Deep obsidian cyber background
+  surface:    "#161329",   // Elevated cyber surface
+  surface2:   "#211c3d",   // Secondary panel surface
+  surface3:   "#2c2552",   // Highlight panel surface
+  card:       "#161329",
 
   // Text
-  foreground:       "#f0eff8",  // oklch(0.95 0.01 260)
-  mutedForeground:  "#7878a8",  // oklch(0.72 0.03 265)
+  foreground:       "#f8f7ff",
+  mutedForeground:  "#9694c7",
 
-  // Neon palette
-  neonPurple: "#b060f0",  // oklch(0.65 0.24 305)
-  neonCyan:   "#67e8f9",  // oklch(0.81 0.14 197)
-  neonLime:   "#a3e635",  // oklch(0.85 0.19 145)
-  neonPink:   "#f472b6",  // oklch(0.7 0.24 350)
-  neonAmber:  "#fbbf24",  // oklch(0.83 0.16 82)
+  // Neon & Cyber Accent Palette
+  neonPurple: "#c084fc",  // Bright electric violet
+  neonCyan:   "#38bdf8",  // Vivid sky cyan
+  neonLime:   "#4ade80",  // Radiant matrix green / lime
+  neonPink:   "#f472b6",  // Vibrant neon rose
+  neonAmber:  "#fbbf24",  // Radiant cyber gold
+  neonOrange: "#fb923c",  // Solar flare orange
+  neonRed:    "#f87171",  // Warning laser red
 
   // Semantic
-  primary:     "#b060f0",
-  accent:      "#67e8f9",
+  primary:     "#c084fc",
+  accent:      "#38bdf8",
   destructive: "#ef4444",
-  border:      "#3e3a60",  // oklch(0.35 0.06 275)
-  input:       "#302c50",  // oklch(0.3 0.05 272)
-  ring:        "#9d50e8",  // oklch(0.7 0.2 300)
+  border:      "#352e5e",
+  borderGlow:  "#4f46e5",
+  input:       "#241e42",
+  ring:        "#a855f7",
 
   // Alpha helpers (for glow/overlay effects)
-  neonPurpleAlpha20: "#b060f033",
-  neonPurpleAlpha40: "#b060f066",
-  neonCyanAlpha20:   "#67e8f933",
-  neonCyanAlpha40:   "#67e8f966",
-  neonLimeAlpha20:   "#a3e63533",
-  neonAmberAlpha20:  "#fbbf2433",
+  neonPurpleAlpha10: "rgba(192, 132, 252, 0.10)",
+  neonPurpleAlpha20: "rgba(192, 132, 252, 0.20)",
+  neonPurpleAlpha40: "rgba(192, 132, 252, 0.40)",
+  neonCyanAlpha10:   "rgba(56, 189, 248, 0.10)",
+  neonCyanAlpha20:   "rgba(56, 189, 248, 0.20)",
+  neonCyanAlpha40:   "rgba(56, 189, 248, 0.40)",
+  neonLimeAlpha10:   "rgba(74, 222, 128, 0.10)",
+  neonLimeAlpha20:   "rgba(74, 222, 128, 0.20)",
+  neonPinkAlpha20:   "rgba(244, 114, 182, 0.20)",
+  neonAmberAlpha10:  "rgba(251, 191, 36, 0.10)",
+  neonAmberAlpha20:  "rgba(251, 191, 36, 0.20)",
+
+  // Rich Gradients
+  gradients: {
+    hero: ["#2d1b54", "#181333", "#0d0b18"] as const,
+    cyanPurple: ["#38bdf8", "#c084fc", "#f472b6"] as const,
+    purplePink: ["#c084fc", "#f472b6"] as const,
+    cyberCyan: ["#06b6d4", "#38bdf8"] as const,
+    emeraldLime: ["#10b981", "#4ade80"] as const,
+    goldAmber: ["#fbbf24", "#f97316"] as const,
+    darkCardCyan: ["rgba(56, 189, 248, 0.14)", "rgba(22, 19, 41, 0.95)"] as const,
+    darkCardPurple: ["rgba(192, 132, 252, 0.14)", "rgba(22, 19, 41, 0.95)"] as const,
+    darkCardLime: ["rgba(74, 222, 128, 0.14)", "rgba(22, 19, 41, 0.95)"] as const,
+    darkCardAmber: ["rgba(251, 191, 36, 0.14)", "rgba(22, 19, 41, 0.95)"] as const,
+  },
 
   white: "#ffffff",
   black: "#000000",

@@ -1,12 +1,14 @@
+import { useState, useRef, useEffect } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { TopNav, SiteFooter } from "@/components/site/nav";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Lock, Send, Bot, CheckCircle2, ChevronRight, Pause, Volume2, Maximize, Crown, Swords, Shield, Zap } from "lucide-react";
+import { PlayCircle, Lock, Send, Bot, CheckCircle2, ChevronRight, Pause, Volume2, Maximize, Crown, Swords, Shield, Zap, Loader2 } from "lucide-react";
 import { getCatalogFn, getEnrolledCoursesFn } from "@/server/courses";
 import { getCurrentUserFn } from "@/server/auth";
 import { getActiveIntroVideoFn } from "@/server/cms";
 import { Panel } from "@/components/site/ui-bits";
 import { HunterStatsBar } from "@/components/site/HunterStatsBar";
+import { api } from "@/lib/api";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -191,32 +193,7 @@ function LandingPage() {
           <div className="flex flex-col gap-6">
 
             {/* AI Assistant */}
-            <Panel accent="cyan" className="p-5 flex flex-col h-[280px]">
-              <h3 className="font-display text-xs font-bold uppercase tracking-widest text-neon-cyan mb-4">AI Teacher Assistant</h3>
-
-              <div className="flex-1 flex gap-4">
-                <div className="w-10 h-10 rounded-lg bg-neon-cyan/10 border border-neon-cyan/50 flex flex-shrink-0 items-center justify-center text-neon-cyan">
-                  <Bot className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-neon-cyan mb-1">ALEX</div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    Ready to level up your dungeon strategy, Jin-Woo? You're 1 EXP from Level 101.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Ask the system anything..."
-                  className="flex-1 h-10 bg-surface rounded-lg border border-border px-3 text-sm outline-none focus:border-neon-cyan/50 text-foreground"
-                />
-                <Button variant="neon" size="sm" className="h-10 px-4">
-                  SEND
-                </Button>
-              </div>
-            </Panel>
+            <AiTeacherAssistantWidget user={user} />
 
             {/* Enrolled Courses / Call to Action */}
             <Panel accent="purple" className="p-5 flex-1 flex flex-col">
@@ -285,5 +262,171 @@ function LandingPage() {
       </main>
       <SiteFooter />
     </div>
+  );
+}
+
+function AiTeacherAssistantWidget({ user }: { user: any }) {
+  const [messages, setMessages] = useState<
+    Array<{
+      sender: "ALEX" | "USER";
+      text: string;
+      source?: string;
+      escalation?: boolean;
+    }>
+  >([
+    {
+      sender: "ALEX",
+      text: `Ready to level up your training, ${user?.name || "Hunter"}? Ask me anything about our courses, syllabus, certificates, or platform guidelines!`,
+      source: "System Assistant",
+    },
+  ]);
+  const [input, setInput] = useState("");
+  const [loading, setLoading] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
+
+  const handleSend = async (queryText = input) => {
+    const q = queryText.trim();
+    if (!q || loading) return;
+
+    const userMsg = { sender: "USER" as const, text: q };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setLoading(true);
+
+    try {
+      const res = await api.post("/assistant/query", { query: q });
+      const data = res.data;
+      if (data.match) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "ALEX",
+            text: data.answer,
+            source: data.source || "Knowledge Base",
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: "ALEX",
+            text: data.message || "I couldn't find a direct answer in our academy FAQs.",
+            escalation: true,
+          },
+        ]);
+      }
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: "ALEX",
+          text: "Unable to query the academy knowledge base right now. Feel free to reach out via Support.",
+          escalation: true,
+        },
+      ]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Panel accent="cyan" className="p-5 flex flex-col h-[320px]">
+      <div className="flex items-center justify-between mb-3 border-b border-border/40 pb-2">
+        <h3 className="font-display text-xs font-bold uppercase tracking-widest text-neon-cyan flex items-center gap-1.5">
+          <Bot className="w-3.5 h-3.5" /> AI Teacher Assistant
+        </h3>
+        <span className="text-[9px] px-2 py-0.5 rounded border border-neon-cyan/30 bg-neon-cyan/10 text-neon-cyan font-bold uppercase tracking-wider">
+          Online
+        </span>
+      </div>
+
+      {/* Messages */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-y-auto pr-1 space-y-3 custom-scrollbar">
+        {messages.map((m, idx) => (
+          <div
+            key={idx}
+            className={`flex gap-2.5 text-xs ${m.sender === "USER" ? "justify-end" : "justify-start"}`}
+          >
+            {m.sender === "ALEX" && (
+              <div className="w-6 h-6 rounded-md bg-neon-cyan/10 border border-neon-cyan/40 flex shrink-0 items-center justify-center text-neon-cyan mt-0.5">
+                <Bot className="w-3.5 h-3.5" />
+              </div>
+            )}
+            <div
+              className={`p-2.5 rounded-lg max-w-[85%] leading-relaxed ${
+                m.sender === "USER"
+                  ? "bg-neon-cyan/20 border border-neon-cyan/40 text-foreground"
+                  : "bg-surface-2/90 border border-border text-muted-foreground"
+              }`}
+            >
+              {m.sender === "ALEX" && (
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="text-[10px] font-bold text-neon-cyan font-display">ALEX</span>
+                  {m.source && (
+                    <span className="text-[8px] text-neon-lime bg-neon-lime/10 px-1.5 py-0.2 rounded border border-neon-lime/20 font-mono">
+                      {m.source}
+                    </span>
+                  )}
+                </div>
+              )}
+              <p className="text-foreground/90 whitespace-pre-line text-xs">{m.text}</p>
+
+              {m.escalation && (
+                <div className="mt-2 pt-1.5 border-t border-border/50">
+                  <Link
+                    to="/support"
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-neon-purple hover:underline uppercase tracking-wider font-display"
+                  >
+                    Open Support Ticket &rarr;
+                  </Link>
+                </div>
+              )}
+            </div>
+          </div>
+        ))}
+        {loading && (
+          <div className="flex gap-2 items-center text-xs text-muted-foreground">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-neon-cyan" />
+            <span className="text-[11px]">Scanning knowledge base...</span>
+          </div>
+        )}
+      </div>
+
+      {/* Input Form */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSend();
+        }}
+        className="mt-3 flex gap-2"
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask ALEX anything..."
+          className="flex-1 h-9 bg-surface rounded-lg border border-border px-3 text-xs outline-none focus:border-neon-cyan/50 text-foreground"
+        />
+        <Button
+          type="submit"
+          variant="neon"
+          size="sm"
+          disabled={!input.trim() || loading}
+          className="h-9 px-3 text-xs font-display tracking-wider"
+        >
+          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "SEND"}
+        </Button>
+      </form>
+    </Panel>
   );
 }

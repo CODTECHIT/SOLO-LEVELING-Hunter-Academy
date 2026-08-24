@@ -38,3 +38,4 @@ dist-ssr
 *.sw?
 
 /src/generated/prisma
+SmartLeaving/
