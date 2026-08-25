@@ -182,7 +182,7 @@ export default function HomeScreen() {
                 nativeControls={true}
                 contentFit="contain"
                 fullscreenOptions={{ enable: true }}
-                surfaceType="textureView"
+                surfaceType="surfaceView"
               />
               <View style={styles.videoOverlay}>
                 <Text style={styles.videoTitle}>{introVideo?.title ?? "Welcome to the Academy"}</Text>

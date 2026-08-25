@@ -28,7 +28,11 @@ import {
   Bot,
 } from "lucide-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { usePreventScreenCapture, preventScreenCaptureAsync } from "expo-screen-capture";
+import {
+  usePreventScreenCapture,
+  preventScreenCaptureAsync,
+  useScreenshotListener,
+} from "expo-screen-capture";
 import { useCourse, useEnrolledCourses } from "@/hooks/useCourses";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { useAuthStore } from "@/store/authStore";
@@ -273,7 +277,7 @@ export default function LearningPlayerScreen() {
               nativeControls={true}
               contentFit="contain"
               fullscreenOptions={{ enable: true }}
-              surfaceType="textureView"
+              surfaceType="surfaceView"
               onFullscreenEnter={() => {
                 preventScreenCaptureAsync("fullscreen_video_window").catch(() => {});
               }}
