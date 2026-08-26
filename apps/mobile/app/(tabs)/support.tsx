@@ -343,7 +343,7 @@ export default function SupportScreen() {
             <Card style={styles.contactCard}>
               <TouchableOpacity
                 style={styles.contactRow}
-                onPress={() => Linking.openURL("mailto:cybertechacademy123@gmail.com")}
+                onPress={() => Linking.openURL("mailto:cybertechacademysupport@gmail.com")}
                 activeOpacity={0.7}
               >
                 <View style={styles.iconBox}>
@@ -351,7 +351,7 @@ export default function SupportScreen() {
                 </View>
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactTitle}>Email Support</Text>
-                  <Text style={styles.contactDesc}>cybertechacademy123@gmail.com</Text>
+                  <Text style={styles.contactDesc}>cybertechacademysupport@gmail.com</Text>
                 </View>
               </TouchableOpacity>
             </Card>

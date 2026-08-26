@@ -546,10 +546,10 @@ function SupportPage() {
             <p className="font-bold text-foreground">Official Email Support</p>
             <p className="text-xs text-muted-foreground">Responses typically within 24 hours</p>
             <a
-              href="mailto:cybertechacademy123@gmail.com"
+              href="mailto:cybertechacademysupport@gmail.com"
               className="text-neon-cyan hover:underline text-sm font-semibold block pt-1"
             >
-              cybertechacademy123@gmail.com
+              cybertechacademysupport@gmail.com
             </a>
           </Panel>
 
