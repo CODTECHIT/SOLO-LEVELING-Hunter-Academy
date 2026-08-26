@@ -66,8 +66,8 @@ export default function LoginScreen() {
       await login(values.email, values.password);
       router.replace("/(tabs)");
     } catch (err: any) {
-      const msg = err?.response?.data?.error ?? err?.message ?? "Login failed";
-      cyberAlert("Login Failed", msg, undefined, "error");
+      const msg = err?.response?.data?.message ?? err?.response?.data?.error ?? err?.message ?? "Login failed";
+      cyberAlert("Login Failed", typeof msg === "string" ? msg : JSON.stringify(msg), undefined, "error");
     } finally {
       setLoading(false);
     }

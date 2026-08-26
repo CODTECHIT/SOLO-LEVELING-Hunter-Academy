@@ -1,10 +1,24 @@
 import axios from "axios";
+import { Platform } from "react-native";
 import { getToken } from "./token";
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://10.0.2.2:3001";
+function getBaseUrl(): string {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+      return "http://localhost:3001";
+    }
+  }
+  return (
+    envUrl ||
+    (Platform.OS === "android"
+      ? "http://10.0.2.2:3001"
+      : "http://localhost:3001")
+  );
+}
 
 export const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: getBaseUrl(),
   timeout: 15000,
   headers: { "Content-Type": "application/json" },
 });

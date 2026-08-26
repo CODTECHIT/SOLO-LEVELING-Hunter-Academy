@@ -19,7 +19,7 @@ import {
 } from "@expo-google-fonts/inter";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { usePreventScreenCapture } from "expo-screen-capture";
+import { useSafePreventScreenCapture } from "@/hooks/useSafeScreenCapture";
 import { colors } from "@/theme";
 
 import { CyberAlertModal } from "@/components/ui/CyberAlertModal";
@@ -36,7 +36,7 @@ const queryClient = new QueryClient({
 });
 
 export default function RootLayout() {
-  usePreventScreenCapture("global_app_protection");
+  useSafePreventScreenCapture("global_app_protection");
 
   const [fontsLoaded, fontError] = useFonts({
     Orbitron_700Bold,

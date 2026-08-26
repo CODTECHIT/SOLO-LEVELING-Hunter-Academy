@@ -35,11 +35,7 @@ import {
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useVideoPlayer, VideoView } from "expo-video";
-import {
-  usePreventScreenCapture,
-  preventScreenCaptureAsync,
-  useScreenshotListener,
-} from "expo-screen-capture";
+import { useSafePreventScreenCapture } from "@/hooks/useSafeScreenCapture";
 import { useCourse, useEnrolledCourses } from "@/hooks/useCourses";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { useAuthStore } from "@/store/authStore";
@@ -64,7 +60,7 @@ export default function LearningPlayerScreen() {
   const insets = useSafeAreaInsets();
 
   // Screen recording restriction (Active across the player screen)
-  usePreventScreenCapture("learning_player_screen");
+  useSafePreventScreenCapture("learning_player_screen");
 
   const {
     isDownloaded,

@@ -3,16 +3,3 @@
 node_modules
 *.log
 .expo
-.expo/
-dist
-dist/
-web-build/
-*.bundle.js
-*.jsbundle
-android/build/
-android/.gradle/
-android/app/build/
-ios/build/
-ios/Pods/
-.turbo
-.next

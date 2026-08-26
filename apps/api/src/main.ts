@@ -14,7 +14,13 @@ async function bootstrap() {
       const allowedExact = [
         "http://localhost:3000",
         "http://localhost:3001",
+        "http://localhost:5173",
+        "http://localhost:8081",
+        "http://localhost:19006",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8081",
         "http://10.0.2.2:3000",
+        "http://10.0.2.2:8081",
         process.env.FRONTEND_URL,
         process.env.MOBILE_FRONTEND_URL,
       ].filter(Boolean) as string[];
@@ -23,9 +29,9 @@ async function bootstrap() {
         return callback(null, true);
       }
 
-      // Allow local development LAN IPs (e.g. http://192.168.x.x:3000, http://10.x.x.x:3000)
+      // Allow local development LAN IPs and any localhost port (e.g. http://localhost:8081, http://192.168.x.x:8081)
       const isLocalLan =
-        /^http:\/\/(192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3}|127\.0\.0\.1)(:\d+)?$/.test(
+        /^https?:\/\/(localhost|127\.0\.0\.1|192\.168\.\d{1,3}\.\d{1,3}|10\.\d{1,3}\.\d{1,3}\.\d{1,3})(:\d+)?$/.test(
           origin,
         );
       if (isLocalLan) {
