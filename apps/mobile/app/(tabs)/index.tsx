@@ -140,7 +140,7 @@ export default function HomeScreen() {
             </View>
             <View>
               <Text style={styles.brandTitle}>
-                CYBER TECH <Text style={styles.brandTitleAccent}>ACADEMY</Text>
+                CYBER TECH ACADEMY
               </Text>
               <Text style={styles.greetingText}>
                 {user ? `Hunter ${user.name.split(" ")[0]} • Active` : "Next-Gen Developer Training"}
@@ -193,26 +193,6 @@ export default function HomeScreen() {
             <View style={styles.neonAccentLine} />
 
             <View style={styles.heroContent}>
-              <View style={styles.heroTagRow}>
-                <View style={styles.heroStatusPill}>
-                  <Sparkles color={colors.neonCyan} size={11} />
-                  <Text style={styles.heroStatusText}>CYBER MASTERCLASSES</Text>
-                </View>
-                {stats?.rankLetter && (
-                  <View style={styles.heroRankPill}>
-                    <Text style={styles.heroRankText}>{stats.rankLetter}-RANK</Text>
-                  </View>
-                )}
-              </View>
-
-              <Text style={styles.heroHeadline}>
-                Unleash Your Inner <Text style={{ color: colors.neonCyan }}>Hunter</Text> in Code
-              </Text>
-
-              <Text style={styles.heroSubheadline}>
-                Level up combat software engineering skills through elite masterclasses and cryptographic certification.
-              </Text>
-
               {/* Embedded Trailer / Ad Video Player */}
               <View style={styles.videoPlayerBox}>
                 <VideoView

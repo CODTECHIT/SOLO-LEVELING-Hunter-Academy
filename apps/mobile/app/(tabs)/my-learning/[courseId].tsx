@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  StatusBar,
+  Modal,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -30,6 +32,8 @@ import {
   Minimize2,
   Shield,
 } from "lucide-react-native";
+import * as ScreenOrientation from "expo-screen-orientation";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useVideoPlayer, VideoView } from "expo-video";
 import {
   usePreventScreenCapture,
@@ -57,6 +61,7 @@ export default function LearningPlayerScreen() {
   }>();
   const router = useRouter();
   const qc = useQueryClient();
+  const insets = useSafeAreaInsets();
 
   // Screen recording restriction (Active across the player screen)
   usePreventScreenCapture("learning_player_screen");
@@ -89,6 +94,31 @@ export default function LearningPlayerScreen() {
   const [isMarkingComplete, setIsMarkingComplete] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  // Fullscreen orientation handlers (instant switch to landscape / portrait)
+  const enterFullscreen = useCallback(async () => {
+    try {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+    } catch {}
+    StatusBar.setHidden(true, "fade");
+    setIsFullscreen(true);
+  }, []);
+
+  const exitFullscreen = useCallback(async () => {
+    try {
+      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+    } catch {}
+    StatusBar.setHidden(false, "fade");
+    setIsFullscreen(false);
+  }, []);
+
+  // Cleanup orientation on unmount
+  useEffect(() => {
+    return () => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+      StatusBar.setHidden(false, "fade");
+    };
+  }, []);
 
   // Auto-pause video and alert if screenshot or screen capture is triggered
   useScreenshotListener(() => {
@@ -248,16 +278,14 @@ export default function LearningPlayerScreen() {
 
   return (
     <SafeScreen>
-      {/* Back (Hidden when in Fullscreen) */}
-      {!isFullscreen && (
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <ArrowLeft color={colors.foreground} size={20} />
-          <Text style={styles.backText}>My Learning</Text>
-        </TouchableOpacity>
-      )}
+      {/* Back Button */}
+      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <ArrowLeft color={colors.foreground} size={20} />
+        <Text style={styles.backText}>My Learning</Text>
+      </TouchableOpacity>
 
-      {/* Video Player (In-App Secured Fullscreen stays in main Activity window with FLAG_SECURE) */}
-      <View style={isFullscreen ? styles.videoContainerFullscreen : styles.videoContainer}>
+      {/* Portrait Video Player */}
+      <View style={styles.videoContainer}>
         {isEnrolled && activeLesson ? (
           <>
             {youtubeId ? (
@@ -292,47 +320,18 @@ export default function LearningPlayerScreen() {
                 player={player}
                 nativeControls={true}
                 contentFit="contain"
-                fullscreenOptions={{ enable: true }}
                 surfaceType="textureView"
               />
             )}
 
-            {/* Fullscreen Overlay Controls */}
-            {isFullscreen ? (
-              <View style={styles.fullscreenHeader}>
-                <TouchableOpacity
-                  style={styles.fullscreenBackBtn}
-                  onPress={() => setIsFullscreen(false)}
-                  activeOpacity={0.8}
-                >
-                  <ArrowLeft color="#ffffff" size={18} />
-                  <Text style={styles.fullscreenTitle} numberOfLines={1}>
-                    {activeLesson.title}
-                  </Text>
-                </TouchableOpacity>
-                <View style={styles.fullscreenHeaderRight}>
-                  <View style={styles.protectedBadge}>
-                    <Shield color={colors.neonCyan} size={11} />
-                    <Text style={styles.protectedBadgeText}>SECURE</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.fullscreenExitBtn}
-                    onPress={() => setIsFullscreen(false)}
-                    activeOpacity={0.8}
-                  >
-                    <Minimize2 color="#ffffff" size={18} />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.fullscreenToggleBtn}
-                onPress={() => setIsFullscreen(true)}
-                activeOpacity={0.8}
-              >
-                <Maximize2 color="#ffffff" size={16} />
-              </TouchableOpacity>
-            )}
+            {/* Fullscreen Toggle Button */}
+            <TouchableOpacity
+              style={styles.fullscreenToggleBtn}
+              onPress={enterFullscreen}
+              activeOpacity={0.8}
+            >
+              <Maximize2 color="#ffffff" size={16} />
+            </TouchableOpacity>
           </>
         ) : (
           <View style={styles.videoLocked}>
@@ -341,6 +340,90 @@ export default function LearningPlayerScreen() {
           </View>
         )}
       </View>
+
+      {/* Fullscreen Landscape Modal */}
+      <Modal
+        visible={isFullscreen}
+        transparent={false}
+        animationType="fade"
+        statusBarTranslucent
+        supportedOrientations={["landscape", "landscape-left", "landscape-right"]}
+        onRequestClose={exitFullscreen}
+      >
+        <View style={styles.modalFullscreenContainer}>
+          {youtubeId ? (
+            <WebView
+              style={styles.video}
+              source={{
+                html: `
+                  <!DOCTYPE html>
+                  <html>
+                    <head>
+                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                      <style>
+                        body { margin: 0; background: black; display: flex; height: 100vh; align-items: center; justify-content: center; overflow: hidden; }
+                        iframe { width: 100vw; height: 100vh; border: none; }
+                      </style>
+                    </head>
+                    <body>
+                      <iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0&autoplay=1&playsinline=1&modestbranding=1&fs=0&origin=https://www.youtube.com" allow="autoplay"></iframe>
+                    </body>
+                  </html>
+                `,
+                baseUrl: "https://www.youtube.com",
+              }}
+              allowsFullscreenVideo={true}
+              mediaPlaybackRequiresUserAction={false}
+              javaScriptEnabled
+              domStorageEnabled
+            />
+          ) : (
+            <VideoView
+              style={styles.video}
+              player={player}
+              nativeControls={true}
+              contentFit="contain"
+              surfaceType="textureView"
+            />
+          )}
+
+          {/* Fullscreen Overlay Header with Safe Area Insets */}
+          <View
+            style={[
+              styles.fullscreenHeader,
+              {
+                top: Math.max(insets.top, 12),
+                left: Math.max(insets.left, 16),
+                right: Math.max(insets.right, 16),
+              },
+            ]}
+          >
+            <TouchableOpacity
+              style={styles.fullscreenBackBtn}
+              onPress={exitFullscreen}
+              activeOpacity={0.8}
+            >
+              <ArrowLeft color="#ffffff" size={18} />
+              <Text style={styles.fullscreenTitle} numberOfLines={1}>
+                {activeLesson?.title || "Lesson"}
+              </Text>
+            </TouchableOpacity>
+            <View style={styles.fullscreenHeaderRight}>
+              <View style={styles.protectedBadge}>
+                <Shield color={colors.neonCyan} size={11} />
+                <Text style={styles.protectedBadgeText}>SECURE</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.fullscreenExitBtn}
+                onPress={exitFullscreen}
+                activeOpacity={0.8}
+              >
+                <Minimize2 color="#ffffff" size={18} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       <ScrollView
         style={{ flex: 1 }}
@@ -724,6 +807,13 @@ const styles = StyleSheet.create({
     height: "100%",
     backgroundColor: "#000",
     zIndex: 9999,
+    justifyContent: "center",
+  },
+  modalFullscreenContainer: {
+    flex: 1,
+    backgroundColor: "#000",
+    width: "100%",
+    height: "100%",
     justifyContent: "center",
   },
   video: { width: "100%", height: "100%" },

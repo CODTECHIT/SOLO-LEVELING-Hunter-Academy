@@ -101,15 +101,7 @@ export function CyberTechLogo({
               { fontSize: dimensions.titleSize },
             ]}
           >
-            CYBER TECH
-          </Text>
-          <Text
-            style={[
-              styles.brandSubtitle,
-              { fontSize: dimensions.subSize },
-            ]}
-          >
-            HUNTER ACADEMY
+            CYBER TECH ACADEMY
           </Text>
         </View>
       )}

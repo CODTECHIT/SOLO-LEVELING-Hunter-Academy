@@ -74,12 +74,14 @@ export default function TabsLayout() {
         name="courses/[slug]"
         options={{
           href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen
         name="my-learning/[courseId]"
         options={{
           href: null,
+          tabBarStyle: { display: "none" },
         }}
       />
       <Tabs.Screen

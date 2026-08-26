@@ -16,7 +16,7 @@ export default function Index() {
   if (!ready || isLoading) {
     return (
       <View style={styles.center}>
-        <CyberTechLogo size="lg" />
+        <CyberTechLogo size="xl" />
         <ActivityIndicator color={colors.neonCyan} size="small" style={{ marginTop: 24 }} />
       </View>
     );
