@@ -9,15 +9,6 @@ import {
   Easing,
   Platform,
 } from "react-native";
-import Svg, {
-  Defs,
-  LinearGradient,
-  Stop,
-  Line,
-  ClipPath,
-  Polygon,
-  G,
-} from "react-native-svg";
 import { colors, fonts } from "@/theme";
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
@@ -27,34 +18,23 @@ interface DiagonalSplashIntroProps {
 }
 
 export function DiagonalSplashIntro({ onFinish }: DiagonalSplashIntroProps) {
-  const [stage, setStage] = useState<"meteor" | "impact" | "crack" | "split" | "done">("meteor");
+  const [stage, setStage] = useState<"meteor" | "impact" | "exit" | "done">("meteor");
 
   // Animation values
-  const meteorScale = useRef(new Animated.Value(2.2)).current;
+  const containerOpacity = useRef(new Animated.Value(1)).current;
+  const meteorScale = useRef(new Animated.Value(1.6)).current;
   const meteorOpacity = useRef(new Animated.Value(0)).current;
-  const meteorTranslateY = useRef(new Animated.Value(-120)).current;
+  const meteorTranslateY = useRef(new Animated.Value(-60)).current;
 
   const shakeTranslateX = useRef(new Animated.Value(0)).current;
   const shakeTranslateY = useRef(new Animated.Value(0)).current;
 
-  const shockwaveScale1 = useRef(new Animated.Value(0.1)).current;
+  const shockwaveScale1 = useRef(new Animated.Value(0.2)).current;
   const shockwaveOpacity1 = useRef(new Animated.Value(0)).current;
-  const shockwaveScale2 = useRef(new Animated.Value(0.1)).current;
+  const shockwaveScale2 = useRef(new Animated.Value(0.2)).current;
   const shockwaveOpacity2 = useRef(new Animated.Value(0)).current;
 
   const flashOpacity = useRef(new Animated.Value(0)).current;
-  const beamOpacity = useRef(new Animated.Value(0)).current;
-
-  const topTranslateX = useRef(new Animated.Value(0)).current;
-  const topTranslateY = useRef(new Animated.Value(0)).current;
-  const topRotate = useRef(new Animated.Value(0)).current;
-  const topOpacity = useRef(new Animated.Value(1)).current;
-
-  const bottomTranslateX = useRef(new Animated.Value(0)).current;
-  const bottomTranslateY = useRef(new Animated.Value(0)).current;
-  const bottomRotate = useRef(new Animated.Value(0)).current;
-  const bottomOpacity = useRef(new Animated.Value(1)).current;
-
   const statusPulse = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
@@ -63,24 +43,24 @@ export function DiagonalSplashIntro({ onFinish }: DiagonalSplashIntroProps) {
       Animated.sequence([
         Animated.timing(statusPulse, {
           toValue: 1,
-          duration: 400,
+          duration: 450,
           useNativeDriver: true,
         }),
         Animated.timing(statusPulse, {
-          toValue: 0.5,
-          duration: 400,
+          toValue: 0.4,
+          duration: 450,
           useNativeDriver: true,
         }),
       ])
     );
     pulseLoop.start();
 
-    // 1. Stage: Meteor entrance (0ms - 750ms)
+    // 1. Stage: Entrance Animation (0ms - 650ms)
     Animated.parallel([
       Animated.timing(meteorScale, {
         toValue: 1,
-        duration: 700,
-        easing: Easing.out(Easing.back(1.5)),
+        duration: 650,
+        easing: Easing.out(Easing.back(1.2)),
         useNativeDriver: true,
       }),
       Animated.timing(meteorOpacity, {
@@ -90,172 +70,106 @@ export function DiagonalSplashIntro({ onFinish }: DiagonalSplashIntroProps) {
       }),
       Animated.timing(meteorTranslateY, {
         toValue: 0,
-        duration: 700,
+        duration: 650,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: true,
       }),
     ]).start();
 
-    // 2. Stage: Impact Shockwave & Flash (750ms)
+    // 2. Stage: Impact Shockwaves & Glow (650ms)
     const tImpact = setTimeout(() => {
       setStage("impact");
 
       // Flash
       Animated.sequence([
         Animated.timing(flashOpacity, {
-          toValue: 0.9,
-          duration: 80,
+          toValue: 0.4,
+          duration: 70,
           useNativeDriver: true,
         }),
         Animated.timing(flashOpacity, {
           toValue: 0,
-          duration: 350,
+          duration: 300,
           useNativeDriver: true,
         }),
       ]).start();
 
       // Screen Shake
       Animated.sequence([
-        Animated.timing(shakeTranslateX, { toValue: 9, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeTranslateX, { toValue: -9, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeTranslateY, { toValue: 8, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeTranslateX, { toValue: 5, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeTranslateY, { toValue: -5, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeTranslateX, { toValue: 0, duration: 40, useNativeDriver: true }),
-        Animated.timing(shakeTranslateY, { toValue: 0, duration: 40, useNativeDriver: true }),
+        Animated.timing(shakeTranslateX, { toValue: 5, duration: 35, useNativeDriver: true }),
+        Animated.timing(shakeTranslateX, { toValue: -5, duration: 35, useNativeDriver: true }),
+        Animated.timing(shakeTranslateY, { toValue: 4, duration: 35, useNativeDriver: true }),
+        Animated.timing(shakeTranslateX, { toValue: 2, duration: 35, useNativeDriver: true }),
+        Animated.timing(shakeTranslateY, { toValue: 0, duration: 35, useNativeDriver: true }),
+        Animated.timing(shakeTranslateX, { toValue: 0, duration: 35, useNativeDriver: true }),
       ]).start();
 
-      // Shockwave Ring 1
-      shockwaveOpacity1.setValue(1);
+      // Shockwave Ring 1 (Cyan)
+      shockwaveOpacity1.setValue(0.9);
       Animated.parallel([
         Animated.timing(shockwaveScale1, {
-          toValue: 2.8,
-          duration: 650,
+          toValue: 2.6,
+          duration: 700,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.timing(shockwaveOpacity1, {
           toValue: 0,
-          duration: 650,
+          duration: 700,
           useNativeDriver: true,
         }),
       ]).start();
 
-      // Shockwave Ring 2
+      // Shockwave Ring 2 (Purple)
       setTimeout(() => {
-        shockwaveOpacity2.setValue(0.9);
+        shockwaveOpacity2.setValue(0.8);
         Animated.parallel([
           Animated.timing(shockwaveScale2, {
-            toValue: 3.2,
-            duration: 650,
+            toValue: 3.0,
+            duration: 700,
             easing: Easing.out(Easing.cubic),
             useNativeDriver: true,
           }),
           Animated.timing(shockwaveOpacity2, {
             toValue: 0,
-            duration: 650,
+            duration: 700,
             useNativeDriver: true,
           }),
         ]).start();
-      }, 100);
-    }, 750);
+      }, 120);
+    }, 650);
 
-    // 3. Stage: Laser Crack Line (1150ms)
-    const tCrack = setTimeout(() => {
-      setStage("crack");
-      Animated.timing(beamOpacity, {
-        toValue: 1,
-        duration: 250,
-        useNativeDriver: true,
-      }).start();
-
-      // Slight pre-split crack shift
+    // 3. Stage: Smooth Exit Fade (1700ms)
+    const tExit = setTimeout(() => {
+      setStage("exit");
       Animated.parallel([
-        Animated.timing(topTranslateX, { toValue: -4, duration: 250, useNativeDriver: true }),
-        Animated.timing(topTranslateY, { toValue: -4, duration: 250, useNativeDriver: true }),
-        Animated.timing(bottomTranslateX, { toValue: 4, duration: 250, useNativeDriver: true }),
-        Animated.timing(bottomTranslateY, { toValue: 4, duration: 250, useNativeDriver: true }),
-      ]).start();
-    }, 1150);
-
-    // 4. Stage: Diagonal Split Separation (1600ms)
-    const tSplit = setTimeout(() => {
-      setStage("split");
-
-      Animated.parallel([
-        // Top-Right half slides UP-RIGHT
-        Animated.timing(topTranslateX, {
-          toValue: SCREEN_WIDTH * 0.95,
-          duration: 650,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(topTranslateY, {
-          toValue: -SCREEN_HEIGHT * 0.85,
-          duration: 650,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(topRotate, {
-          toValue: 1,
-          duration: 650,
-          useNativeDriver: true,
-        }),
-        Animated.timing(topOpacity, {
+        Animated.timing(containerOpacity, {
           toValue: 0,
-          duration: 550,
-          delay: 100,
+          duration: 500,
+          easing: Easing.inOut(Easing.ease),
           useNativeDriver: true,
         }),
-
-        // Bottom-Left half slides DOWN-LEFT
-        Animated.timing(bottomTranslateX, {
-          toValue: -SCREEN_WIDTH * 0.95,
-          duration: 650,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(bottomTranslateY, {
-          toValue: SCREEN_HEIGHT * 0.85,
-          duration: 650,
-          easing: Easing.in(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(bottomRotate, {
-          toValue: 1,
-          duration: 650,
-          useNativeDriver: true,
-        }),
-        Animated.timing(bottomOpacity, {
-          toValue: 0,
-          duration: 550,
-          delay: 100,
-          useNativeDriver: true,
-        }),
-
-        // Fade laser beam
-        Animated.timing(beamOpacity, {
-          toValue: 0,
-          duration: 400,
-          delay: 200,
+        Animated.timing(meteorScale, {
+          toValue: 1.05,
+          duration: 500,
+          easing: Easing.out(Easing.quad),
           useNativeDriver: true,
         }),
       ]).start();
-    }, 1600);
+    }, 1700);
 
-    // 5. Complete & Unmount (2350ms)
+    // 4. Complete & Unmount (2200ms)
     const tDone = setTimeout(() => {
       setStage("done");
       pulseLoop.stop();
       if (onFinish) {
         onFinish();
       }
-    }, 2350);
+    }, 2200);
 
     return () => {
       clearTimeout(tImpact);
-      clearTimeout(tCrack);
-      clearTimeout(tSplit);
+      clearTimeout(tExit);
       clearTimeout(tDone);
       pulseLoop.stop();
     };
@@ -265,72 +179,16 @@ export function DiagonalSplashIntro({ onFinish }: DiagonalSplashIntroProps) {
     return null;
   }
 
-  // Exact matching diagonal coordinates: (0, 58% H) to (W, 42% H)
-  const y1 = SCREEN_HEIGHT * 0.58;
-  const y2 = SCREEN_HEIGHT * 0.42;
-
-  const topPolygonPoints = `0,0 ${SCREEN_WIDTH},0 ${SCREEN_WIDTH},${y2} 0,${y1}`;
-  const bottomPolygonPoints = `0,${y1} ${SCREEN_WIDTH},${y2} ${SCREEN_WIDTH},${SCREEN_HEIGHT} 0,${SCREEN_HEIGHT}`;
-
-  const topRotateInterpolation = topRotate.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "4deg"],
-  });
-
-  const bottomRotateInterpolation = bottomRotate.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "-4deg"],
-  });
-
-  // Render centered logo and typography inside each split half
-  const renderBrandedContent = (glowColor: string) => (
-    <View style={styles.brandContainer}>
-      <Animated.View
-        style={[
-          styles.logoWrap,
-          {
-            transform: [
-              { translateY: meteorTranslateY },
-              { scale: meteorScale },
-            ],
-            opacity: meteorOpacity,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.logoAura,
-            {
-              shadowColor: glowColor,
-              backgroundColor: glowColor === colors.neonCyan ? "rgba(0, 243, 255, 0.2)" : "rgba(168, 85, 247, 0.2)",
-            },
-          ]}
-        />
-        <Image
-          source={require("../../assets/logo.png")}
-          style={styles.logoImage}
-          resizeMode="contain"
-        />
-      </Animated.View>
-
-      <Animated.View
-        style={[
-          styles.textWrap,
-          {
-            transform: [{ translateY: meteorTranslateY }],
-            opacity: meteorOpacity,
-          },
-        ]}
-      >
-        <Text style={styles.brandTitle}>CYBERTECH</Text>
-        <Text style={styles.brandSubtitle}>HUNTER ACADEMY</Text>
-      </Animated.View>
-    </View>
-  );
-
   return (
-    <View style={styles.fullscreenContainer} pointerEvents={stage === "split" ? "none" : "auto"}>
-      {/* Container with shake animation during impact */}
+    <Animated.View
+      style={[
+        styles.fullscreenContainer,
+        {
+          opacity: containerOpacity,
+        },
+      ]}
+      pointerEvents={stage === "exit" ? "none" : "auto"}
+    >
       <Animated.View
         style={[
           styles.shakeContainer,
@@ -342,68 +200,6 @@ export function DiagonalSplashIntro({ onFinish }: DiagonalSplashIntroProps) {
           },
         ]}
       >
-        {/* Top-Right Half (Svg Clipped Polygon) */}
-        <Animated.View
-          style={[
-            styles.splitHalfLayer,
-            {
-              transform: [
-                { translateX: topTranslateX },
-                { translateY: topTranslateY },
-                { rotate: topRotateInterpolation },
-              ],
-              opacity: topOpacity,
-            },
-          ]}
-        >
-          <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
-            <Defs>
-              <ClipPath id="topClip">
-                <Polygon points={topPolygonPoints} />
-              </ClipPath>
-            </Defs>
-            <G clipPath="url(#topClip)">
-              {/* Dark cyber background */}
-              <Polygon points={`0,0 ${SCREEN_WIDTH},0 ${SCREEN_WIDTH},${SCREEN_HEIGHT} 0,${SCREEN_HEIGHT}`} fill="#07090e" />
-            </G>
-          </Svg>
-          {/* Top Half Content */}
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            {renderBrandedContent(colors.neonPurple)}
-          </View>
-        </Animated.View>
-
-        {/* Bottom-Left Half (Svg Clipped Polygon) */}
-        <Animated.View
-          style={[
-            styles.splitHalfLayer,
-            {
-              transform: [
-                { translateX: bottomTranslateX },
-                { translateY: bottomTranslateY },
-                { rotate: bottomRotateInterpolation },
-              ],
-              opacity: bottomOpacity,
-            },
-          ]}
-        >
-          <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
-            <Defs>
-              <ClipPath id="bottomClip">
-                <Polygon points={bottomPolygonPoints} />
-              </ClipPath>
-            </Defs>
-            <G clipPath="url(#bottomClip)">
-              {/* Dark cyber background */}
-              <Polygon points={`0,0 ${SCREEN_WIDTH},0 ${SCREEN_WIDTH},${SCREEN_HEIGHT} 0,${SCREEN_HEIGHT}`} fill="#07090e" />
-            </G>
-          </Svg>
-          {/* Bottom Half Content */}
-          <View style={StyleSheet.absoluteFill} pointerEvents="none">
-            {renderBrandedContent(colors.neonCyan)}
-          </View>
-        </Animated.View>
-
         {/* Shockwave Rings */}
         <Animated.View
           style={[
@@ -428,46 +224,49 @@ export function DiagonalSplashIntro({ onFinish }: DiagonalSplashIntroProps) {
           ]}
         />
 
-        {/* Diagonal Laser Crack Light Beam */}
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              opacity: beamOpacity,
-            },
-          ]}
-          pointerEvents="none"
-        >
-          <Svg width={SCREEN_WIDTH} height={SCREEN_HEIGHT} style={StyleSheet.absoluteFill}>
-            <Defs>
-              <LinearGradient id="crackBeamGrad" x1="0%" y1="58%" x2="100%" y2="42%">
-                <Stop offset="0%" stopColor="#00f3ff" stopOpacity="0" />
-                <Stop offset="20%" stopColor="#00f3ff" stopOpacity="1" />
-                <Stop offset="50%" stopColor="#ffffff" stopOpacity="1" />
-                <Stop offset="80%" stopColor="#a855f7" stopOpacity="1" />
-                <Stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
-              </LinearGradient>
-            </Defs>
-            {/* Outer Glow Laser */}
-            <Line
-              x1="0"
-              y1={y1}
-              x2={SCREEN_WIDTH}
-              y2={y2}
-              stroke="url(#crackBeamGrad)"
-              strokeWidth="10"
+        {/* Brand Content (Logo & Title) */}
+        <View style={styles.brandContainer}>
+          <Animated.View
+            style={[
+              styles.logoWrap,
+              {
+                transform: [
+                  { translateY: meteorTranslateY },
+                  { scale: meteorScale },
+                ],
+                opacity: meteorOpacity,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.logoAura,
+                {
+                  shadowColor: colors.neonCyan,
+                  backgroundColor: "rgba(0, 243, 255, 0.15)",
+                },
+              ]}
             />
-            {/* Core White Laser Streak */}
-            <Line
-              x1="0"
-              y1={y1}
-              x2={SCREEN_WIDTH}
-              y2={y2}
-              stroke="#ffffff"
-              strokeWidth="3"
+            <Image
+              source={require("../../assets/logo.png")}
+              style={styles.logoImage}
+              resizeMode="contain"
             />
-          </Svg>
-        </Animated.View>
+          </Animated.View>
+
+          <Animated.View
+            style={[
+              styles.textWrap,
+              {
+                transform: [{ translateY: meteorTranslateY }],
+                opacity: meteorOpacity,
+              },
+            ]}
+          >
+            <Text style={styles.brandTitle}>CYBERTECH</Text>
+            <Text style={styles.brandSubtitle}>HUNTER ACADEMY</Text>
+          </Animated.View>
+        </View>
 
         {/* Flash Overlay */}
         <Animated.View
@@ -485,21 +284,21 @@ export function DiagonalSplashIntro({ onFinish }: DiagonalSplashIntroProps) {
           style={[
             styles.statusWrap,
             {
-              opacity: stage === "split" ? 0 : statusPulse,
+              opacity: stage === "exit" ? 0 : statusPulse,
             },
           ]}
           pointerEvents="none"
         >
           <Text style={styles.statusText}>
             {stage === "meteor"
-              ? "METEORIC GATE DESCENDING..."
-              : stage === "impact" || stage === "crack"
-              ? "FRACTURING SYSTEM BARRIER..."
+              ? "INITIALIZING SYSTEM..."
+              : stage === "impact"
+              ? "CONNECTING TO ACADEMY..."
               : "ARISE, HUNTER..."}
           </Text>
         </Animated.View>
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -519,16 +318,10 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     position: "relative",
-  },
-  splitHalfLayer: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    alignItems: "center",
+    justifyContent: "center",
   },
   brandContainer: {
-    flex: 1,
     alignItems: "center",
     justifyContent: "center",
     paddingBottom: 40,
@@ -581,10 +374,10 @@ const styles = StyleSheet.create({
     width: 240,
     height: 240,
     borderRadius: 120,
-    borderWidth: 3,
+    borderWidth: 2.5,
     shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.9,
-    shadowRadius: 25,
+    shadowOpacity: 0.8,
+    shadowRadius: 20,
     elevation: 10,
     pointerEvents: "none",
   },

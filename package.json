@@ -6,6 +6,8 @@
   "scripts": {
     "build": "cd apps/web && npm run build",
     "dev": "cd apps/web && npm run dev",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "mobile": "npm run start --workspace=apps/mobile",
     "build:web": "cd apps/web && npm run build",
     "build:api": "npm run build --workspace=apps/api",
     "build:all": "npm run db:generate && npm run build:api && npm run build:web",
