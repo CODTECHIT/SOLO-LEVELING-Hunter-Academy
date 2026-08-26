@@ -73,7 +73,6 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [assistantVisible, setAssistantVisible] = useState(false);
   const [assistantQuery, setAssistantQuery] = useState("");
-  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -137,15 +136,12 @@ export default function HomeScreen() {
         <View style={styles.topHeader}>
           <View style={styles.brandRow}>
             <View style={styles.logoBadge}>
-              <CyberTechLogo size="sm" showText={false} />
+              <CyberTechLogo size="md" showText={false} />
             </View>
             <View>
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Text style={styles.brandTitle}>CYBER TECH</Text>
-                <View style={styles.brandPill}>
-                  <Text style={styles.brandPillText}>ACADEMY</Text>
-                </View>
-              </View>
+              <Text style={styles.brandTitle}>
+                CYBER TECH <Text style={styles.brandTitleAccent}>ACADEMY</Text>
+              </Text>
               <Text style={styles.greetingText}>
                 {user ? `Hunter ${user.name.split(" ")[0]} • Active` : "Next-Gen Developer Training"}
               </Text>
@@ -217,6 +213,29 @@ export default function HomeScreen() {
                 Level up combat software engineering skills through elite masterclasses and cryptographic certification.
               </Text>
 
+              {/* Embedded Trailer / Ad Video Player */}
+              <View style={styles.videoPlayerBox}>
+                <VideoView
+                  style={styles.videoPlayer}
+                  player={player}
+                  nativeControls={true}
+                  contentFit="cover"
+                  fullscreenOptions={{ enable: true }}
+                  surfaceType="textureView"
+                />
+                <View style={styles.videoCaptionBar}>
+                  <View style={styles.videoCaptionLeft}>
+                    <Play color={colors.neonCyan} size={12} />
+                    <Text style={styles.videoCaptionText} numberOfLines={1}>
+                      {introVideo?.title || "Academy Masterclasses & Trailer"}
+                    </Text>
+                  </View>
+                  <View style={styles.adLiveBadge}>
+                    <Text style={styles.adLiveText}>OFFICIAL TRAILER</Text>
+                  </View>
+                </View>
+              </View>
+
               {/* Action Buttons */}
               <View style={styles.heroActionRow}>
                 <TouchableOpacity
@@ -243,38 +262,15 @@ export default function HomeScreen() {
                   </LinearGradient>
                 </TouchableOpacity>
 
-                {introVideo?.videoUrl && (
-                  <TouchableOpacity
-                    style={styles.heroSecondaryBtn}
-                    onPress={() => setShowVideoPlayer(!showVideoPlayer)}
-                    activeOpacity={0.8}
-                  >
-                    <Play color={colors.neonCyan} size={14} />
-                    <Text style={styles.heroSecondaryBtnText}>
-                      {showVideoPlayer ? "Hide Trailer" : "Trailer"}
-                    </Text>
-                  </TouchableOpacity>
-                )}
+                <TouchableOpacity
+                  style={styles.heroSecondaryBtn}
+                  onPress={() => router.push("/(tabs)/courses")}
+                  activeOpacity={0.8}
+                >
+                  <Compass color={colors.neonCyan} size={15} />
+                  <Text style={styles.heroSecondaryBtnText}>Explore Tracks</Text>
+                </TouchableOpacity>
               </View>
-
-              {/* Collapsible Trailer Preview */}
-              {showVideoPlayer && introVideo?.videoUrl && (
-                <View style={styles.videoPlayerBox}>
-                  <VideoView
-                    style={styles.videoPlayer}
-                    player={player}
-                    nativeControls={true}
-                    contentFit="contain"
-                    fullscreenOptions={{ enable: false }}
-                    surfaceType="textureView"
-                  />
-                  <View style={styles.videoCaptionBar}>
-                    <Text style={styles.videoCaptionText} numberOfLines={1}>
-                      {introVideo.title || "Academy Welcome Teaser"}
-                    </Text>
-                  </View>
-                </View>
-              )}
             </View>
           </LinearGradient>
         </View>
@@ -414,64 +410,6 @@ export default function HomeScreen() {
             );
           })}
         </View>
-
-        {/* ── AI Teacher Assistant Spotlight Banner ── */}
-        <TouchableOpacity
-          activeOpacity={0.9}
-          onPress={() => {
-            setAssistantQuery("");
-            setAssistantVisible(true);
-          }}
-          style={styles.aiSpotlightWrapper}
-        >
-          <LinearGradient
-            colors={["rgba(0, 243, 255, 0.15)", "rgba(176, 96, 240, 0.12)", colors.surface]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.aiSpotlightCard}
-          >
-            <View style={styles.aiSpotlightTop}>
-              <View style={styles.aiAvatarBox}>
-                <Bot color={colors.neonCyan} size={22} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Text style={styles.aiSpotlightTitle}>ALEX • AI TEACHER TUTOR</Text>
-                  <View style={styles.aiOnlineBadge}>
-                    <View style={styles.aiOnlineDot} />
-                    <Text style={styles.aiOnlineText}>ONLINE</Text>
-                  </View>
-                </View>
-                <Text style={styles.aiSpotlightSub}>
-                  Instant syllabus explanations, code debugging & 24/7 exam answers.
-                </Text>
-              </View>
-              <ChevronRight color={colors.neonCyan} size={18} />
-            </View>
-
-            {/* Quick Prompt Chips */}
-            <View style={styles.aiPromptChipsRow}>
-              {[
-                "🎓 Certificates",
-                "⚡ Leveling Guide",
-                "📚 Courses Catalog",
-                "💳 Pricing",
-              ].map((chip, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    setAssistantQuery(chip.replace(/^[^\w]+/, ""));
-                    setAssistantVisible(true);
-                  }}
-                  style={styles.aiPromptChip}
-                >
-                  <Text style={styles.aiPromptChipText}>{chip}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
 
         {/* ── Featured Masterclass Courses ── */}
         <View style={styles.section}>
@@ -727,6 +665,41 @@ const styles = StyleSheet.create({
     gap: spacing[3],
   },
   logoBadge: {
+    width: 50,
+    height: 50,
+    borderRadius: radii.xl,
+    backgroundColor: "rgba(0, 243, 255, 0.1)",
+    borderWidth: 1.5,
+    borderColor: "rgba(0, 243, 255, 0.35)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brandTitle: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.foreground,
+    letterSpacing: 1.5,
+    fontWeight: "bold",
+  },
+  brandTitleAccent: {
+    fontFamily: fonts.display,
+    fontSize: 16,
+    color: colors.neonCyan,
+    letterSpacing: 1.5,
+    fontWeight: "bold",
+  },
+  greetingText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  aiHeaderBtn: {
     width: 38,
     height: 38,
     borderRadius: radii.lg,
@@ -736,52 +709,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  brandTitle: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes.base,
-    color: colors.foreground,
-    letterSpacing: 1.5,
-    fontWeight: "bold",
-  },
-  brandPill: {
-    backgroundColor: "rgba(176, 96, 240, 0.2)",
-    borderWidth: 1,
-    borderColor: "rgba(176, 96, 240, 0.5)",
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: 4,
-  },
-  brandPillText: {
-    fontFamily: fonts.display,
-    fontSize: 8,
-    color: colors.neonPurple,
-    fontWeight: "bold",
-  },
-  greetingText: {
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.xs,
-    color: colors.mutedForeground,
-    marginTop: 1,
-  },
-  headerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
-  },
-  aiHeaderBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.md,
-    backgroundColor: "rgba(0, 243, 255, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 243, 255, 0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
   notifBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: radii.md,
+    width: 38,
+    height: 38,
+    borderRadius: radii.lg,
     backgroundColor: "rgba(251, 191, 36, 0.1)",
     borderWidth: 1,
     borderColor: "rgba(251, 191, 36, 0.3)",
@@ -887,7 +818,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[2],
-    marginTop: 4,
+    marginTop: 6,
   },
   heroPrimaryBtn: {
     flex: 1,
@@ -911,41 +842,68 @@ const styles = StyleSheet.create({
   heroSecondaryBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: spacing[3],
+    gap: 6,
+    paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
     borderRadius: radii.lg,
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    backgroundColor: "rgba(0, 243, 255, 0.08)",
     borderWidth: 1,
     borderColor: "rgba(0, 243, 255, 0.3)",
   },
   heroSecondaryBtnText: {
     fontFamily: fonts.display,
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "bold",
     color: colors.neonCyan,
   },
   videoPlayerBox: {
     marginTop: spacing[3],
-    borderRadius: radii.lg,
+    borderRadius: radii.xl,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "rgba(0, 243, 255, 0.3)",
+    borderColor: "rgba(0, 243, 255, 0.35)",
     backgroundColor: "#000",
   },
   videoPlayer: {
     width: "100%",
-    height: 160,
+    height: 180,
   },
   videoCaptionBar: {
-    backgroundColor: "rgba(5, 8, 16, 0.9)",
+    backgroundColor: "rgba(5, 8, 16, 0.95)",
     paddingHorizontal: spacing[3],
-    paddingVertical: 4,
+    paddingVertical: 6,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.06)",
+  },
+  videoCaptionLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    flex: 1,
   },
   videoCaptionText: {
     fontFamily: fonts.sans,
-    fontSize: 10,
-    color: colors.mutedForeground,
+    fontSize: 11,
+    color: colors.foreground,
+    fontWeight: "600",
+  },
+  adLiveBadge: {
+    backgroundColor: "rgba(0, 243, 255, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.4)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  adLiveText: {
+    fontFamily: fonts.display,
+    fontSize: 8,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    letterSpacing: 0.8,
   },
 
   // Hunter Combat HUD
@@ -1069,88 +1027,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.sans,
     fontSize: 10,
     fontWeight: "600",
-  },
-
-  // AI Teacher Assistant Spotlight
-  aiSpotlightWrapper: {
-    paddingHorizontal: spacing[4],
-    marginBottom: spacing[4],
-  },
-  aiSpotlightCard: {
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: "rgba(0, 243, 255, 0.3)",
-    padding: spacing[4],
-    gap: spacing[3],
-  },
-  aiSpotlightTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[3],
-  },
-  aiAvatarBox: {
-    width: 42,
-    height: 42,
-    borderRadius: radii.lg,
-    backgroundColor: "rgba(0, 243, 255, 0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(0, 243, 255, 0.4)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  aiSpotlightTitle: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes.xs,
-    fontWeight: "bold",
-    color: colors.neonCyan,
-    letterSpacing: 0.5,
-  },
-  aiOnlineBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    backgroundColor: "rgba(34, 197, 94, 0.15)",
-    paddingHorizontal: 5,
-    paddingVertical: 1,
-    borderRadius: radii.full,
-  },
-  aiOnlineDot: {
-    width: 5,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: colors.neonLime,
-  },
-  aiOnlineText: {
-    fontFamily: fonts.display,
-    fontSize: 8,
-    fontWeight: "bold",
-    color: colors.neonLime,
-  },
-  aiSpotlightSub: {
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.xs,
-    color: colors.mutedForeground,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  aiPromptChipsRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: spacing[2],
-  },
-  aiPromptChip: {
-    backgroundColor: "rgba(0, 243, 255, 0.08)",
-    paddingHorizontal: spacing[3],
-    paddingVertical: 5,
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: "rgba(0, 243, 255, 0.2)",
-  },
-  aiPromptChipText: {
-    fontFamily: fonts.sans,
-    fontSize: 10,
-    fontWeight: "600",
-    color: colors.neonCyan,
   },
 
   // Section Standard Headers

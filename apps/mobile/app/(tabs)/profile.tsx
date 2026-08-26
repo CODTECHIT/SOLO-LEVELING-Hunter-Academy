@@ -51,12 +51,19 @@ export default function ProfileScreen() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await api.patch("/users/profile", { name: name || undefined, phone: phone || undefined });
+      await api.patch("/users/profile", {
+        name: name.trim() || undefined,
+        phone: phone !== undefined ? (phone.trim() || null) : null,
+      });
       await loadUser();
       setEditing(false);
       cyberAlert("Profile Updated", "Your profile details have been saved successfully.", undefined, "success");
     } catch (err: any) {
-      cyberAlert("Save Failed", err?.response?.data?.error ?? "Could not save profile changes.", undefined, "error");
+      const msg =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        "Could not save profile changes.";
+      cyberAlert("Save Failed", msg, undefined, "error");
     } finally {
       setSaving(false);
     }

@@ -166,7 +166,8 @@ export default function SupportScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         {selectedTicket ? (
           // Active Live Chat Thread View
@@ -196,6 +197,7 @@ export default function SupportScreen() {
               data={selectedTicket.messages || []}
               keyExtractor={(item) => item.id}
               contentContainerStyle={styles.messageList}
+              keyboardShouldPersistTaps="handled"
               onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
               renderItem={({ item }) => {
                 const isStaff =
@@ -380,7 +382,10 @@ export default function SupportScreen() {
 
       {/* ---------------- NEW TICKET MODAL ---------------- */}
       <Modal visible={isModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Open Support Ticket</Text>
@@ -416,7 +421,7 @@ export default function SupportScreen() {
               style={{ marginTop: spacing[4] }}
             />
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeScreen>
   );

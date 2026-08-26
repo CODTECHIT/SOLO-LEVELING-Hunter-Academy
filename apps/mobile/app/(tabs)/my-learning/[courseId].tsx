@@ -50,35 +50,6 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Badge } from "@/components/ui/Badge";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
-const { width: SCREEN_W } = Dimensions.get("window");
-
-// Floating dynamic security watermark to prevent analog camera & screen capture
-function VideoWatermark({ text }: { text: string }) {
-  const [pos, setPos] = useState({ top: 18, left: 15 });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPos({
-        top: Math.floor(12 + Math.random() * 60),
-        left: Math.floor(8 + Math.random() * 50),
-      });
-    }, 10000);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <View
-      pointerEvents="none"
-      style={[
-        styles.watermarkContainer,
-        { top: `${pos.top}%`, left: `${pos.left}%` },
-      ]}
-    >
-      <Text style={styles.watermarkText}>{text}</Text>
-    </View>
-  );
-}
-
 export default function LearningPlayerScreen() {
   const { courseId, lessonId: initialLessonId } = useLocalSearchParams<{
     courseId: string;
@@ -310,7 +281,7 @@ export default function LearningPlayerScreen() {
                   `,
                   baseUrl: "https://www.youtube.com",
                 }}
-                allowsFullscreenVideo={false}
+                allowsFullscreenVideo={true}
                 mediaPlaybackRequiresUserAction={false}
                 javaScriptEnabled
                 domStorageEnabled
@@ -321,15 +292,10 @@ export default function LearningPlayerScreen() {
                 player={player}
                 nativeControls={true}
                 contentFit="contain"
-                fullscreenOptions={{ enable: false }}
+                fullscreenOptions={{ enable: true }}
                 surfaceType="textureView"
               />
             )}
-
-            {/* Dynamic Watermark to protect content */}
-            <VideoWatermark
-              text={`${user?.email || user?.name || "STUDENT"} • ID:${user?.id ? user.id.slice(0, 8) : "SECURE"}`}
-            />
 
             {/* Fullscreen Overlay Controls */}
             {isFullscreen ? (
@@ -742,8 +708,8 @@ const styles = StyleSheet.create({
   },
   backText: { fontFamily: fonts.body, fontSize: fontSizes.base, color: colors.foreground },
   videoContainer: {
-    width: SCREEN_W,
-    height: (SCREEN_W * 9) / 16,
+    width: "100%",
+    aspectRatio: 16 / 9,
     backgroundColor: "#000",
     position: "relative",
     overflow: "hidden",
@@ -828,23 +794,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255, 255, 255, 0.15)",
     padding: 6,
     borderRadius: radii.md,
-  },
-  watermarkContainer: {
-    position: "absolute",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
-    borderRadius: radii.sm,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
-    zIndex: 15,
-  },
-  watermarkText: {
-    fontFamily: fonts.sans,
-    fontSize: 10,
-    color: "rgba(255, 255, 255, 0.35)",
-    fontWeight: "bold",
-    letterSpacing: 0.5,
   },
   videoLocked: {
     flex: 1,

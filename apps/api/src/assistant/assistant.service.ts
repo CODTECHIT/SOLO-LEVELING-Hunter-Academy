@@ -295,87 +295,101 @@ export class AssistantService {
       }
     }
 
-    // 5. Query Database FAQs
-    const dbFaqs = await this.prisma.faqItem.findMany({
-      where: courseId ? { OR: [{ courseId }, { courseId: null }] } : {},
-      orderBy: { order: "asc" },
-    });
+    // 5. Query Database FAQs safely
+    try {
+      if ((this.prisma as any).faqItem) {
+        const dbFaqs = await (this.prisma as any).faqItem.findMany({
+          where: courseId ? { OR: [{ courseId }, { courseId: null }] } : {},
+          orderBy: { order: "asc" },
+        });
 
-    for (const faq of dbFaqs) {
-      let score = 0;
-      const qLower = faq.question.toLowerCase();
-      const aLower = faq.answer.toLowerCase();
+        for (const faq of dbFaqs) {
+          let score = 0;
+          const qLower = faq.question.toLowerCase();
+          const aLower = faq.answer.toLowerCase();
 
-      if (qLower.includes(queryLower)) score += 15;
+          if (qLower.includes(queryLower)) score += 15;
 
-      for (const word of words) {
-        if (qLower.includes(word)) score += 4;
-        if (aLower.includes(word)) score += 1.5;
+          for (const word of words) {
+            if (qLower.includes(word)) score += 4;
+            if (aLower.includes(word)) score += 1.5;
+          }
+
+          if (faq.courseId && faq.courseId === courseId) score += 3;
+
+          if (score > highestScore) {
+            highestScore = score;
+            bestMatch = {
+              answer: faq.answer,
+              matchedQuestion: faq.question,
+              source: faq.courseId ? "Course FAQ" : "Academy FAQ",
+            };
+          }
+        }
       }
-
-      if (faq.courseId && faq.courseId === courseId) score += 3;
-
-      if (score > highestScore) {
-        highestScore = score;
-        bestMatch = {
-          answer: faq.answer,
-          matchedQuestion: faq.question,
-          source: faq.courseId ? "Course FAQ" : "Academy FAQ",
-        };
-      }
+    } catch (faqErr) {
+      console.warn("DB FAQ search skipped:", faqErr);
     }
 
-    // 6. Check Lesson Notes & Description
-    if (lesson && lesson.description) {
-      let lessonScore = 0;
-      const lTitleLower = (lesson.title || "").toLowerCase();
-      const lDescLower = lesson.description.toLowerCase();
+    // 6. Check Lesson Notes & Description safely
+    try {
+      if (lesson && lesson.description) {
+        let lessonScore = 0;
+        const lTitleLower = (lesson.title || "").toLowerCase();
+        const lDescLower = lesson.description.toLowerCase();
 
-      if (lTitleLower.includes(queryLower)) lessonScore += 12;
-
-      for (const word of words) {
-        if (lTitleLower.includes(word)) lessonScore += 4;
-        if (lDescLower.includes(word)) lessonScore += 2;
-      }
-
-      if (lessonScore > highestScore) {
-        highestScore = lessonScore;
-        bestMatch = {
-          answer: lesson.description,
-          matchedQuestion: lesson.title,
-          source: `Lesson Notes (${lesson.title})`,
-        };
-      }
-    }
-
-    // 7. Check Courses in DB
-    if (highestScore < 5) {
-      const dbCourses = await this.prisma.course.findMany({
-        select: { id: true, title: true, price: true, description: true },
-      });
-
-      for (const c of dbCourses) {
-        if (!c.title || c.title.length <= 2) continue;
-        const cTitleLower = c.title.toLowerCase();
-        const cDescLower = (c.description || "").toLowerCase();
-
-        let cScore = 0;
-        if (queryLower.includes(cTitleLower) || cTitleLower.includes(queryLower)) cScore += 12;
+        if (lTitleLower.includes(queryLower)) lessonScore += 12;
 
         for (const word of words) {
-          if (cTitleLower.includes(word)) cScore += 4;
-          if (cDescLower.includes(word)) cScore += 2;
+          if (lTitleLower.includes(word)) lessonScore += 4;
+          if (lDescLower.includes(word)) lessonScore += 2;
         }
 
-        if (cScore > highestScore) {
-          highestScore = cScore;
+        if (lessonScore > highestScore) {
+          highestScore = lessonScore;
           bestMatch = {
-            answer: `${c.title} (₹${c.price}):\n\n${c.description}\n\nCheck out the full syllabus in our Courses section to start leveling up!`,
-            matchedQuestion: c.title,
-            source: "Course Catalog",
+            answer: lesson.description,
+            matchedQuestion: lesson.title,
+            source: `Lesson Notes (${lesson.title})`,
           };
         }
       }
+    } catch (lessonErr) {
+      console.warn("Lesson notes search skipped:", lessonErr);
+    }
+
+    // 7. Check Courses in DB safely
+    try {
+      if (highestScore < 5 && this.prisma.course) {
+        const dbCourses = await this.prisma.course.findMany({
+          select: { id: true, title: true, price: true, description: true },
+        });
+
+        for (const c of dbCourses) {
+          if (!c.title || c.title.length <= 2) continue;
+          const cTitleLower = c.title.toLowerCase();
+          const cDescLower = (c.description || "").toLowerCase();
+
+          let cScore = 0;
+          if (queryLower.includes(cTitleLower) || cTitleLower.includes(queryLower)) cScore += 12;
+
+          for (const word of words) {
+            if (cTitleLower.includes(word)) cScore += 4;
+            if (cDescLower.includes(word)) cScore += 2;
+          }
+
+          if (cScore > highestScore) {
+            highestScore = cScore;
+            bestMatch = {
+              answer: `${c.title} (₹${c.price}):\n\n${c.description}\n\nCheck out the full syllabus in our Courses section to start leveling up!`,
+              matchedQuestion: c.title,
+              source: "Course Catalog",
+            };
+          }
+        }
+      }
+    } catch (courseErr) {
+      console.warn("Course search skipped:", courseErr);
     }
 
     // 8. Return Best Match if Confidence is Good

@@ -19,6 +19,32 @@ export class UsersService {
     });
   }
 
+  async updateUserProfile(
+    userId: string,
+    data: { name?: string; phone?: string | null },
+  ) {
+    const updateData: any = {};
+    if (data.name !== undefined && data.name.trim().length > 0) {
+      updateData.name = data.name.trim();
+    }
+    if (data.phone !== undefined) {
+      updateData.phone = data.phone && data.phone.trim().length > 0 ? data.phone.trim() : null;
+    }
+
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        phone: true,
+        role: true,
+        createdAt: true,
+      },
+    });
+  }
+
   async getUserEnrollments(userId: string) {
     return this.prisma.enrollment.findMany({
       where: { userId },
