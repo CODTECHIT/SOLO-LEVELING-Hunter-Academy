@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Headers,
+  Req,
   UseGuards,
   BadRequestException,
 } from "@nestjs/common";
@@ -47,7 +48,9 @@ export class PaymentsController {
   async webhook(
     @Body() payload: any,
     @Headers("x-razorpay-signature") signature: string,
+    @Req() req: any,
   ) {
-    return this.paymentsService.handleWebhook(payload, signature);
+    const rawBody = req?.rawBody;
+    return this.paymentsService.handleWebhook(payload, signature, rawBody);
   }
 }

@@ -35,13 +35,13 @@ export class AdminService {
         where: { status: "PAID" },
         _sum: { amount: true },
       }),
-      this.prisma.enrollment.findMany({
+      this.prisma.enrollment.groupBy({
+        by: ["userId"],
         where: {
           enrolledAt: {
             gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
           },
         },
-        distinct: ["userId"],
       }),
     ]);
 

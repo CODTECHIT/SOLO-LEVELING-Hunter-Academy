@@ -38,8 +38,8 @@ export class CoursesService {
     });
   }
 
-  async findById(id: string) {
-    return this.prisma.course.findUnique({
+  async findById(id: string, userId?: string | null) {
+    const course = await this.prisma.course.findUnique({
       where: { id },
       include: {
         category: true,
@@ -80,6 +80,33 @@ export class CoursesService {
         },
       },
     });
+
+    if (!course) return null;
+
+    let isEnrolled = false;
+    if (userId) {
+      const enrollment = await this.prisma.enrollment.findUnique({
+        where: {
+          userId_courseId: {
+            userId: userId,
+            courseId: course.id,
+          },
+        },
+        select: { expiresAt: true },
+      });
+      const hasAccessExpired = !!enrollment?.expiresAt && enrollment.expiresAt.getTime() <= Date.now();
+      isEnrolled = !!enrollment && !hasAccessExpired;
+    }
+
+    if (!isEnrolled) {
+      // Secure content: strip videoUrl for non-enrolled users
+      course.lessons = course.lessons.map((lesson: any) => {
+        const { videoUrl, ...safeLesson } = lesson;
+        return safeLesson as any;
+      });
+    }
+
+    return course;
   }
 
   async findBySlug(slug: string) {
@@ -223,6 +250,14 @@ export class CoursesService {
       });
       completedLessonIds = progress.filter((p: any) => p.completed).map((p: any) => p.lessonId);
       lessonProgress = Object.fromEntries(progress.map((p: any) => [p.lessonId, p.progressSeconds]));
+    }
+
+    if (!isEnrolled) {
+      // Secure content: strip videoUrl for non-enrolled users
+      course.lessons = course.lessons.map((lesson: any) => {
+        const { videoUrl, ...safeLesson } = lesson;
+        return safeLesson as any;
+      });
     }
 
     return { course, isEnrolled, hasAccessExpired, completedLessonIds, lessonProgress };

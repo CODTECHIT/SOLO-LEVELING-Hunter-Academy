@@ -63,7 +63,12 @@ export default defineConfig({
       server: { entry: "server" },
     }),
     viteReact(),
-    nitro(),
+    nitro({
+      node: true,
+      externals: {
+        external: ["@prisma/client", "@prisma/adapter-pg", "pg", "bcryptjs", "jose"],
+      },
+    }),
     tailwindcss(),
     tsConfigPaths(),
   ],

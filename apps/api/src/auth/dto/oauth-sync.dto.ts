@@ -8,4 +8,8 @@ export class OAuthSyncDto {
   @IsString()
   @IsOptional()
   name?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  accessToken: string;
 }

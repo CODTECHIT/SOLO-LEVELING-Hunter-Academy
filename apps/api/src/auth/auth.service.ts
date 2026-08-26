@@ -17,7 +17,17 @@ export class AuthService {
     private prisma: PrismaService,
     private jwtService: JwtService,
     private mailService: MailService,
-  ) {}
+  ) {
+    // Periodically clean up expired reset codes every 10 minutes to prevent memory leaks
+    setInterval(() => {
+      const now = Date.now();
+      for (const [email, record] of this.resetCodes.entries()) {
+        if (record.expiresAt < now) {
+          this.resetCodes.delete(email);
+        }
+      }
+    }, 10 * 60 * 1000).unref();
+  }
 
   async signUp(dto: SignUpDto) {
     const normalizedEmail = dto.email.trim().toLowerCase();
@@ -90,8 +100,45 @@ export class AuthService {
     };
   }
 
-  async syncOAuthUser(data: { email: string; name?: string }) {
+  async syncOAuthUser(data: { email: string; name?: string; accessToken: string }) {
     const normalizedEmail = data.email.trim().toLowerCase();
+    const { accessToken } = data;
+
+    if (!accessToken) {
+      throw new UnauthorizedException("OAuth access token is required for identity verification");
+    }
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+    // Cryptographically / server-side verify token with Supabase Auth
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/auth/v1/user`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: supabaseAnonKey,
+          },
+        });
+
+        if (!response.ok) {
+          throw new UnauthorizedException("Invalid OAuth token supplied");
+        }
+
+        const supabaseUser: any = await response.json();
+        const verifiedEmail = supabaseUser?.email?.trim().toLowerCase();
+
+        if (!verifiedEmail || verifiedEmail !== normalizedEmail) {
+          throw new UnauthorizedException("Token identity does not match requested email address");
+        }
+      } catch (err: any) {
+        if (err instanceof UnauthorizedException) throw err;
+        throw new UnauthorizedException("Failed to verify OAuth identity with provider");
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      throw new UnauthorizedException("OAuth provider configuration is missing in production");
+    }
+
     let user = await this.prisma.user.findUnique({
       where: { email: normalizedEmail },
     });

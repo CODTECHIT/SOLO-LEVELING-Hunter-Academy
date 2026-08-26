@@ -6,7 +6,11 @@
   "scripts": {
     "build": "cd apps/web && npm run build",
     "dev": "cd apps/web && npm run dev",
-    "build:web": "cd apps/web && npm run build"
+    "build:web": "cd apps/web && npm run build",
+    "build:api": "npm run build --workspace=apps/api",
+    "build:all": "npm run db:generate && npm run build:api && npm run build:web",
+    "db:push": "cd apps/web && npx prisma db push",
+    "db:generate": "npx prisma generate --schema=apps/web/prisma/schema.prisma"
   },
   "workspaces": [
     "apps/api",

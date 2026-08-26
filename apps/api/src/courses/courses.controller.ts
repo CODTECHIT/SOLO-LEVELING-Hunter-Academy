@@ -39,8 +39,21 @@ export class CoursesController {
   }
 
   @Get(":id")
-  async findById(@Param("id") id: string) {
-    return this.coursesService.findById(id);
+  async findById(
+    @Param("id") id: string,
+    @Headers("authorization") authHeader?: string,
+  ) {
+    let userId = null;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+      const token = authHeader.split(" ")[1];
+      try {
+        const payload = await this.coursesService.verifyToken(token);
+        userId = payload.sub;
+      } catch (e) {
+        // invalid token, ignore
+      }
+    }
+    return this.coursesService.findById(id, userId);
   }
 
   @Get("slug/:slug")

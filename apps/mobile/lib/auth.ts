@@ -100,13 +100,14 @@ export async function signInWithGoogle(): Promise<AuthResponse> {
     }
   }
 
-  if (!email) {
-    throw new Error("No verified email received from Google account");
+  if (!accessToken) {
+    throw new Error("No valid access token received from Google sign in");
   }
 
   const response = await api.post<AuthResponse>("/auth/oauth/sync", {
     email,
     name,
+    accessToken,
   });
 
   await saveToken(response.data.token);

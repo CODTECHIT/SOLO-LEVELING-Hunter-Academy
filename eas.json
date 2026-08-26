@@ -8,21 +8,18 @@
       "developmentClient": true,
       "distribution": "internal",
       "env": {
-        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
         "NODE_OPTIONS": "--max-old-space-size=8192"
       }
     },
     "preview": {
       "distribution": "internal",
       "env": {
-        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
         "NODE_OPTIONS": "--max-old-space-size=8192"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "NPM_CONFIG_LEGACY_PEER_DEPS": "true",
         "NODE_OPTIONS": "--max-old-space-size=8192"
       }
     }

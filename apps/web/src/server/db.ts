@@ -7,13 +7,26 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient(): PrismaClient {
-  const connectionString =
-    process.env.DATABASE_URL ||
-    "postgresql://postgres.nvezyhkrikioxxxlaytq:qs-F8ZSn4a%3F%25ssU@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres";
-  const isLocal = connectionString.includes("localhost") || connectionString.includes("127.0.0.1");
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "DATABASE_URL environment variable is required in production.",
+      );
+    }
+    console.warn(
+      "⚠️ DATABASE_URL is not set. Please configure your .env file.",
+    );
+  }
+
+  const effectiveUrl =
+    connectionString ||
+    "postgresql://postgres:postgres@localhost:5432/postgres";
+  const isLocal =
+    effectiveUrl.includes("localhost") || effectiveUrl.includes("127.0.0.1");
 
   const pool = new Pool({
-    connectionString,
+    connectionString: effectiveUrl,
     ssl: isLocal ? false : { rejectUnauthorized: false },
   });
   const adapter = new PrismaPg(pool);

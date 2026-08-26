@@ -214,12 +214,44 @@ export const logoutFn = createServerFn({ method: "POST" }).handler(async () => {
 const syncOAuthSchema = z.object({
   email: z.string().email(),
   name: z.string().optional(),
+  accessToken: z.string().min(1, "Access token is required"),
 });
 
 export const syncSupabaseOAuthUserFn = createServerFn({ method: "POST" })
   .validator((data) => parseZod(syncOAuthSchema.safeParse(data)))
   .handler(async ({ data }) => {
     const normalizedEmail = data.email.trim().toLowerCase();
+    const { accessToken } = data;
+
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+    if (supabaseUrl && supabaseAnonKey) {
+      try {
+        const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/auth/v1/user`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            apikey: supabaseAnonKey,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Invalid OAuth session token");
+        }
+
+        const supabaseUser: any = await response.json();
+        const verifiedEmail = supabaseUser?.email?.trim().toLowerCase();
+
+        if (!verifiedEmail || verifiedEmail !== normalizedEmail) {
+          throw new Error("Token identity does not match requested email address");
+        }
+      } catch (err: any) {
+        throw new Error(err.message || "Failed to verify OAuth identity");
+      }
+    } else if (process.env.NODE_ENV === "production") {
+      throw new Error("OAuth provider configuration is missing in production");
+    }
+
     let user = await prisma.user.findUnique({ where: { email: normalizedEmail } });
 
     if (!user) {
@@ -238,3 +270,4 @@ export const syncSupabaseOAuthUserFn = createServerFn({ method: "POST" })
 
     return { success: true, role: user.role, token };
   });
+

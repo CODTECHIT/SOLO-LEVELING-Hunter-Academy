@@ -33,8 +33,19 @@ function AuthCallbackComponent() {
         return;
       }
 
+      if (!session.access_token) {
+        setErrorMsg("No valid OAuth token returned by provider.");
+        return;
+      }
+
       try {
-        const res = await syncUser({ data: { email, name } });
+        const res = await syncUser({
+          data: {
+            email,
+            name,
+            accessToken: session.access_token,
+          },
+        });
 
         if (res.token) {
           const { setAuthToken } = await import("@/lib/api");

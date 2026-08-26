@@ -59,6 +59,10 @@ model Course {
   published       Boolean      @default(false)
   type        CourseType   @default(FULL)
   createdAt   DateTime     @default(now())
+
+  @@index([published, type])
+  @@index([categoryId])
+  @@index([createdAt])
 }
 
 model Lesson {
@@ -72,6 +76,8 @@ model Lesson {
   duration    Int?             // seconds
   progress    LessonProgress[]
   quiz        Quiz?
+
+  @@index([courseId, order])
 }
 
 model Enrollment {
@@ -83,7 +89,11 @@ model Enrollment {
   paymentId   String?
   enrolledAt  DateTime  @default(now())
   expiresAt   DateTime? // access expiry; null = lifetime
+
   @@unique([userId, courseId])
+  @@index([courseId])
+  @@index([userId])
+  @@index([enrolledAt])
 }
 
 model LessonProgress {
@@ -95,7 +105,10 @@ model LessonProgress {
   progressSeconds Int       @default(0) // watched time in seconds
   completed       Boolean   @default(false)
   completedAt     DateTime?
+
   @@unique([userId, lessonId])
+  @@index([userId])
+  @@index([lessonId])
 }
 
 model Payment {
@@ -111,6 +124,11 @@ model Payment {
   status          PaymentStatus @default(PENDING)
   refunds         Refund[]
   createdAt       DateTime  @default(now())
+
+  @@index([userId])
+  @@index([courseId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Refund {
@@ -122,6 +140,10 @@ model Refund {
   reason      String
   status      RefundStatus @default(PENDING)
   createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Review {
@@ -133,7 +155,9 @@ model Review {
   rating      Int      // 1–5
   comment     String?
   createdAt   DateTime @default(now())
+
   @@unique([userId, courseId])
+  @@index([courseId])
 }
 
 model Category {
@@ -271,6 +295,10 @@ model SupportTicket {
   messages     SupportMessage[]
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+
+  @@index([userId, status])
+  @@index([assignedToId])
+  @@index([createdAt])
 }
 
 model SupportMessage {
@@ -283,6 +311,8 @@ model SupportMessage {
   message     String        @db.Text
   attachments String?
   createdAt   DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
 }
 
 enum Role {
@@ -362,6 +392,8 @@ model Certificate {
   createdAt     DateTime  @default(now())
 
   @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
 }
 
 // ---------------- NOTIFICATION SYSTEM ----------------
@@ -376,6 +408,9 @@ model Notification {
   data      Json?    // Optional structured payload e.g. { courseId, slug, ticketId, certificateId }
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
 }
 
 

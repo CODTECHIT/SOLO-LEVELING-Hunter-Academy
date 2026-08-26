@@ -161,10 +161,19 @@ export class PaymentsService {
         const rzpOrder: any = await res.json();
         orderId = rzpOrder.id;
       } catch (err: any) {
+        if (process.env.NODE_ENV === "production") {
+          console.error("Razorpay order creation failed in production:", err.message);
+          throw new BadRequestException(
+            `Payment gateway initialization failed: ${err.message || "Please try again later"}`,
+          );
+        }
         console.warn("Falling back to dev order due to Razorpay error:", err.message);
         orderId = `order_dev_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
       }
     } else {
+      if (process.env.NODE_ENV === "production") {
+        throw new BadRequestException("Razorpay gateway keys are not configured in production");
+      }
       // Dev placeholder mode
       orderId = `order_dev_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
     }
@@ -325,8 +334,15 @@ export class PaymentsService {
   /**
    * Handle Webhooks from Razorpay
    */
-  async handleWebhook(payload: any, signature: string) {
-    const keySecret = this.getKeySecret();
+  async handleWebhook(
+    payload: any,
+    signature: string,
+    rawBody?: Buffer | string,
+  ) {
+    const webhookSecret =
+      this.configService.get<string>("RAZORPAY_WEBHOOK_SECRET") ||
+      process.env.RAZORPAY_WEBHOOK_SECRET ||
+      this.getKeySecret();
     const isMockAllowed =
       process.env.NODE_ENV !== "production" &&
       process.env.ENABLE_MOCK_PAYMENTS === "true";
@@ -336,9 +352,14 @@ export class PaymentsService {
     }
 
     if (signature) {
+      const dataToVerify =
+        rawBody !== undefined && rawBody !== null
+          ? rawBody
+          : JSON.stringify(payload);
+
       const expectedSig = crypto
-        .createHmac("sha256", keySecret)
-        .update(JSON.stringify(payload))
+        .createHmac("sha256", webhookSecret)
+        .update(dataToVerify)
         .digest("hex");
 
       let isSigMatch = false;
