@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -23,6 +23,7 @@ import { useSafePreventScreenCapture } from "@/hooks/useSafeScreenCapture";
 import { colors } from "@/theme";
 
 import { CyberAlertModal } from "@/components/ui/CyberAlertModal";
+import { DiagonalSplashIntro } from "@/components/ui/DiagonalSplashIntro";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -37,6 +38,7 @@ const queryClient = new QueryClient({
 
 export default function RootLayout() {
   useSafePreventScreenCapture("global_app_protection");
+  const [showSplashIntro, setShowSplashIntro] = useState(true);
 
   const [fontsLoaded, fontError] = useFonts({
     Orbitron_700Bold,
@@ -79,6 +81,9 @@ export default function RootLayout() {
             <Stack.Screen name="auth/callback" />
           </Stack>
           <CyberAlertModal />
+          {showSplashIntro && (
+            <DiagonalSplashIntro onFinish={() => setShowSplashIntro(false)} />
+          )}
         </QueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

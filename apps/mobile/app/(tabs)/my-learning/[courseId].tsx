@@ -11,6 +11,7 @@ import {
   RefreshControl,
   StatusBar,
   Modal,
+  Platform,
 } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import {
@@ -388,7 +389,7 @@ export default function LearningPlayerScreen() {
             style={[
               styles.fullscreenHeader,
               {
-                top: Math.max(insets.top, 12),
+                top: Math.max(Platform.OS === "android" ? (StatusBar.currentHeight || 0) : insets.top, insets.top) + 14,
                 left: Math.max(insets.left, 16),
                 right: Math.max(insets.right, 16),
               },
@@ -409,13 +410,6 @@ export default function LearningPlayerScreen() {
                 <Shield color={colors.neonCyan} size={11} />
                 <Text style={styles.protectedBadgeText}>SECURE</Text>
               </View>
-              <TouchableOpacity
-                style={styles.fullscreenExitBtn}
-                onPress={exitFullscreen}
-                activeOpacity={0.8}
-              >
-                <Minimize2 color="#ffffff" size={18} />
-              </TouchableOpacity>
             </View>
           </View>
         </View>
