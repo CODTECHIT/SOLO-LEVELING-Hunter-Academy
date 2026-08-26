@@ -134,39 +134,67 @@ export default function HomeScreen() {
       >
         {/* ── Top Header Navigation Bar ── */}
         <View style={styles.topHeader}>
-          <View style={styles.brandRow}>
-            <View style={styles.logoBadge}>
-              <CyberTechLogo size="md" showText={false} />
+          <TouchableOpacity
+            style={styles.brandRow}
+            onPress={() => router.push("/(tabs)/profile")}
+            activeOpacity={0.85}
+          >
+            <View style={styles.avatarCrestWrapper}>
+              <LinearGradient
+                colors={["rgba(0, 243, 255, 0.25)", "rgba(176, 96, 240, 0.15)"]}
+                style={styles.avatarCrestGrad}
+              >
+                <Image
+                  source={require("../../assets/logo.png")}
+                  style={styles.avatarImage}
+                  resizeMode="contain"
+                />
+              </LinearGradient>
+              {/* Online status beacon dot */}
+              <View style={styles.statusDotBeacon}>
+                <View style={styles.statusDotCore} />
+              </View>
             </View>
-            <View>
-              <Text style={styles.brandTitle}>
-                CYBER TECH ACADEMY
-              </Text>
-              <Text style={styles.greetingText}>
-                {user ? `Hunter ${user.name.split(" ")[0]} • Active` : "Next-Gen Developer Training"}
-              </Text>
+
+            <View style={styles.brandInfo}>
+              <View style={styles.titleRow}>
+                <Text style={styles.brandTitleText}>CYBER TECH</Text>
+                <Text style={styles.brandTitleAccent}> ACADEMY</Text>
+              </View>
+
+              <View style={styles.hunterStatusRow}>
+                <Text style={styles.hunterNameText} numberOfLines={1}>
+                  {user ? `Hunter ${user.name.split(" ")[0]}` : "Recruit Hunter"}
+                </Text>
+                <View style={styles.rankPillMini}>
+                  <Text style={styles.rankPillText}>
+                    {stats?.rankLetter ? `${stats.rankLetter}-RANK` : "ACTIVE"}
+                  </Text>
+                </View>
+              </View>
             </View>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.headerActions}>
             {/* AI Shortcut Button */}
             <TouchableOpacity
-              style={styles.aiHeaderBtn}
+              style={styles.actionBtnAi}
               onPress={() => {
                 setAssistantQuery("");
                 setAssistantVisible(true);
               }}
-              activeOpacity={0.8}
+              activeOpacity={0.75}
             >
               <Bot color={colors.neonCyan} size={18} />
+              <View style={styles.aiSparkDot} />
             </TouchableOpacity>
 
             {/* Notification Bell */}
             {isAuthenticated && (
               <TouchableOpacity
-                style={styles.notifBtn}
+                style={styles.actionBtnNotif}
                 onPress={() => setNotifModalVisible(true)}
-                activeOpacity={0.8}
+                activeOpacity={0.75}
               >
                 <Bell color={colors.neonAmber} size={18} />
                 {unreadCount > 0 && (
@@ -643,80 +671,169 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[3],
+    flex: 1,
+    marginRight: spacing[2],
   },
-  logoBadge: {
-    width: 50,
-    height: 50,
+  avatarCrestWrapper: {
+    position: "relative",
+  },
+  avatarCrestGrad: {
+    width: 44,
+    height: 44,
     borderRadius: radii.xl,
-    backgroundColor: "rgba(0, 243, 255, 0.1)",
-    borderWidth: 1.5,
-    borderColor: "rgba(0, 243, 255, 0.35)",
+    padding: 2,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0b1220",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.4)",
+    shadowColor: colors.neonCyan,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  avatarImage: {
+    width: 32,
+    height: 32,
+  },
+  statusDotBeacon: {
+    position: "absolute",
+    bottom: -1,
+    right: -1,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#050810",
     alignItems: "center",
     justifyContent: "center",
   },
-  brandTitle: {
+  statusDotCore: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#10B981",
+    shadowColor: "#10B981",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  brandInfo: {
+    justifyContent: "center",
+    flex: 1,
+  },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  brandTitleText: {
     fontFamily: fonts.display,
-    fontSize: 16,
+    fontSize: 13.5,
     color: colors.foreground,
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
     fontWeight: "bold",
   },
   brandTitleAccent: {
     fontFamily: fonts.display,
-    fontSize: 16,
-    color: colors.neonCyan,
-    letterSpacing: 1.5,
+    fontSize: 13.5,
+    color: colors.foreground,
+    letterSpacing: 1.2,
     fontWeight: "bold",
   },
-  greetingText: {
+  hunterStatusRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 2,
+  },
+  hunterNameText: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     color: colors.mutedForeground,
-    marginTop: 2,
+    fontWeight: "600",
+    maxWidth: 120,
+  },
+  rankPillMini: {
+    backgroundColor: "rgba(176, 96, 240, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(176, 96, 240, 0.4)",
+    paddingHorizontal: 6,
+    paddingVertical: 1.5,
+    borderRadius: radii.full,
+  },
+  rankPillText: {
+    fontFamily: fonts.display,
+    fontSize: 8,
+    fontWeight: "bold",
+    color: colors.neonPurple,
+    letterSpacing: 0.5,
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[2],
   },
-  aiHeaderBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: radii.lg,
-    backgroundColor: "rgba(0, 243, 255, 0.1)",
+  actionBtnAi: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.xl,
+    backgroundColor: "rgba(0, 243, 255, 0.08)",
     borderWidth: 1,
-    borderColor: "rgba(0, 243, 255, 0.3)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  notifBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: radii.lg,
-    backgroundColor: "rgba(251, 191, 36, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(251, 191, 36, 0.3)",
+    borderColor: "rgba(0, 243, 255, 0.25)",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
+    shadowColor: colors.neonCyan,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  aiSparkDot: {
+    position: "absolute",
+    top: 7,
+    right: 7,
+    width: 5,
+    height: 5,
+    borderRadius: 2.5,
+    backgroundColor: colors.neonCyan,
+  },
+  actionBtnNotif: {
+    width: 40,
+    height: 40,
+    borderRadius: radii.xl,
+    backgroundColor: "rgba(251, 191, 36, 0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(251, 191, 36, 0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+    position: "relative",
+    shadowColor: colors.neonAmber,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 2,
   },
   notifBadge: {
     position: "absolute",
-    top: -4,
-    right: -4,
-    backgroundColor: colors.neonAmber,
+    top: -3,
+    right: -3,
+    backgroundColor: colors.destructive,
     borderRadius: 9,
     minWidth: 16,
     height: 16,
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 3,
+    borderWidth: 1.5,
+    borderColor: colors.background,
   },
   notifBadgeText: {
     fontFamily: fonts.display,
     fontSize: 8,
     fontWeight: "bold",
-    color: "#050810",
+    color: "#fff",
   },
 
   // Hero Wrapper

@@ -35,7 +35,7 @@ import {
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useVideoPlayer, VideoView } from "expo-video";
-import { useSafePreventScreenCapture } from "@/hooks/useSafeScreenCapture";
+import { useSafePreventScreenCapture, useScreenshotListener } from "@/hooks/useSafeScreenCapture";
 import { useCourse, useEnrolledCourses } from "@/hooks/useCourses";
 import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { useAuthStore } from "@/store/authStore";

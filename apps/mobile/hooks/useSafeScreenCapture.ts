@@ -28,3 +28,22 @@ export function useSafePreventScreenCapture(key?: string) {
   }, [key]);
 }
 
+export function useScreenshotListener(listener: () => void) {
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+
+    let subscription: ScreenCapture.Subscription | null = null;
+    try {
+      subscription = ScreenCapture.addScreenshotListener(listener);
+    } catch {
+      // Ignore
+    }
+
+    return () => {
+      subscription?.remove();
+    };
+  }, [listener]);
+}
+
+
+
