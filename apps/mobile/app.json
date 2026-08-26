@@ -8,11 +8,6 @@
     "userInterfaceStyle": "dark",
     "backgroundColor": "#050810",
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#050810"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -26,18 +21,8 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
       },
-      "splash": {
-        "image": "./assets/splash.png",
-        "resizeMode": "contain",
-        "backgroundColor": "#050810",
-        "dark": {
-          "image": "./assets/splash.png",
-          "backgroundColor": "#050810"
-        }
-      },
       "backgroundColor": "#050810",
       "package": "com.cybertech.academy",
-      "usesCleartextTraffic": true,
       "permissions": [
         "android.permission.INTERNET"
       ]

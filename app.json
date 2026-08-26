@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "3b921bb2-d98f-4af4-9923-c1140cdc2ab0"
+      }
+    },
+    "android": {
+      "package": "com.mahajan2456.lmsportal"
+    }
+  }
+}
