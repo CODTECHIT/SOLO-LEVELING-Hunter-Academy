@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -19,14 +19,27 @@ import {
   HelpCircle,
   Headphones,
   CheckCircle2,
-  ChevronRight,
   BookOpen,
   ThumbsUp,
   ThumbsDown,
+  User,
+  Shield,
+  Zap,
 } from "lucide-react-native";
 import { api } from "@/lib/api";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 import { useRouter } from "expo-router";
+
+interface Message {
+  id: string;
+  sender: "user" | "bot";
+  text: string;
+  source?: string;
+  confidence?: string;
+  matchedQuestion?: string;
+  time: string;
+  escalationNeeded?: boolean;
+}
 
 interface CourseAssistantModalProps {
   visible: boolean;
@@ -48,54 +61,102 @@ export function CourseAssistantModal({
   initialQuery,
 }: CourseAssistantModalProps) {
   const router = useRouter();
-  const [query, setQuery] = useState(initialQuery || "");
+  const [inputText, setInputText] = useState("");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
   const [escalating, setEscalating] = useState(false);
   const [ticketCreated, setTicketCreated] = useState<string | null>(null);
-  const [feedbackGiven, setFeedbackGiven] = useState<boolean>(false);
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, boolean>>({});
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: "welcome-1",
+      sender: "bot",
+      text: lessonTitle
+        ? `Greetings Hunter! ⚔️ I am ALEX, your AI Tactical Tutor. Ask me any question or doubt regarding "${lessonTitle}".`
+        : "Greetings Hunter! ⚔️ I am ALEX, your 24/7 AI Tactical Tutor. Ask me anything about course lessons, coding concepts, certificates, quizzes, or academy progression!",
+      source: "ALEX Core",
+      confidence: "HIGH",
+      time: "Just now",
+    },
+  ]);
 
   const quickPrompts = [
-    "What courses are available?",
-    "How to get a certificate?",
-    "Payment methods supported",
-    "Offline download study",
+    "🎓 How to get Certificate?",
+    "📚 Available Courses",
+    "⚡ How does EXP/Rank work?",
+    "💳 Payment Methods",
+    "📥 Offline Video Downloads",
   ];
 
-  const handleSearch = async (searchQuery = query) => {
-    const textToSearch = searchQuery.trim();
-    if (!textToSearch || loading) return;
+  useEffect(() => {
+    if (visible && initialQuery && initialQuery.trim().length > 0) {
+      sendMessage(initialQuery.trim());
+    }
+  }, [visible, initialQuery]);
 
+  const sendMessage = async (textToSend: string) => {
+    const text = textToSend.trim();
+    if (!text || loading) return;
+
+    const userMsg: Message = {
+      id: `user-${Date.now()}`,
+      sender: "user",
+      text,
+      time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setInputText("");
     setLoading(true);
-    setResult(null);
-    setTicketCreated(null);
-    setFeedbackGiven(false);
+
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
 
     try {
       const res = await api.post("/assistant/query", {
         courseId,
         lessonId,
-        query: textToSearch,
+        query: text,
       });
-      setResult(res.data);
+
+      const data = res.data;
+      const botMsg: Message = {
+        id: `bot-${Date.now()}`,
+        sender: "bot",
+        text: data?.answer || data?.message || "I found tactical guidance for your query.",
+        source: data?.source || "Knowledge Base",
+        confidence: data?.confidence || "HIGH",
+        matchedQuestion: data?.matchedQuestion,
+        escalationNeeded: data?.escalationNeeded,
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setMessages((prev) => [...prev, botMsg]);
     } catch {
-      setResult({
-        match: false,
+      const fallbackMsg: Message = {
+        id: `bot-${Date.now()}`,
+        sender: "bot",
+        text: "I'm experiencing high server traffic, but here is instant tactical guidance:\n\n• Ensure all prerequisite concepts in previous lessons are completed.\n• Check that your code syntax and async calls match current standards.\n• If you need human instructor guidance, tap 'Connect with Support' below!",
+        source: "Offline AI Fallback",
         escalationNeeded: true,
-        message: "Unable to retrieve knowledge base right now. Would you like to raise a support ticket?",
-        suggestedSubject: `Lesson Doubt: ${lessonTitle || courseTitle || "General"}`,
-        originalQuery: textToSearch,
-      });
+        time: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
       setLoading(false);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 150);
     }
   };
 
-  const handleEscalateToSupport = async () => {
+  const handleEscalateToSupport = async (lastUserQuestion?: string) => {
     setEscalating(true);
     try {
       const subject = `Lesson Doubt: ${lessonTitle || courseTitle || "Course Question"}`;
-      const msgContent = `[Automated Knowledge Base Escalation]\nCourse: ${courseTitle || courseId}\nLesson: ${lessonTitle || "General"}\nStudent Question:\n"${query || result?.originalQuery || "Need instructor clarification"}"`;
+      const msgContent = `[AI Assistant Escalation]\nCourse: ${courseTitle || courseId || "General"}\nLesson: ${lessonTitle || "General"}\nStudent Question:\n"${lastUserQuestion || "Instructor clarification requested"}"`;
 
       const res = await api.post("/support/tickets", {
         subject,
@@ -105,8 +166,7 @@ export function CourseAssistantModal({
       });
 
       setTicketCreated(res.data?.ticketNumber || "SUBMITTED");
-    } catch (err) {
-      // If error, redirect to support tab
+    } catch {
       onClose();
       router.push("/support" as any);
     } finally {
@@ -125,12 +185,18 @@ export function CourseAssistantModal({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <View style={styles.botIconBadge}>
-                <Bot color={colors.neonCyan} size={18} />
+                <Bot color={colors.neonCyan} size={20} />
               </View>
               <View>
-                <Text style={styles.title}>AI Tactical Assistant</Text>
+                <View style={styles.titleRow}>
+                  <Text style={styles.title}>ALEX • AI Teacher</Text>
+                  <View style={styles.onlineBadge}>
+                    <View style={styles.onlineDot} />
+                    <Text style={styles.onlineText}>ONLINE</Text>
+                  </View>
+                </View>
                 <Text style={styles.subtitle} numberOfLines={1}>
-                  {lessonTitle ? `Knowledge for: ${lessonTitle}` : "Course Knowledge Base"}
+                  {lessonTitle ? `Knowledge for: ${lessonTitle}` : "Tactical Course & Tech Tutor"}
                 </Text>
               </View>
             </View>
@@ -139,177 +205,157 @@ export function CourseAssistantModal({
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-            {/* Quick Prompts */}
-            <Text style={styles.sectionLabel}>QUICK INQUIRY</Text>
+          {/* Quick Prompts Bar */}
+          <View style={styles.quickPromptsContainer}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
               {quickPrompts.map((prompt, i) => (
                 <TouchableOpacity
                   key={i}
                   style={styles.chip}
                   activeOpacity={0.7}
-                  onPress={() => {
-                    setQuery(prompt);
-                    handleSearch(prompt);
-                  }}
+                  onPress={() => sendMessage(prompt.replace(/^[^\w]+/, ""))}
                 >
                   <Sparkles size={11} color={colors.neonCyan} />
                   <Text style={styles.chipText}>{prompt}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </View>
 
-            {/* Results Section */}
-            {loading && (
-              <View style={styles.loadingBox}>
-                <ActivityIndicator color={colors.neonCyan} size="small" />
-                <Text style={styles.loadingText}>Scanning syllabus & knowledge base...</Text>
-              </View>
-            )}
+          {/* Messages Scroll Area */}
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messagesContainer}
+            contentContainerStyle={styles.messagesContent}
+            showsVerticalScrollIndicator={false}
+            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+          >
+            {messages.map((msg) => (
+              <View
+                key={msg.id}
+                style={[
+                  styles.messageWrapper,
+                  msg.sender === "user" ? styles.userMsgWrapper : styles.botMsgWrapper,
+                ]}
+              >
+                {msg.sender === "bot" && (
+                  <View style={styles.botAvatar}>
+                    <Bot color={colors.neonCyan} size={14} />
+                  </View>
+                )}
 
-            {!loading && result && (
-              <View style={styles.resultContainer}>
-                {result.match ? (
-                  <View style={styles.matchCard}>
-                    <View style={styles.matchHeader}>
-                      <View style={styles.sourceBadge}>
-                        <BookOpen color={colors.neonLime} size={12} />
-                        <Text style={styles.sourceBadgeText}>{result.source || "Knowledge Base"}</Text>
+                <View
+                  style={[
+                    styles.messageBubble,
+                    msg.sender === "user" ? styles.userBubble : styles.botBubble,
+                  ]}
+                >
+                  {/* Source & Verified header for bot messages */}
+                  {msg.sender === "bot" && (
+                    <View style={styles.botMetaRow}>
+                      <View style={styles.sourceTag}>
+                        <BookOpen color={colors.neonLime} size={10} />
+                        <Text style={styles.sourceTagText}>{msg.source || "Knowledge Engine"}</Text>
                       </View>
-                      {result.confidence === "HIGH" && (
-                        <Text style={styles.confidenceTag}>Verified Match</Text>
-                      )}
+                      <Text style={styles.timeText}>{msg.time}</Text>
                     </View>
+                  )}
 
-                    {result.matchedQuestion && (
-                      <Text style={styles.matchedQuestion}>💡 {result.matchedQuestion}</Text>
-                    )}
+                  {msg.matchedQuestion && msg.matchedQuestion !== msg.text && (
+                    <Text style={styles.matchedQuestionText}>💡 {msg.matchedQuestion}</Text>
+                  )}
 
-                    <Text style={styles.answerText}>{result.answer}</Text>
+                  <Text style={msg.sender === "user" ? styles.userMsgText : styles.botMsgText}>
+                    {msg.text}
+                  </Text>
 
-                    {/* Feedback row */}
-                    {!feedbackGiven ? (
-                      <View style={styles.feedbackRow}>
-                        <Text style={styles.feedbackLabel}>Did this help you?</Text>
-                        <View style={{ flexDirection: "row", gap: 10 }}>
+                  {/* Bot feedback buttons */}
+                  {msg.sender === "bot" && msg.id !== "welcome-1" && (
+                    <View style={styles.feedbackContainer}>
+                      {!feedbackMap[msg.id] ? (
+                        <View style={styles.feedbackRow}>
+                          <Text style={styles.feedbackLabel}>Helpful?</Text>
                           <TouchableOpacity
                             style={styles.feedbackBtn}
-                            onPress={() => setFeedbackGiven(true)}
+                            onPress={() => setFeedbackMap((p) => ({ ...p, [msg.id]: true }))}
                           >
-                            <ThumbsUp color={colors.neonLime} size={14} />
+                            <ThumbsUp color={colors.neonLime} size={12} />
                             <Text style={[styles.feedbackBtnText, { color: colors.neonLime }]}>Yes</Text>
                           </TouchableOpacity>
                           <TouchableOpacity
                             style={styles.feedbackBtn}
                             onPress={() => {
-                              setFeedbackGiven(true);
-                              setResult({ ...result, escalationNeeded: true });
+                              setFeedbackMap((p) => ({ ...p, [msg.id]: true }));
+                              handleEscalateToSupport(msg.text);
                             }}
                           >
-                            <ThumbsDown color={colors.destructive} size={14} />
-                            <Text style={[styles.feedbackBtnText, { color: colors.destructive }]}>No</Text>
+                            <ThumbsDown color={colors.destructive} size={12} />
+                            <Text style={[styles.feedbackBtnText, { color: colors.destructive }]}>Doubt</Text>
                           </TouchableOpacity>
                         </View>
-                      </View>
-                    ) : (
-                      <Text style={styles.feedbackThankYou}>✓ Thanks for your feedback!</Text>
-                    )}
-                  </View>
-                ) : (
-                  <View style={styles.noMatchCard}>
-                    <HelpCircle color={colors.neonAmber} size={28} style={{ marginBottom: 8 }} />
-                    <Text style={styles.noMatchTitle}>No Direct Knowledge Match</Text>
-                    <Text style={styles.noMatchDesc}>
-                      {result.message || "This specific question isn't in the automated FAQ index."}
-                    </Text>
-                  </View>
-                )}
-
-                {/* Escalation to Support Team */}
-                {result.escalationNeeded && (
-                  <View style={styles.escalationCard}>
-                    <View style={styles.escalationHeader}>
-                      <Headphones color={colors.neonCyan} size={18} />
-                      <Text style={styles.escalationTitle}>Connect with Academy Support</Text>
+                      ) : (
+                        <Text style={styles.feedbackDone}>✓ Feedback recorded</Text>
+                      )}
                     </View>
-                    <Text style={styles.escalationText}>
-                      Need human instructor assistance? We can raise a direct support ticket for this lesson.
-                    </Text>
+                  )}
+                </View>
 
-                    {ticketCreated ? (
-                      <View style={styles.ticketSuccessBox}>
-                        <CheckCircle2 color={colors.neonLime} size={18} />
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.ticketSuccessTitle}>
-                            Ticket Raised: {ticketCreated}
-                          </Text>
-                          <Text style={styles.ticketSuccessSubtitle}>
-                            Our instructor team will respond in your Support dashboard.
-                          </Text>
-                        </View>
-                        <TouchableOpacity
-                          style={styles.viewTicketBtn}
-                          onPress={() => {
-                            onClose();
-                            router.push("/support" as any);
-                          }}
-                        >
-                          <Text style={styles.viewTicketBtnText}>View</Text>
-                          <ChevronRight size={14} color="#050810" />
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <TouchableOpacity
-                        style={styles.escalateActionBtn}
-                        activeOpacity={0.85}
-                        disabled={escalating}
-                        onPress={handleEscalateToSupport}
-                      >
-                        {escalating ? (
-                          <ActivityIndicator color="#050810" size="small" />
-                        ) : (
-                          <>
-                            <Send color="#050810" size={16} />
-                            <Text style={styles.escalateActionBtnText}>
-                              Create Instructor Ticket
-                            </Text>
-                          </>
-                        )}
-                      </TouchableOpacity>
-                    )}
+                {msg.sender === "user" && (
+                  <View style={styles.userAvatar}>
+                    <User color="#050810" size={14} />
                   </View>
                 )}
               </View>
+            ))}
+
+            {/* Typing indicator */}
+            {loading && (
+              <View style={styles.botMsgWrapper}>
+                <View style={styles.botAvatar}>
+                  <Bot color={colors.neonCyan} size={14} />
+                </View>
+                <View style={[styles.botBubble, styles.typingBubble]}>
+                  <ActivityIndicator color={colors.neonCyan} size="small" />
+                  <Text style={styles.typingText}>ALEX is analyzing syllabus & notes...</Text>
+                </View>
+              </View>
             )}
 
-            {!result && !loading && (
-              <View style={styles.emptyPromptState}>
-                <Bot color={colors.mutedForeground} size={36} style={{ opacity: 0.5, marginBottom: 8 }} />
-                <Text style={styles.emptyPromptTitle}>Ask anything about this lesson</Text>
-                <Text style={styles.emptyPromptSub}>
-                  Queries are checked against course notes, FAQs, and syllabus knowledge.
-                </Text>
+            {/* Ticket escalation banner if needed */}
+            {ticketCreated && (
+              <View style={styles.ticketBanner}>
+                <CheckCircle2 color={colors.neonLime} size={18} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.ticketBannerTitle}>Support Ticket #{ticketCreated} Created</Text>
+                  <Text style={styles.ticketBannerSub}>Our instructor engineering team will reply in Support.</Text>
+                </View>
               </View>
             )}
           </ScrollView>
 
-          {/* Search Input Bar */}
+          {/* Input Bar */}
           <View style={styles.inputContainer}>
             <TextInput
               style={styles.input}
-              placeholder="Ask a question or topic..."
+              placeholder="Ask ALEX a question or doubt..."
               placeholderTextColor={colors.mutedForeground}
-              value={query}
-              onChangeText={setQuery}
-              returnKeyType="search"
-              onSubmitEditing={() => handleSearch()}
+              value={inputText}
+              onChangeText={setInputText}
+              onSubmitEditing={() => sendMessage(inputText)}
+              returnKeyType="send"
+              editable={!loading}
             />
             <TouchableOpacity
-              style={[styles.sendBtn, !query.trim() && { opacity: 0.5 }]}
-              onPress={() => handleSearch()}
-              disabled={!query.trim() || loading}
+              style={[styles.sendBtn, !inputText.trim() || loading ? styles.sendBtnDisabled : styles.sendBtnActive]}
+              onPress={() => sendMessage(inputText)}
+              disabled={!inputText.trim() || loading}
+              activeOpacity={0.8}
             >
-              <Send size={16} color="#050810" />
+              {loading ? (
+                <ActivityIndicator color="#050810" size="small" />
+              ) : (
+                <Send color="#050810" size={16} />
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -321,322 +367,327 @@ export function CourseAssistantModal({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    backgroundColor: "rgba(5, 8, 16, 0.8)",
     justifyContent: "flex-end",
   },
   sheetContainer: {
-    height: "75%",
-    backgroundColor: "#121124",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    height: "85%",
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: radii["2xl"],
+    borderTopRightRadius: radii["2xl"],
     borderWidth: 1,
-    borderColor: "rgba(103, 232, 249, 0.25)",
-    padding: spacing[4],
-    paddingBottom: Platform.OS === "ios" ? 34 : spacing[4],
+    borderColor: "rgba(0, 243, 255, 0.25)",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
   },
   header: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    paddingBottom: spacing[2],
+    justifyContent: "space-between",
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(62, 58, 96, 0.5)",
-    marginBottom: spacing[2],
+    borderBottomColor: colors.border,
+    backgroundColor: colors.surface2,
   },
   headerLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing[2],
+    gap: spacing[3],
     flex: 1,
   },
   botIconBadge: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    backgroundColor: "rgba(103, 232, 249, 0.15)",
+    width: 38,
+    height: 38,
+    borderRadius: radii.md,
+    backgroundColor: "rgba(0, 243, 255, 0.12)",
     borderWidth: 1,
-    borderColor: "rgba(103, 232, 249, 0.4)",
+    borderColor: "rgba(0, 243, 255, 0.4)",
     alignItems: "center",
     justifyContent: "center",
   },
+  titleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   title: {
-    color: colors.neonCyan,
     fontFamily: fonts.display,
     fontSize: fontSizes.sm,
-    letterSpacing: 1,
+    fontWeight: "bold",
+    color: colors.foreground,
+    letterSpacing: 0.5,
+  },
+  onlineBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(34, 197, 94, 0.15)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: "rgba(34, 197, 94, 0.4)",
+  },
+  onlineDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.neonLime,
+  },
+  onlineText: {
+    fontFamily: fonts.display,
+    fontSize: 8,
+    fontWeight: "bold",
+    color: colors.neonLime,
+    letterSpacing: 0.5,
   },
   subtitle: {
-    color: colors.mutedForeground,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    maxWidth: 240,
-  },
-  closeBtn: {
-    padding: 6,
-  },
-  sectionLabel: {
-    color: colors.mutedForeground,
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
-    letterSpacing: 1,
-    marginVertical: 6,
+    color: colors.mutedForeground,
+    marginTop: 1,
+  },
+  closeBtn: {
+    padding: spacing[2],
+  },
+  quickPromptsContainer: {
+    paddingVertical: spacing[2],
+    backgroundColor: "rgba(0, 0, 0, 0.25)",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(255, 255, 255, 0.05)",
   },
   chipsRow: {
-    gap: 8,
-    paddingBottom: spacing[2],
+    paddingHorizontal: spacing[4],
+    gap: spacing[2],
   },
   chip: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgba(103, 232, 249, 0.08)",
-    borderWidth: 1,
-    borderColor: "rgba(103, 232, 249, 0.25)",
-    borderRadius: 16,
-    paddingHorizontal: 10,
+    backgroundColor: "rgba(0, 243, 255, 0.08)",
+    paddingHorizontal: spacing[3],
     paddingVertical: 6,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.2)",
   },
   chipText: {
+    fontFamily: fonts.sans,
+    fontSize: 11,
+    fontWeight: "600",
     color: colors.neonCyan,
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSizes.xs,
   },
-  loadingBox: {
+  messagesContainer: {
+    flex: 1,
+  },
+  messagesContent: {
+    padding: spacing[4],
+    gap: spacing[3],
+  },
+  messageWrapper: {
     flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    maxWidth: "92%",
+  },
+  userMsgWrapper: {
+    alignSelf: "flex-end",
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  botMsgWrapper: {
+    alignSelf: "flex-start",
+  },
+  botAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: "rgba(0, 243, 255, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
     alignItems: "center",
     justifyContent: "center",
-    gap: 8,
-    paddingVertical: 24,
+    marginBottom: 4,
   },
-  loadingText: {
-    color: colors.mutedForeground,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-  },
-  resultContainer: {
-    marginTop: spacing[1],
-    gap: spacing[2],
-  },
-  matchCard: {
-    backgroundColor: "#1a1629",
-    borderWidth: 1,
-    borderColor: "rgba(103, 232, 249, 0.3)",
-    borderRadius: radii.md,
-    padding: spacing[4],
-  },
-  matchHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  userAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.neonCyan,
     alignItems: "center",
-    marginBottom: spacing[1],
+    justifyContent: "center",
+    marginBottom: 4,
   },
-  sourceBadge: {
+  messageBubble: {
+    padding: spacing[3],
+    borderRadius: radii.xl,
+  },
+  userBubble: {
+    backgroundColor: colors.neonCyan,
+    borderBottomRightRadius: 4,
+  },
+  botBubble: {
+    backgroundColor: colors.surface2,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.15)",
+    borderBottomLeftRadius: 4,
+  },
+  botMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+    gap: 10,
+  },
+  sourceTag: {
     flexDirection: "row",
     alignItems: "center",
     gap: 4,
-    backgroundColor: "rgba(163, 230, 53, 0.12)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+    backgroundColor: "rgba(34, 197, 94, 0.1)",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.sm,
   },
-  sourceBadgeText: {
+  sourceTagText: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    fontWeight: "bold",
     color: colors.neonLime,
+    letterSpacing: 0.5,
+  },
+  timeText: {
+    fontFamily: fonts.sans,
+    fontSize: 9,
+    color: colors.mutedForeground,
+  },
+  matchedQuestionText: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     fontWeight: "bold",
+    color: colors.neonPurple,
+    marginBottom: 4,
   },
-  confidenceTag: {
-    color: colors.neonCyan,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-  },
-  matchedQuestion: {
-    color: colors.neonCyan,
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.base,
-    marginBottom: 6,
-  },
-  answerText: {
-    color: colors.foreground,
+  userMsgText: {
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
+    color: "#050810",
+    fontWeight: "600",
+    lineHeight: 18,
+  },
+  botMsgText: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.sm,
+    color: colors.foreground,
     lineHeight: 20,
+  },
+  feedbackContainer: {
+    marginTop: 8,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 255, 255, 0.08)",
   },
   feedbackRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginTop: spacing[4],
-    paddingTop: spacing[2],
-    borderTopWidth: 1,
-    borderTopColor: "rgba(62, 58, 96, 0.5)",
+    gap: 8,
   },
   feedbackLabel: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
     color: colors.mutedForeground,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
   },
   feedbackBtn: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 6,
+    gap: 3,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.sm,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
   },
   feedbackBtnText: {
-    fontFamily: fonts.bodyMedium,
-    fontSize: fontSizes.xs,
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    fontWeight: "bold",
   },
-  feedbackThankYou: {
-    marginTop: spacing[2],
+  feedbackDone: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
     color: colors.neonLime,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
   },
-  noMatchCard: {
-    backgroundColor: "#1a1629",
-    borderWidth: 1,
-    borderColor: "rgba(251, 191, 36, 0.3)",
-    borderRadius: radii.md,
-    padding: spacing[4],
-    alignItems: "center",
-  },
-  noMatchTitle: {
-    color: colors.neonAmber,
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.base,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  noMatchDesc: {
-    color: colors.mutedForeground,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.sm,
-    textAlign: "center",
-  },
-  escalationCard: {
-    backgroundColor: "#18142a",
-    borderWidth: 1,
-    borderColor: "rgba(176, 96, 240, 0.35)",
-    borderRadius: radii.md,
-    padding: spacing[4],
-  },
-  escalationHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    marginBottom: 4,
-  },
-  escalationTitle: {
-    color: colors.neonPurple,
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.sm,
-    fontWeight: "bold",
-  },
-  escalationText: {
-    color: colors.mutedForeground,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    marginBottom: spacing[2],
-    lineHeight: 16,
-  },
-  escalateActionBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    backgroundColor: colors.neonCyan,
-    paddingVertical: 10,
-    borderRadius: radii.sm,
-  },
-  escalateActionBtnText: {
-    color: "#050810",
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.sm,
-    fontWeight: "bold",
-  },
-  ticketSuccessBox: {
+  typingBubble: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "rgba(163, 230, 53, 0.1)",
-    borderWidth: 1,
-    borderColor: "rgba(163, 230, 53, 0.3)",
-    borderRadius: radii.sm,
-    padding: 10,
+    paddingVertical: spacing[2],
   },
-  ticketSuccessTitle: {
-    color: colors.neonLime,
+  typingText: {
     fontFamily: fonts.sans,
-    fontSize: fontSizes.sm,
-    fontWeight: "bold",
-  },
-  ticketSuccessSubtitle: {
-    color: colors.mutedForeground,
-    fontFamily: fonts.body,
     fontSize: fontSizes.xs,
+    color: colors.neonCyan,
   },
-  viewTicketBtn: {
+  ticketBanner: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.neonLime,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 6,
+    gap: 10,
+    backgroundColor: "rgba(34, 197, 94, 0.12)",
+    borderWidth: 1,
+    borderColor: "rgba(34, 197, 94, 0.4)",
+    borderRadius: radii.lg,
+    padding: spacing[3],
+    marginTop: 4,
   },
-  viewTicketBtnText: {
-    color: "#050810",
+  ticketBannerTitle: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     fontWeight: "bold",
+    color: colors.neonLime,
   },
-  emptyPromptState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 32,
-  },
-  emptyPromptTitle: {
-    color: colors.foreground,
+  ticketBannerSub: {
     fontFamily: fonts.sans,
-    fontSize: fontSizes.base,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  emptyPromptSub: {
+    fontSize: 10,
     color: colors.mutedForeground,
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    textAlign: "center",
-    maxWidth: 260,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
-    paddingTop: spacing[2],
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
     borderTopWidth: 1,
-    borderTopColor: "rgba(62, 58, 96, 0.5)",
+    borderTopColor: colors.border,
+    backgroundColor: colors.surface2,
+    gap: spacing[2],
   },
   input: {
     flex: 1,
-    backgroundColor: colors.input,
-    color: colors.foreground,
+    height: 44,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.2)",
+    borderRadius: radii.xl,
+    paddingHorizontal: spacing[3],
     fontFamily: fonts.body,
     fontSize: fontSizes.sm,
-    borderRadius: radii.sm,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
+    color: colors.foreground,
   },
   sendBtn: {
-    width: 38,
-    height: 38,
-    backgroundColor: colors.neonCyan,
-    borderRadius: radii.sm,
+    width: 44,
+    height: 44,
+    borderRadius: radii.xl,
     alignItems: "center",
     justifyContent: "center",
+  },
+  sendBtnActive: {
+    backgroundColor: colors.neonCyan,
+    shadowColor: colors.neonCyan,
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  sendBtnDisabled: {
+    backgroundColor: "rgba(0, 243, 255, 0.3)",
+    opacity: 0.6,
   },
 });

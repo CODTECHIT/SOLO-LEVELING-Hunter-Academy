@@ -47,10 +47,18 @@ export default function RefundsScreen() {
     }
   };
 
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/(tabs)/profile");
+    }
+  };
+
   return (
     <SafeScreen>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
           <ArrowLeft color={colors.foreground} size={24} />
         </TouchableOpacity>
         <Text style={styles.title}>Refunds</Text>

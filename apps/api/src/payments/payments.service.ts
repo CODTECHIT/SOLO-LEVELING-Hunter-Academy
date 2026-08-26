@@ -237,11 +237,9 @@ export class PaymentsService {
     }
 
     const keySecret = this.getKeySecret();
-    const keyId = this.getKeyId();
-    const isDev =
-      keyId.includes("placeholder") ||
-      keySecret.includes("placeholder") ||
-      razorpayOrderId.startsWith("order_dev_");
+    const isMockAllowed =
+      process.env.NODE_ENV !== "production" &&
+      process.env.ENABLE_MOCK_PAYMENTS === "true";
 
     // Standard Razorpay HMAC SHA-256 verification
     const expectedSignature = crypto
@@ -249,9 +247,17 @@ export class PaymentsService {
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
       .digest("hex");
 
-    const isValidSignature =
-      expectedSignature === razorpaySignature ||
-      (isDev && razorpaySignature.startsWith("dev_sig_"));
+    let isValidSignature = false;
+    try {
+      isValidSignature =
+        crypto.timingSafeEqual(
+          Buffer.from(expectedSignature, "utf8"),
+          Buffer.from(razorpaySignature, "utf8"),
+        ) ||
+        (isMockAllowed && razorpaySignature.startsWith("dev_sig_"));
+    } catch {
+      isValidSignature = false;
+    }
 
     if (!isValidSignature) {
       await this.prisma.payment.update({
@@ -321,15 +327,31 @@ export class PaymentsService {
    */
   async handleWebhook(payload: any, signature: string) {
     const keySecret = this.getKeySecret();
-    const isPlaceholder = keySecret.includes("placeholder");
+    const isMockAllowed =
+      process.env.NODE_ENV !== "production" &&
+      process.env.ENABLE_MOCK_PAYMENTS === "true";
 
-    if (!isPlaceholder && signature) {
+    if (!signature && !isMockAllowed) {
+      throw new BadRequestException("Missing x-razorpay-signature header");
+    }
+
+    if (signature) {
       const expectedSig = crypto
         .createHmac("sha256", keySecret)
         .update(JSON.stringify(payload))
         .digest("hex");
 
-      if (expectedSig !== signature) {
+      let isSigMatch = false;
+      try {
+        isSigMatch = crypto.timingSafeEqual(
+          Buffer.from(expectedSig, "utf8"),
+          Buffer.from(signature, "utf8"),
+        );
+      } catch {
+        isSigMatch = false;
+      }
+
+      if (!isSigMatch) {
         throw new BadRequestException("Invalid webhook signature");
       }
     }

@@ -1,9 +1,13 @@
 import { Injectable } from "@nestjs/common";
+import { JwtService } from "@nestjs/jwt";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
 export class CoursesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
 
   async findAll(skip = 0, take = 10) {
     return this.prisma.course.findMany({
@@ -180,13 +184,12 @@ export class CoursesService {
   }
 
   async verifyToken(token: string) {
-    // A quick hack since we don't have JwtService injected here.
-    // If we wanted to be perfectly clean, we'd inject JwtService.
-    // But since this is a known payload structure we can just base64 decode it for public context
-    const parts = token.split('.');
-    if (parts.length !== 3) throw new Error("Invalid token");
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64').toString('utf8'));
-    return payload;
+    try {
+      const payload = await this.jwtService.verifyAsync(token);
+      return payload;
+    } catch {
+      throw new Error("Invalid token signature or expired token");
+    }
   }
 
   async findBySlugWithContext(slug: string, userId: string | null) {

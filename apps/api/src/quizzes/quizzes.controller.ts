@@ -22,8 +22,9 @@ export class QuizzesController {
 
   @UseGuards(JwtAuthGuard)
   @Get(":id")
-  async findOne(@Param("id") id: string) {
-    return this.quizzesService.findOneForStudent(id);
+  async findOne(@Request() req: any, @Param("id") id: string) {
+    const userId = req.user?.id || req.user?.userId;
+    return this.quizzesService.findOneForStudent(userId, id);
   }
 
   @UseGuards(JwtAuthGuard)

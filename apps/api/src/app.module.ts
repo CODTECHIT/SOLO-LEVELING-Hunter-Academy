@@ -18,6 +18,16 @@ import { MailModule } from "./mail/mail.module";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 
+const jwtSecret =
+  process.env.JWT_SECRET ||
+  (process.env.NODE_ENV === "production"
+    ? undefined
+    : "dev-fallback-secret-local-only");
+
+if (!jwtSecret && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET environment variable is required in production");
+}
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -26,7 +36,7 @@ import { AppService } from "./app.service";
     }),
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || "your-secret-key-change-in-production",
+      secret: jwtSecret || "dev-fallback-secret-local-only",
       signOptions: { expiresIn: "7d" },
     }),
     PassportModule,

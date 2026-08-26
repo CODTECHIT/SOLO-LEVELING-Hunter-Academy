@@ -26,6 +26,11 @@ import {
   Bot,
   Sparkles,
   Trophy,
+  Play,
+  Pause,
+  Award,
+  GraduationCap,
+  Compass,
 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -37,7 +42,6 @@ import Animated, {
 } from "react-native-reanimated";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { SafeScreen } from "@/components/layout/SafeScreen";
-import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { SkeletonCard } from "@/components/ui/Skeleton";
@@ -50,6 +54,7 @@ import { useAuthStore } from "@/store/authStore";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
+const CARD_W = Math.min(SCREEN_W * 0.78, 320);
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -63,10 +68,12 @@ export default function HomeScreen() {
     markAllAsRead,
     refetch: refetchNotifs,
   } = useNotifications(isAuthenticated);
+
   const [notifModalVisible, setNotifModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [assistantVisible, setAssistantVisible] = useState(false);
   const [assistantQuery, setAssistantQuery] = useState("");
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -85,32 +92,30 @@ export default function HomeScreen() {
   };
 
   const glowOpacity = useSharedValue(0.4);
-  const textScale = useSharedValue(1);
+  const pulseScale = useSharedValue(1);
 
   useEffect(() => {
     glowOpacity.value = withRepeat(
-      withSequence(withTiming(1, { duration: 1500 }), withTiming(0.4, { duration: 1500 })),
+      withSequence(withTiming(1, { duration: 1600 }), withTiming(0.4, { duration: 1600 })),
       -1,
       true
     );
-    textScale.value = withRepeat(
-      withSequence(withTiming(1.02, { duration: 2000 }), withTiming(1, { duration: 2000 })),
+    pulseScale.value = withRepeat(
+      withSequence(withTiming(1.03, { duration: 1800 }), withTiming(1, { duration: 1800 })),
       -1,
       true
     );
   }, []);
 
-  const animatedHeroTitle = useAnimatedStyle(() => ({
-    transform: [{ scale: textScale.value }],
-    opacity: glowOpacity.value + 0.5,
+  const animatedPulse = useAnimatedStyle(() => ({
+    transform: [{ scale: pulseScale.value }],
   }));
 
   const player = useVideoPlayer(
-    introVideo?.videoUrl ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4", 
-    player => {
-      player.loop = true;
-      player.muted = true;
-      player.play();
+    introVideo?.videoUrl ?? "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    (p) => {
+      p.loop = true;
+      p.muted = true;
     }
   );
 
@@ -128,195 +133,329 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* ── Hero Banner ── */}
-        <View>
+        {/* ── Top Header Navigation Bar ── */}
+        <View style={styles.topHeader}>
+          <View style={styles.brandRow}>
+            <View style={styles.logoBadge}>
+              <CyberTechLogo size="sm" showText={false} />
+            </View>
+            <View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Text style={styles.brandTitle}>CYBER TECH</Text>
+                <View style={styles.brandPill}>
+                  <Text style={styles.brandPillText}>ACADEMY</Text>
+                </View>
+              </View>
+              <Text style={styles.greetingText}>
+                {user ? `Hunter ${user.name.split(" ")[0]} • Active` : "Next-Gen Developer Training"}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.headerActions}>
+            {/* AI Shortcut Button */}
+            <TouchableOpacity
+              style={styles.aiHeaderBtn}
+              onPress={() => {
+                setAssistantQuery("");
+                setAssistantVisible(true);
+              }}
+              activeOpacity={0.8}
+            >
+              <Bot color={colors.neonCyan} size={18} />
+            </TouchableOpacity>
+
+            {/* Notification Bell */}
+            {isAuthenticated && (
+              <TouchableOpacity
+                style={styles.notifBtn}
+                onPress={() => setNotifModalVisible(true)}
+                activeOpacity={0.8}
+              >
+                <Bell color={colors.neonAmber} size={18} />
+                {unreadCount > 0 && (
+                  <View style={styles.notifBadge}>
+                    <Text style={styles.notifBadgeText}>
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        {/* ── Hero Banner Section ── */}
+        <View style={styles.heroWrapper}>
           <LinearGradient
-            colors={[colors.surface2, colors.background]}
+            colors={["#0c1428", "#080d1a", "#050810"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroBanner}
           >
-            {/* Decorative neon line */}
-            <View style={styles.neonLineTop} />
+            {/* Top decorative neon glow line */}
+            <View style={styles.neonAccentLine} />
 
-            <View style={styles.heroTop}>
-              <View style={styles.heroIconBox}>
-                <CyberTechLogo size="sm" showText={false} />
-              </View>
-              <View style={styles.heroText}>
-                <View style={styles.heroBrandRow}>
-                  <Text style={styles.heroBrand}>CYBER TECH</Text>
-                  <View style={styles.academyPill}>
-                    <Text style={styles.academyPillText}>ACADEMY</Text>
-                  </View>
+            <View style={styles.heroContent}>
+              <View style={styles.heroTagRow}>
+                <View style={styles.heroStatusPill}>
+                  <Sparkles color={colors.neonCyan} size={11} />
+                  <Text style={styles.heroStatusText}>CYBER MASTERCLASSES</Text>
                 </View>
-                <Text style={styles.heroSub}>
-                  {user ? `Hunter ${user.name.split(" ")[0]} • Level Up` : "Unleash Your Inner Hunter"}
-                </Text>
+                {stats?.rankLetter && (
+                  <View style={styles.heroRankPill}>
+                    <Text style={styles.heroRankText}>{stats.rankLetter}-RANK</Text>
+                  </View>
+                )}
               </View>
 
-              {/* Notification Bell */}
-              {isAuthenticated && (
+              <Text style={styles.heroHeadline}>
+                Unleash Your Inner <Text style={{ color: colors.neonCyan }}>Hunter</Text> in Code
+              </Text>
+
+              <Text style={styles.heroSubheadline}>
+                Level up combat software engineering skills through elite masterclasses and cryptographic certification.
+              </Text>
+
+              {/* Action Buttons */}
+              <View style={styles.heroActionRow}>
                 <TouchableOpacity
-                  style={styles.notifBtn}
-                  onPress={() => setNotifModalVisible(true)}
-                  activeOpacity={0.8}
+                  style={styles.heroPrimaryBtn}
+                  onPress={() => {
+                    if (isAuthenticated) {
+                      router.push("/(tabs)/my-learning" as any);
+                    } else {
+                      router.push("/(auth)/login");
+                    }
+                  }}
+                  activeOpacity={0.85}
                 >
-                  <Bell color={colors.neonAmber} size={20} />
-                  {unreadCount > 0 && (
-                    <View style={styles.notifBadge}>
-                      <Text style={styles.notifBadgeText}>
-                        {unreadCount > 9 ? "9+" : unreadCount}
-                      </Text>
-                    </View>
-                  )}
+                  <LinearGradient
+                    colors={[colors.neonCyan, "#00b4d8"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={styles.heroPrimaryBtnGrad}
+                  >
+                    <Zap color="#050810" size={16} />
+                    <Text style={styles.heroPrimaryBtnText}>
+                      {isAuthenticated ? "Continue Mission" : "Begin Your Journey"}
+                    </Text>
+                  </LinearGradient>
                 </TouchableOpacity>
-              )}
-            </View>
 
-            {/* Intro Video */}
-            <View style={styles.videoContainer}>
-              <VideoView
-                style={styles.videoPlayer}
-                player={player}
-                nativeControls={true}
-                contentFit="contain"
-                fullscreenOptions={{ enable: true }}
-                surfaceType="surfaceView"
-              />
-              <View style={styles.videoOverlay}>
-                <Text style={styles.videoTitle}>{introVideo?.title ?? "Welcome to the Academy"}</Text>
+                {introVideo?.videoUrl && (
+                  <TouchableOpacity
+                    style={styles.heroSecondaryBtn}
+                    onPress={() => setShowVideoPlayer(!showVideoPlayer)}
+                    activeOpacity={0.8}
+                  >
+                    <Play color={colors.neonCyan} size={14} />
+                    <Text style={styles.heroSecondaryBtnText}>
+                      {showVideoPlayer ? "Hide Trailer" : "Trailer"}
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
-            </View>
 
-            {/* Hunter Stats Bar — mirrors web HunterStatsBar exactly */}
-            {isAuthenticated && stats && (
-              <TouchableOpacity
-                style={styles.statsContainer}
-                activeOpacity={0.9}
-                onPress={() => router.push("/ranks" as any)}
-              >
-                {/* Rank badge */}
-                <View style={styles.rankRow}>
-                  <View style={styles.rankBadge}>
-                    <Text style={styles.rankLetter}>{stats.rankLetter}</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.rankName}>{stats.rankName}</Text>
-                    <Text style={styles.expLabel}>EXP: {stats.expTotal.toLocaleString()} • Tap for guide</Text>
-                  </View>
-                  <View style={styles.streakBox}>
-                    <Flame color={colors.neonAmber} size={16} />
-                    <Text style={styles.streakText}>
-                      {stats.streak}d streak
+              {/* Collapsible Trailer Preview */}
+              {showVideoPlayer && introVideo?.videoUrl && (
+                <View style={styles.videoPlayerBox}>
+                  <VideoView
+                    style={styles.videoPlayer}
+                    player={player}
+                    nativeControls={true}
+                    contentFit="contain"
+                    fullscreenOptions={{ enable: false }}
+                    surfaceType="textureView"
+                  />
+                  <View style={styles.videoCaptionBar}>
+                    <Text style={styles.videoCaptionText} numberOfLines={1}>
+                      {introVideo.title || "Academy Welcome Teaser"}
                     </Text>
                   </View>
                 </View>
-
-                {/* EXP Bar */}
-                <ProgressBar
-                  value={(stats.expCurrent / stats.expMax) * 100}
-                  color={colors.neonPurple}
-                  label={`EXP  ${stats.expCurrent} / ${stats.expMax}`}
-                  height={8}
-                />
-                {/* HP / Focus */}
-                <ProgressBar
-                  value={stats.focusPct}
-                  color={colors.neonCyan}
-                  label={`HP  Focus ${stats.focusPct}%`}
-                  height={6}
-                />
-                {/* MP / Streak */}
-                <ProgressBar
-                  value={stats.mpPercent}
-                  color={colors.neonLime}
-                  label={`MP  Streak ${stats.streak > 0 ? `(${stats.streak}d)` : `${stats.mpPercent}%`}`}
-                  height={6}
-                />
-              </TouchableOpacity>
-            )}
-
-            {!isAuthenticated && (
-              <TouchableOpacity
-                style={styles.ctaBtn}
-                onPress={() => router.push("/(auth)/login")}
-                activeOpacity={0.8}
-              >
-                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 }}>
-                  <Zap color={colors.white} size={16} />
-                  <Text style={styles.ctaBtnText}>Begin Your Journey</Text>
-                </View>
-              </TouchableOpacity>
-            )}
+              )}
+            </View>
           </LinearGradient>
         </View>
 
-        {/* ── Combat Achievements & Badges ── */}
-        <View style={styles.achievementsRow}>
+        {/* ── Hunter Combat HUD / Stats Card (When Logged In) ── */}
+        {isAuthenticated && stats && (
+          <View style={styles.hudWrapper}>
+            <TouchableOpacity
+              style={styles.statsCard}
+              activeOpacity={0.9}
+              onPress={() => router.push("/ranks" as any)}
+            >
+              <LinearGradient
+                colors={["rgba(176, 96, 240, 0.12)", "rgba(0, 243, 255, 0.06)", colors.surface]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.statsCardGrad}
+              >
+                {/* HUD Top Bar */}
+                <View style={styles.hudTopRow}>
+                  <View style={styles.hudRankBadge}>
+                    <Text style={styles.hudRankLetter}>{stats.rankLetter || "E"}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                      <Text style={styles.hudRankName}>{stats.rankName}</Text>
+                      <View style={styles.hudPrestigeBadge}>
+                        <Shield color={colors.neonPurple} size={10} />
+                        <Text style={styles.hudPrestigeText}>ACTIVE</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.hudExpSub}>
+                      {stats.expTotal.toLocaleString()} EXP Accumulated • Tap for Rank Guide
+                    </Text>
+                  </View>
+                  <View style={styles.streakPill}>
+                    <Flame color={colors.neonAmber} size={16} />
+                    <Text style={styles.streakPillText}>{stats.streak}d</Text>
+                  </View>
+                </View>
+
+                {/* Progress Gauges */}
+                <View style={styles.gaugesContainer}>
+                  <ProgressBar
+                    value={(stats.expCurrent / (stats.expMax || 100)) * 100}
+                    color={colors.neonPurple}
+                    label={`EXP Progression: ${stats.expCurrent} / ${stats.expMax}`}
+                    height={7}
+                  />
+                  <View style={styles.gaugesSplit}>
+                    <View style={{ flex: 1 }}>
+                      <ProgressBar
+                        value={stats.focusPct || 0}
+                        color={colors.neonCyan}
+                        label={`HP Focus: ${stats.focusPct}%`}
+                        height={5}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <ProgressBar
+                        value={stats.mpPercent || 0}
+                        color={colors.neonLime}
+                        label={`MP Streak: ${stats.streak > 0 ? `${stats.streak}d (${stats.mpPercent}%)` : `${stats.mpPercent}%`}`}
+                        height={5}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </LinearGradient>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* ── Tactical Quick Actions Matrix ── */}
+        <View style={styles.quickMatrixWrapper}>
           {[
-            { title: "Shadow Monarch", icon: Crown, color: colors.neonAmber, border: colors.neonAmberAlpha20, bg: "rgba(251, 191, 36, 0.08)" },
-            { title: "Dungeon Raider", icon: Swords, color: colors.neonLime, border: colors.neonLimeAlpha20, bg: "rgba(74, 222, 128, 0.08)" },
-            { title: "Swift Blade", icon: Shield, color: colors.neonCyan, border: colors.neonCyanAlpha20, bg: "rgba(56, 189, 248, 0.08)" },
-          ].map((item, idx) => {
-            const Icon = item.icon;
+            {
+              title: "My Courses",
+              sub: "Resume Study",
+              icon: BookOpen,
+              color: colors.neonCyan,
+              bg: "rgba(0, 243, 255, 0.08)",
+              border: "rgba(0, 243, 255, 0.25)",
+              route: "/(tabs)/my-learning",
+            },
+            {
+              title: "Course Catalog",
+              sub: "Explore All",
+              icon: Compass,
+              color: colors.neonPurple,
+              bg: "rgba(176, 96, 240, 0.08)",
+              border: "rgba(176, 96, 240, 0.25)",
+              route: "/(tabs)/courses",
+            },
+            {
+              title: "Hunter Ranks",
+              sub: "EXP & Prestige",
+              icon: Trophy,
+              color: colors.neonAmber,
+              bg: "rgba(251, 191, 36, 0.08)",
+              border: "rgba(251, 191, 36, 0.25)",
+              route: "/ranks",
+            },
+            {
+              title: "AI Teacher",
+              sub: "24/7 Q&A",
+              icon: Bot,
+              color: colors.neonLime,
+              bg: "rgba(34, 197, 94, 0.08)",
+              border: "rgba(34, 197, 94, 0.25)",
+              action: () => {
+                setAssistantQuery("");
+                setAssistantVisible(true);
+              },
+            },
+          ].map((tile, idx) => {
+            const Icon = tile.icon;
             return (
-              <View
+              <TouchableOpacity
                 key={idx}
                 style={[
-                  styles.achievementCard,
-                  { borderColor: item.border, backgroundColor: item.bg },
+                  styles.quickTile,
+                  { backgroundColor: tile.bg, borderColor: tile.border },
                 ]}
+                activeOpacity={0.8}
+                onPress={() => {
+                  if (tile.action) tile.action();
+                  else if (tile.route) router.push(tile.route as any);
+                }}
               >
-                <Icon color={item.color} size={20} />
-                <Text style={[styles.achievementTitle, { color: item.color }]}>
-                  {item.title}
-                </Text>
-              </View>
+                <View style={[styles.quickTileIcon, { backgroundColor: tile.bg }]}>
+                  <Icon color={tile.color} size={18} />
+                </View>
+                <Text style={styles.quickTileTitle}>{tile.title}</Text>
+                <Text style={[styles.quickTileSub, { color: tile.color }]}>{tile.sub}</Text>
+              </TouchableOpacity>
             );
           })}
         </View>
 
-        {/* ── AI Teacher Assistant Card ── */}
+        {/* ── AI Teacher Assistant Spotlight Banner ── */}
         <TouchableOpacity
           activeOpacity={0.9}
           onPress={() => {
             setAssistantQuery("");
             setAssistantVisible(true);
           }}
-          style={styles.aiCardContainer}
+          style={styles.aiSpotlightWrapper}
         >
           <LinearGradient
-            colors={["rgba(56, 189, 248, 0.18)", "rgba(192, 132, 252, 0.12)", colors.surface]}
+            colors={["rgba(0, 243, 255, 0.15)", "rgba(176, 96, 240, 0.12)", colors.surface]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={styles.aiCard}
+            style={styles.aiSpotlightCard}
           >
-            <View style={styles.aiCardGlowLine} />
-            <View style={styles.aiCardHeader}>
-              <View style={styles.aiAvatar}>
+            <View style={styles.aiSpotlightTop}>
+              <View style={styles.aiAvatarBox}>
                 <Bot color={colors.neonCyan} size={22} />
               </View>
               <View style={{ flex: 1 }}>
-                <View style={styles.aiTitleRow}>
-                  <Text style={styles.aiTitle}>AI TEACHER ASSISTANT</Text>
-                  <View style={styles.onlineBadge}>
-                    <Text style={styles.onlineText}>ONLINE</Text>
+                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                  <Text style={styles.aiSpotlightTitle}>ALEX • AI TEACHER TUTOR</Text>
+                  <View style={styles.aiOnlineBadge}>
+                    <View style={styles.aiOnlineDot} />
+                    <Text style={styles.aiOnlineText}>ONLINE</Text>
                   </View>
                 </View>
-                <Text style={styles.aiSubtitle}>
-                  ALEX • 24/7 Tactical Syllabus & FAQ Guide
+                <Text style={styles.aiSpotlightSub}>
+                  Instant syllabus explanations, code debugging & 24/7 exam answers.
                 </Text>
               </View>
               <ChevronRight color={colors.neonCyan} size={18} />
             </View>
 
             {/* Quick Prompt Chips */}
-            <View style={styles.aiChipRow}>
+            <View style={styles.aiPromptChipsRow}>
               {[
                 "🎓 Certificates",
+                "⚡ Leveling Guide",
                 "📚 Courses Catalog",
-                "💳 Payment Options",
+                "💳 Pricing",
               ].map((chip, idx) => (
                 <TouchableOpacity
                   key={idx}
@@ -325,21 +464,21 @@ export default function HomeScreen() {
                     setAssistantQuery(chip.replace(/^[^\w]+/, ""));
                     setAssistantVisible(true);
                   }}
-                  style={styles.aiChip}
+                  style={styles.aiPromptChip}
                 >
-                  <Text style={styles.aiChipText}>{chip}</Text>
+                  <Text style={styles.aiPromptChipText}>{chip}</Text>
                 </TouchableOpacity>
               ))}
             </View>
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* ── Full Courses ── */}
+        {/* ── Featured Masterclass Courses ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
               <Crown color={colors.neonAmber} size={18} />
-              <Text style={styles.sectionTitle}>Full Courses</Text>
+              <Text style={styles.sectionTitle}>Full Masterclasses</Text>
             </View>
             <TouchableOpacity onPress={() => router.push("/(tabs)/courses")} style={styles.seeAll}>
               <Text style={styles.seeAllText}>See all</Text>
@@ -363,7 +502,7 @@ export default function HomeScreen() {
               renderItem={({ item }) => (
                 <TouchableOpacity
                   style={styles.courseCard}
-                  activeOpacity={0.85}
+                  activeOpacity={0.88}
                   onPress={() => router.push(`/(tabs)/courses/${item.slug}` as any)}
                 >
                   <View style={styles.courseThumb}>
@@ -371,21 +510,30 @@ export default function HomeScreen() {
                       <Image source={{ uri: item.thumbnail }} style={styles.thumbImg} />
                     ) : (
                       <LinearGradient
-                        colors={[colors.neonPurple + "40", colors.neonCyan + "20"]}
+                        colors={["rgba(176, 96, 240, 0.4)", "rgba(0, 243, 255, 0.2)"]}
                         style={styles.thumbGrad}
                       >
-                        <BookOpen color={colors.neonPurple} size={32} />
+                        <BookOpen color={colors.neonPurple} size={36} />
                       </LinearGradient>
                     )}
+                    <View style={styles.thumbBadge}>
+                      <Badge label={item.category?.name || "Masterclass"} variant="purple" />
+                    </View>
                   </View>
+
                   <View style={styles.courseInfo}>
-                    <Badge label={item.category.name} variant="purple" />
                     <Text style={styles.courseTitle} numberOfLines={2}>{item.title}</Text>
-                    <View style={styles.courseMeta}>
-                      <Text style={styles.courseLessons}>{item.lessons.length} lessons</Text>
-                      <Text style={styles.coursePrice}>
-                        {item.price === 0 ? "Free" : `₹${item.price.toLocaleString()}`}
-                      </Text>
+                    
+                    <View style={styles.courseFooter}>
+                      <View style={styles.lessonsCountBox}>
+                        <BookOpen color={colors.mutedForeground} size={12} />
+                        <Text style={styles.courseLessons}>{item.lessons?.length || 0} lessons</Text>
+                      </View>
+                      <View style={styles.pricePill}>
+                        <Text style={styles.coursePrice}>
+                          {item.price === 0 ? "FREE" : `₹${item.price.toLocaleString()}`}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -394,13 +542,13 @@ export default function HomeScreen() {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.horizontalList}
               ListEmptyComponent={
-                <Text style={styles.emptyText}>No courses available yet.</Text>
+                <Text style={styles.emptyText}>No masterclasses published yet.</Text>
               }
             />
           )}
         </View>
 
-        {/* ── Module Courses (Hunter Pass) ── */}
+        {/* ── Hunter Pass Topic Modules ── */}
         {((catalog?.moduleCourses?.length ?? 0) > 0) && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
@@ -413,30 +561,27 @@ export default function HomeScreen() {
               {catalog?.moduleCourses?.map((item) => (
                 <TouchableOpacity
                   key={item.id}
-                  style={[styles.courseCard, styles.moduleCard]}
-                  activeOpacity={0.85}
+                  style={styles.moduleCard}
+                  activeOpacity={0.88}
                   onPress={() => router.push(`/(tabs)/courses/${item.slug}` as any)}
                 >
-                  <View style={styles.courseThumb}>
+                  <View style={styles.moduleThumb}>
                     {item.thumbnail ? (
-                      <Image
-                        source={{ uri: item.thumbnail }}
-                        style={styles.thumbImg}
-                      />
+                      <Image source={{ uri: item.thumbnail }} style={styles.thumbImg} />
                     ) : (
                       <LinearGradient
-                        colors={[colors.neonCyan + "30", colors.neonLime + "20"]}
+                        colors={["rgba(0, 243, 255, 0.3)", "rgba(34, 197, 94, 0.2)"]}
                         style={styles.thumbGrad}
                       >
                         <Swords color={colors.neonCyan} size={28} />
                       </LinearGradient>
                     )}
                   </View>
-                  <View style={styles.courseInfo}>
-                    <Badge label="Module" variant="cyan" />
-                    <Text style={styles.courseTitle} numberOfLines={2}>{item.title}</Text>
-                    <Text style={styles.coursePrice}>
-                      {item.price === 0 ? "Free" : `₹${item.price.toLocaleString()}`}
+                  <View style={styles.moduleInfo}>
+                    <Badge label="Skill Module" variant="cyan" />
+                    <Text style={styles.moduleTitle} numberOfLines={2}>{item.title}</Text>
+                    <Text style={styles.modulePrice}>
+                      {item.price === 0 ? "FREE" : `₹${item.price.toLocaleString()}`}
                     </Text>
                   </View>
                 </TouchableOpacity>
@@ -445,11 +590,39 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Bottom spacer */}
-        <View style={{ height: spacing[8] }} />
+        {/* ── Combat Badges Strip ── */}
+        <View style={styles.achievementsSection}>
+          <Text style={styles.achievementsHeader}>HONOR BADGES</Text>
+          <View style={styles.achievementsRow}>
+            {[
+              { title: "Shadow Monarch", icon: Crown, color: colors.neonAmber, border: "rgba(251, 191, 36, 0.3)", bg: "rgba(251, 191, 36, 0.08)" },
+              { title: "Dungeon Raider", icon: Swords, color: colors.neonLime, border: "rgba(74, 222, 128, 0.3)", bg: "rgba(74, 222, 128, 0.08)" },
+              { title: "Swift Blade", icon: Shield, color: colors.neonCyan, border: "rgba(56, 189, 248, 0.3)", bg: "rgba(56, 189, 248, 0.08)" },
+            ].map((item, idx) => {
+              const Icon = item.icon;
+              return (
+                <View
+                  key={idx}
+                  style={[
+                    styles.achievementCard,
+                    { borderColor: item.border, backgroundColor: item.bg },
+                  ]}
+                >
+                  <Icon color={item.color} size={18} />
+                  <Text style={[styles.achievementTitle, { color: item.color }]}>
+                    {item.title}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </View>
+
+        {/* Bottom spacing */}
+        <View style={{ height: 90 }} />
       </ScrollView>
 
-      {/* ── Notification Modal / Bottom Sheet ── */}
+      {/* ── Notification Sheet ── */}
       <Modal
         visible={notifModalVisible}
         animationType="slide"
@@ -485,10 +658,10 @@ export default function HomeScreen() {
 
             {notifications.length === 0 ? (
               <View style={styles.notifEmpty}>
-                <Bell color={colors.mutedForeground} size={48} opacity={0.3} />
+                <Bell color={colors.mutedForeground} size={44} opacity={0.3} />
                 <Text style={styles.notifEmptyTitle}>All caught up!</Text>
                 <Text style={styles.notifEmptySub}>
-                  New courses, certifications, purchases, and support updates will appear here.
+                  Course updates, certifications, and support responses will appear here.
                 </Text>
               </View>
             ) : (
@@ -535,91 +708,93 @@ export default function HomeScreen() {
   );
 }
 
-const CARD_W = SCREEN_W * 0.7;
-
 const styles = StyleSheet.create({
   scroll: { paddingBottom: 110 },
 
-  // Hero
-  heroBanner: {
-    margin: spacing[4],
-    borderRadius: radii["2xl"],
-    borderWidth: 1,
-    borderColor: colors.neonPurple + "40",
-    padding: spacing[5],
-    overflow: "hidden",
-    gap: spacing[4],
+  // Top Header
+  topHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: spacing[4],
+    paddingTop: spacing[2],
+    paddingBottom: spacing[3],
+    backgroundColor: colors.background,
   },
-  neonLineTop: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 2,
-    backgroundColor: colors.neonPurple + "80",
+  brandRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
   },
-  heroTop: { flexDirection: "row", alignItems: "center", gap: spacing[3] },
-  heroIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: radii.xl,
+  logoBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: radii.lg,
     backgroundColor: "rgba(0, 243, 255, 0.1)",
-    borderWidth: 1.5,
-    borderColor: "rgba(0, 243, 255, 0.4)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: colors.neonCyan,
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  heroText: { flex: 1, gap: 2 },
-  heroBrandRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  heroBrand: {
+  brandTitle: {
     fontFamily: fonts.display,
     fontSize: fontSizes.base,
     color: colors.foreground,
-    letterSpacing: 2,
+    letterSpacing: 1.5,
     fontWeight: "bold",
   },
-  academyPill: {
-    backgroundColor: "rgba(147, 51, 234, 0.2)",
+  brandPill: {
+    backgroundColor: "rgba(176, 96, 240, 0.2)",
     borderWidth: 1,
-    borderColor: "rgba(147, 51, 234, 0.5)",
-    paddingHorizontal: 6,
+    borderColor: "rgba(176, 96, 240, 0.5)",
+    paddingHorizontal: 5,
     paddingVertical: 1,
-    borderRadius: radii.sm,
+    borderRadius: 4,
   },
-  academyPillText: {
+  brandPillText: {
     fontFamily: fonts.display,
-    fontSize: 9,
+    fontSize: 8,
     color: colors.neonPurple,
-    letterSpacing: 1,
     fontWeight: "bold",
   },
-  heroSub: {
-    fontFamily: fonts.body,
+  greetingText: {
+    fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
-    color: colors.neonCyan,
-    letterSpacing: 0.5,
+    color: colors.mutedForeground,
+    marginTop: 1,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  aiHeaderBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: radii.md,
+    backgroundColor: "rgba(0, 243, 255, 0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   notifBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: radii.full,
-    backgroundColor: "rgba(255, 184, 0, 0.08)",
+    width: 36,
+    height: 36,
+    borderRadius: radii.md,
+    backgroundColor: "rgba(251, 191, 36, 0.1)",
     borderWidth: 1,
-    borderColor: "rgba(255, 184, 0, 0.3)",
+    borderColor: "rgba(251, 191, 36, 0.3)",
     alignItems: "center",
     justifyContent: "center",
     position: "relative",
   },
   notifBadge: {
     position: "absolute",
-    top: -2,
-    right: -2,
+    top: -4,
+    right: -4,
     backgroundColor: colors.neonAmber,
-    borderRadius: radii.full,
+    borderRadius: 9,
     minWidth: 16,
     height: 16,
     alignItems: "center",
@@ -627,129 +802,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 3,
   },
   notifBadgeText: {
-    fontSize: 9,
-    fontWeight: "bold",
-    color: "#000",
-  },
-
-  // Video
-  videoContainer: {
-    width: "100%",
-    aspectRatio: 16 / 9,
-    borderRadius: radii.xl,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: colors.neonCyan + "40",
-    marginTop: spacing[2],
-    backgroundColor: colors.surface2,
-  },
-  videoPlayer: {
-    width: "100%",
-    height: "100%",
-  },
-  videoOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: spacing[3],
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  videoTitle: {
     fontFamily: fonts.display,
-    fontSize: fontSizes.sm,
-    color: colors.white,
-    letterSpacing: 1,
+    fontSize: 8,
+    fontWeight: "bold",
+    color: "#050810",
   },
 
-  // Stats
-  statsContainer: { gap: spacing[2] },
-  rankRow: { flexDirection: "row", alignItems: "center", gap: spacing[3], marginBottom: spacing[2] },
-  rankBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: radii.lg,
-    backgroundColor: colors.neonPurpleAlpha20,
-    borderWidth: 1,
-    borderColor: colors.neonPurple,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  rankLetter: { fontFamily: fonts.display, fontSize: fontSizes.lg, color: colors.neonPurple },
-  rankName: { fontFamily: fonts.sans, fontSize: fontSizes.sm, color: colors.foreground, letterSpacing: 1 },
-  expLabel: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.mutedForeground },
-  streakBox: {
-    marginLeft: "auto",
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: colors.neonAmberAlpha20,
-    paddingHorizontal: spacing[2],
-    paddingVertical: 4,
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.neonAmber + "60",
-  },
-  streakText: { fontFamily: fonts.sans, fontSize: fontSizes.xs, color: colors.neonAmber },
-
-  // CTA
-  ctaBtn: {
-    backgroundColor: colors.neonPurple,
-    borderRadius: radii.lg,
-    paddingVertical: spacing[3],
-    alignItems: "center",
-    shadowColor: colors.neonPurple,
-    shadowOpacity: 0.6,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 6,
-  },
-  ctaBtnText: { fontFamily: fonts.sans, fontSize: fontSizes.base, color: colors.white, letterSpacing: 2 },
-
-  // Combat Achievements Row
-  achievementsRow: {
-    flexDirection: "row",
-    gap: spacing[2],
+  // Hero Wrapper
+  heroWrapper: {
     paddingHorizontal: spacing[4],
-    marginTop: spacing[1],
+    marginBottom: spacing[4],
   },
-  achievementCard: {
-    flex: 1,
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[1],
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    gap: 4,
-  },
-  achievementTitle: {
-    fontFamily: fonts.display,
-    fontSize: 9,
-    letterSpacing: 0.5,
-    textAlign: "center",
-    fontWeight: "bold",
-  },
-
-  // AI Teacher Assistant Card
-  aiCardContainer: {
-    marginHorizontal: spacing[4],
-    marginTop: spacing[4],
-  },
-  aiCard: {
+  heroBanner: {
     borderRadius: radii["2xl"],
     borderWidth: 1,
-    borderColor: colors.neonCyanAlpha40,
+    borderColor: "rgba(0, 243, 255, 0.2)",
     padding: spacing[4],
     overflow: "hidden",
-    shadowColor: colors.neonCyan,
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    elevation: 6,
-    gap: spacing[3],
+    position: "relative",
   },
-  aiCardGlowLine: {
+  neonAccentLine: {
     position: "absolute",
     top: 0,
     left: 0,
@@ -757,76 +829,334 @@ const styles = StyleSheet.create({
     height: 2,
     backgroundColor: colors.neonCyan,
   },
-  aiCardHeader: {
+  heroContent: {
+    gap: spacing[2],
+  },
+  heroTagRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  heroStatusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0, 243, 255, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
+  },
+  heroStatusText: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    letterSpacing: 0.8,
+  },
+  heroRankPill: {
+    backgroundColor: "rgba(176, 96, 240, 0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: "rgba(176, 96, 240, 0.4)",
+  },
+  heroRankText: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: colors.neonPurple,
+  },
+  heroHeadline: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.foreground,
+    lineHeight: 24,
+    marginTop: 4,
+  },
+  heroSubheadline: {
+    fontFamily: fonts.body,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    lineHeight: 18,
+  },
+  heroActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+    marginTop: 4,
+  },
+  heroPrimaryBtn: {
+    flex: 1,
+    borderRadius: radii.lg,
+    overflow: "hidden",
+  },
+  heroPrimaryBtnGrad: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    paddingVertical: spacing[3],
+  },
+  heroPrimaryBtnText: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: "#050810",
+    letterSpacing: 0.5,
+  },
+  heroSecondaryBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[3],
+    borderRadius: radii.lg,
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
+  },
+  heroSecondaryBtnText: {
+    fontFamily: fonts.display,
+    fontSize: 10,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+  },
+  videoPlayerBox: {
+    marginTop: spacing[3],
+    borderRadius: radii.lg,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
+    backgroundColor: "#000",
+  },
+  videoPlayer: {
+    width: "100%",
+    height: 160,
+  },
+  videoCaptionBar: {
+    backgroundColor: "rgba(5, 8, 16, 0.9)",
+    paddingHorizontal: spacing[3],
+    paddingVertical: 4,
+  },
+  videoCaptionText: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.mutedForeground,
+  },
+
+  // Hunter Combat HUD
+  hudWrapper: {
+    paddingHorizontal: spacing[4],
+    marginBottom: spacing[4],
+  },
+  statsCard: {
+    borderRadius: radii.xl,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(176, 96, 240, 0.3)",
+  },
+  statsCardGrad: {
+    padding: spacing[4],
+    gap: spacing[3],
+  },
+  hudTopRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing[3],
   },
-  aiAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: radii.lg,
-    backgroundColor: colors.neonCyanAlpha10,
-    borderWidth: 1,
-    borderColor: colors.neonCyanAlpha40,
+  hudRankBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: radii.md,
+    backgroundColor: "rgba(176, 96, 240, 0.2)",
+    borderWidth: 1.5,
+    borderColor: colors.neonPurple,
     alignItems: "center",
     justifyContent: "center",
   },
-  aiTitleRow: {
+  hudRankLetter: {
+    fontFamily: fonts.display,
+    fontSize: 18,
+    fontWeight: "bold",
+    color: colors.neonPurple,
+  },
+  hudRankName: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.sm,
+    fontWeight: "bold",
+    color: colors.foreground,
+  },
+  hudPrestigeBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-  },
-  aiTitle: {
-    fontFamily: fonts.display,
-    fontSize: 11,
-    color: colors.neonCyan,
-    fontWeight: "bold",
-    letterSpacing: 1.5,
-  },
-  onlineBadge: {
-    backgroundColor: "rgba(74, 222, 128, 0.15)",
-    borderWidth: 1,
-    borderColor: "rgba(74, 222, 128, 0.4)",
+    gap: 3,
+    backgroundColor: "rgba(176, 96, 240, 0.15)",
     paddingHorizontal: 5,
     paddingVertical: 1,
-    borderRadius: radii.sm,
+    borderRadius: 4,
   },
-  onlineText: {
-    fontFamily: fonts.sans,
+  hudPrestigeText: {
+    fontFamily: fonts.display,
     fontSize: 8,
-    color: colors.neonLime,
     fontWeight: "bold",
-    letterSpacing: 0.5,
+    color: colors.neonPurple,
   },
-  aiSubtitle: {
-    fontFamily: fonts.body,
+  hudExpSub: {
+    fontFamily: fonts.sans,
     fontSize: fontSizes.xs,
     color: colors.mutedForeground,
     marginTop: 1,
   },
-  aiChipRow: {
+  streakPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "rgba(251, 191, 36, 0.12)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: "rgba(251, 191, 36, 0.3)",
+  },
+  streakPillText: {
+    fontFamily: fonts.display,
+    fontSize: 11,
+    fontWeight: "bold",
+    color: colors.neonAmber,
+  },
+  gaugesContainer: {
+    gap: spacing[2],
+  },
+  gaugesSplit: {
     flexDirection: "row",
     gap: spacing[2],
+  },
+
+  // Tactical Quick Actions Matrix
+  quickMatrixWrapper: {
+    flexDirection: "row",
     flexWrap: "wrap",
+    paddingHorizontal: spacing[4],
+    gap: spacing[2],
+    marginBottom: spacing[4],
   },
-  aiChip: {
-    backgroundColor: "rgba(22, 19, 41, 0.8)",
+  quickTile: {
+    width: (SCREEN_W - spacing[4] * 2 - spacing[2]) / 2,
+    padding: spacing[3],
+    borderRadius: radii.xl,
     borderWidth: 1,
-    borderColor: "rgba(56, 189, 248, 0.3)",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radii.full,
+    gap: 3,
   },
-  aiChipText: {
+  quickTileIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: radii.md,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  quickTileTitle: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: "bold",
+    color: colors.foreground,
+  },
+  quickTileSub: {
     fontFamily: fonts.sans,
     fontSize: 10,
-    color: colors.foreground,
     fontWeight: "600",
   },
 
-  // Sections
-  section: { marginTop: spacing[6] },
+  // AI Teacher Assistant Spotlight
+  aiSpotlightWrapper: {
+    paddingHorizontal: spacing[4],
+    marginBottom: spacing[4],
+  },
+  aiSpotlightCard: {
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
+    padding: spacing[4],
+    gap: spacing[3],
+  },
+  aiSpotlightTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[3],
+  },
+  aiAvatarBox: {
+    width: 42,
+    height: 42,
+    borderRadius: radii.lg,
+    backgroundColor: "rgba(0, 243, 255, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  aiSpotlightTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    letterSpacing: 0.5,
+  },
+  aiOnlineBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 3,
+    backgroundColor: "rgba(34, 197, 94, 0.15)",
+    paddingHorizontal: 5,
+    paddingVertical: 1,
+    borderRadius: radii.full,
+  },
+  aiOnlineDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.neonLime,
+  },
+  aiOnlineText: {
+    fontFamily: fonts.display,
+    fontSize: 8,
+    fontWeight: "bold",
+    color: colors.neonLime,
+  },
+  aiSpotlightSub: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  aiPromptChipsRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing[2],
+  },
+  aiPromptChip: {
+    backgroundColor: "rgba(0, 243, 255, 0.08)",
+    paddingHorizontal: spacing[3],
+    paddingVertical: 5,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.2)",
+  },
+  aiPromptChipText: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    fontWeight: "600",
+    color: colors.neonCyan,
+  },
+
+  // Section Standard Headers
+  section: {
+    marginBottom: spacing[5],
+  },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -834,72 +1164,203 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     marginBottom: spacing[3],
   },
-  sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: spacing[2] },
-  sectionTitle: { fontFamily: fonts.display, fontSize: fontSizes.base, color: colors.foreground, letterSpacing: 2 },
-  seeAll: { flexDirection: "row", alignItems: "center", gap: 2 },
-  seeAllText: { fontFamily: fonts.body, fontSize: fontSizes.sm, color: colors.neonPurple },
-  horizontalList: { paddingHorizontal: spacing[4], gap: spacing[4] },
-
-  // Course Card
-  courseCard: {
-    width: CARD_W,
-    backgroundColor: colors.card,
-    borderRadius: radii.xl,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: "hidden",
-    shadowColor: colors.neonPurple,
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
-  },
-  moduleGrid: {
+  sectionTitleRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: spacing[4],
-    gap: spacing[4],
-    justifyContent: "space-between",
+    alignItems: "center",
+    gap: 6,
   },
-  moduleCard: {
-    width: "47%", // two columns
-    borderColor: colors.neonCyan + "40",
-    shadowColor: colors.neonCyan,
-  },
-  courseCardSkeleton: { width: CARD_W },
-  courseThumb: { height: 140 },
-  thumbImg: { width: "100%", height: "100%", resizeMode: "cover" },
-  thumbGrad: { flex: 1, alignItems: "center", justifyContent: "center" },
-  courseInfo: { padding: spacing[4], gap: spacing[2] },
-  courseTitle: {
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.base,
+  sectionTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.md,
+    fontWeight: "bold",
     color: colors.foreground,
     letterSpacing: 0.5,
-    lineHeight: 22,
   },
-  courseMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  courseLessons: { fontFamily: fonts.body, fontSize: fontSizes.xs, color: colors.mutedForeground },
-  coursePrice: { fontFamily: fonts.sans, fontSize: fontSizes.sm, color: colors.neonAmber, letterSpacing: 1 },
-  emptyText: {
-    fontFamily: fonts.body,
+  seeAll: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  seeAllText: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.xs,
+    color: colors.neonPurple,
+    fontWeight: "bold",
+  },
+  horizontalList: {
+    paddingHorizontal: spacing[4],
+    gap: spacing[3],
+  },
+
+  // Masterclass Course Cards
+  courseCard: {
+    width: CARD_W,
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.08)",
+    overflow: "hidden",
+  },
+  courseCardSkeleton: {
+    width: CARD_W,
+    height: 220,
+    borderRadius: radii.xl,
+  },
+  courseThumb: {
+    width: "100%",
+    height: 120,
+    backgroundColor: colors.surface2,
+    position: "relative",
+  },
+  thumbImg: {
+    width: "100%",
+    height: "100%",
+  },
+  thumbGrad: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  thumbBadge: {
+    position: "absolute",
+    top: 8,
+    left: 8,
+  },
+  courseInfo: {
+    padding: spacing[3],
+    gap: spacing[2],
+  },
+  courseTitle: {
+    fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
-    color: colors.mutedForeground,
-    padding: spacing[4],
+    fontWeight: "bold",
+    color: colors.foreground,
+    lineHeight: 18,
+    minHeight: 36,
   },
+  courseFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 4,
+  },
+  lessonsCountBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  courseLessons: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: colors.mutedForeground,
+  },
+  pricePill: {
+    backgroundColor: "rgba(0, 243, 255, 0.1)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
+  },
+  coursePrice: {
+    fontFamily: fonts.display,
+    fontSize: 11,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+  },
+  emptyText: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    marginLeft: spacing[4],
+  },
+
+  // Module Grid
+  moduleGrid: {
+    paddingHorizontal: spacing[4],
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing[3],
+  },
+  moduleCard: {
+    width: (SCREEN_W - spacing[4] * 2 - spacing[3]) / 2,
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.15)",
+    overflow: "hidden",
+  },
+  moduleThumb: {
+    width: "100%",
+    height: 90,
+    backgroundColor: colors.surface2,
+  },
+  moduleInfo: {
+    padding: spacing[3],
+    gap: 4,
+  },
+  moduleTitle: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    fontWeight: "bold",
+    color: colors.foreground,
+    minHeight: 28,
+  },
+  modulePrice: {
+    fontFamily: fonts.display,
+    fontSize: 10,
+    fontWeight: "bold",
+    color: colors.neonLime,
+    marginTop: 2,
+  },
+
+  // Achievements Badges
+  achievementsSection: {
+    paddingHorizontal: spacing[4],
+    marginTop: spacing[2],
+  },
+  achievementsHeader: {
+    fontFamily: fonts.display,
+    fontSize: 10,
+    fontWeight: "bold",
+    color: colors.mutedForeground,
+    letterSpacing: 1,
+    marginBottom: spacing[2],
+  },
+  achievementsRow: {
+    flexDirection: "row",
+    gap: spacing[2],
+  },
+  achievementCard: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[2],
+    borderRadius: radii.lg,
+    borderWidth: 1,
+  },
+  achievementTitle: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    fontWeight: "bold",
+  },
+
+  // Notification Modal Sheet
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.75)",
+    backgroundColor: "rgba(5, 8, 16, 0.8)",
     justifyContent: "flex-end",
   },
   modalContainer: {
+    height: "75%",
     backgroundColor: colors.surface,
     borderTopLeftRadius: radii["2xl"],
     borderTopRightRadius: radii["2xl"],
-    borderTopWidth: 1,
-    borderColor: colors.border,
-    maxHeight: "80%",
-    paddingBottom: spacing[6],
+    borderWidth: 1,
+    borderColor: "rgba(251, 191, 36, 0.3)",
   },
   modalHeader: {
     flexDirection: "row",
@@ -916,89 +1377,87 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontFamily: fonts.display,
-    fontSize: fontSizes.base,
+    fontSize: fontSizes.md,
+    fontWeight: "bold",
     color: colors.foreground,
-    letterSpacing: 1,
   },
   modalBadge: {
-    backgroundColor: colors.neonAmberAlpha20,
-    paddingHorizontal: spacing[2],
-    paddingVertical: 2,
+    backgroundColor: colors.neonAmber,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
     borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: colors.neonAmber,
   },
   modalBadgeText: {
-    fontFamily: fonts.sans,
-    fontSize: 10,
-    color: colors.neonAmber,
+    fontFamily: fonts.display,
+    fontSize: 9,
     fontWeight: "bold",
+    color: "#050810",
   },
   markAllText: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
+    fontFamily: fonts.display,
+    fontSize: 10,
     color: colors.neonCyan,
-    textDecorationLine: "underline",
+    fontWeight: "bold",
   },
   closeBtn: {
     padding: 4,
+  },
+  notifEmpty: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing[6],
+    gap: spacing[2],
+  },
+  notifEmptyTitle: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.base,
+    color: colors.foreground,
+    fontWeight: "bold",
+  },
+  notifEmptySub: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    textAlign: "center",
+    lineHeight: 18,
   },
   notifList: {
     padding: spacing[4],
     gap: spacing[3],
   },
   notifItem: {
+    padding: spacing[3],
     backgroundColor: colors.surface2,
-    borderRadius: radii.xl,
-    padding: 14,
+    borderRadius: radii.lg,
     borderWidth: 1,
     borderColor: colors.border,
     gap: 4,
   },
   notifItemUnread: {
-    borderColor: colors.neonAmber + "60",
-    backgroundColor: colors.neonAmberAlpha20 + "20",
+    borderColor: "rgba(251, 191, 36, 0.4)",
+    backgroundColor: "rgba(251, 191, 36, 0.05)",
   },
   notifItemHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
+    justifyContent: "space-between",
   },
   notifItemTitle: {
     fontFamily: fonts.sans,
     fontSize: fontSizes.sm,
-    color: colors.foreground,
     fontWeight: "bold",
-    flex: 1,
+    color: colors.foreground,
   },
   notifItemDate: {
-    fontFamily: fonts.body,
-    fontSize: 10,
+    fontFamily: fonts.sans,
+    fontSize: 9,
     color: colors.mutedForeground,
   },
   notifItemMessage: {
     fontFamily: fonts.body,
     fontSize: fontSizes.xs,
     color: colors.mutedForeground,
-    lineHeight: 18,
-  },
-  notifEmpty: {
-    padding: spacing[8],
-    alignItems: "center",
-    justifyContent: "center",
-    gap: spacing[3],
-  },
-  notifEmptyTitle: {
-    fontFamily: fonts.display,
-    fontSize: fontSizes.base,
-    color: colors.foreground,
-    letterSpacing: 1,
-  },
-  notifEmptySub: {
-    fontFamily: fonts.body,
-    fontSize: fontSizes.xs,
-    color: colors.mutedForeground,
-    textAlign: "center",
-    lineHeight: 18,
+    lineHeight: 16,
   },
 });

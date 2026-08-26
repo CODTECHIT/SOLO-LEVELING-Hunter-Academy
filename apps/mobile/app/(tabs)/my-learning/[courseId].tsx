@@ -26,6 +26,9 @@ import {
   Swords,
   Zap,
   Bot,
+  Maximize2,
+  Minimize2,
+  Shield,
 } from "lucide-react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import {
@@ -48,6 +51,33 @@ import { Badge } from "@/components/ui/Badge";
 import { colors, fonts, fontSizes, spacing, radii } from "@/theme";
 
 const { width: SCREEN_W } = Dimensions.get("window");
+
+// Floating dynamic security watermark to prevent analog camera & screen capture
+function VideoWatermark({ text }: { text: string }) {
+  const [pos, setPos] = useState({ top: 18, left: 15 });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setPos({
+        top: Math.floor(12 + Math.random() * 60),
+        left: Math.floor(8 + Math.random() * 50),
+      });
+    }, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <View
+      pointerEvents="none"
+      style={[
+        styles.watermarkContainer,
+        { top: `${pos.top}%`, left: `${pos.left}%` },
+      ]}
+    >
+      <Text style={styles.watermarkText}>{text}</Text>
+    </View>
+  );
+}
 
 export default function LearningPlayerScreen() {
   const { courseId, lessonId: initialLessonId } = useLocalSearchParams<{
@@ -87,6 +117,18 @@ export default function LearningPlayerScreen() {
   const [videoDuration, setVideoDuration] = useState<number>(0);
   const [isMarkingComplete, setIsMarkingComplete] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+
+  // Auto-pause video and alert if screenshot or screen capture is triggered
+  useScreenshotListener(() => {
+    try {
+      player?.pause();
+    } catch {}
+    Alert.alert(
+      "Screen Capture Restricted",
+      "Screen recording or taking screenshots of academy lectures is strictly prohibited.",
+    );
+  });
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -235,57 +277,97 @@ export default function LearningPlayerScreen() {
 
   return (
     <SafeScreen>
-      {/* Back */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <ArrowLeft color={colors.foreground} size={20} />
-        <Text style={styles.backText}>My Learning</Text>
-      </TouchableOpacity>
+      {/* Back (Hidden when in Fullscreen) */}
+      {!isFullscreen && (
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <ArrowLeft color={colors.foreground} size={20} />
+          <Text style={styles.backText}>My Learning</Text>
+        </TouchableOpacity>
+      )}
 
-      {/* Video Player */}
-      <View style={styles.videoContainer}>
+      {/* Video Player (In-App Secured Fullscreen stays in main Activity window with FLAG_SECURE) */}
+      <View style={isFullscreen ? styles.videoContainerFullscreen : styles.videoContainer}>
         {isEnrolled && activeLesson ? (
-          youtubeId ? (
-            <WebView
-              style={styles.video}
-              source={{
-                html: `
-                  <!DOCTYPE html>
-                  <html>
-                    <head>
-                      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-                      <style>
-                        body { margin: 0; background: black; display: flex; height: 100vh; align-items: center; justify-content: center; overflow: hidden; }
-                        iframe { width: 100vw; height: 100vh; border: none; }
-                      </style>
-                    </head>
-                    <body>
-                      <iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0&autoplay=1&playsinline=1&modestbranding=1&origin=https://www.youtube.com" allowfullscreen allow="autoplay; fullscreen"></iframe>
-                    </body>
-                  </html>
-                `,
-                baseUrl: "https://www.youtube.com",
-              }}
-              allowsFullscreenVideo
-              mediaPlaybackRequiresUserAction={false}
-              javaScriptEnabled
-              domStorageEnabled
+          <>
+            {youtubeId ? (
+              <WebView
+                style={styles.video}
+                source={{
+                  html: `
+                    <!DOCTYPE html>
+                    <html>
+                      <head>
+                        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+                        <style>
+                          body { margin: 0; background: black; display: flex; height: 100vh; align-items: center; justify-content: center; overflow: hidden; }
+                          iframe { width: 100vw; height: 100vh; border: none; }
+                        </style>
+                      </head>
+                      <body>
+                        <iframe src="https://www.youtube.com/embed/${youtubeId}?rel=0&autoplay=1&playsinline=1&modestbranding=1&fs=0&origin=https://www.youtube.com" allow="autoplay"></iframe>
+                      </body>
+                    </html>
+                  `,
+                  baseUrl: "https://www.youtube.com",
+                }}
+                allowsFullscreenVideo={false}
+                mediaPlaybackRequiresUserAction={false}
+                javaScriptEnabled
+                domStorageEnabled
+              />
+            ) : (
+              <VideoView
+                style={styles.video}
+                player={player}
+                nativeControls={true}
+                contentFit="contain"
+                fullscreenOptions={{ enable: false }}
+                surfaceType="textureView"
+              />
+            )}
+
+            {/* Dynamic Watermark to protect content */}
+            <VideoWatermark
+              text={`${user?.email || user?.name || "STUDENT"} • ID:${user?.id ? user.id.slice(0, 8) : "SECURE"}`}
             />
-          ) : (
-            <VideoView
-              style={styles.video}
-              player={player}
-              nativeControls={true}
-              contentFit="contain"
-              fullscreenOptions={{ enable: true }}
-              surfaceType="surfaceView"
-              onFullscreenEnter={() => {
-                preventScreenCaptureAsync("fullscreen_video_window").catch(() => {});
-              }}
-              onFullscreenExit={() => {
-                preventScreenCaptureAsync("fullscreen_video_window").catch(() => {});
-              }}
-            />
-          )
+
+            {/* Fullscreen Overlay Controls */}
+            {isFullscreen ? (
+              <View style={styles.fullscreenHeader}>
+                <TouchableOpacity
+                  style={styles.fullscreenBackBtn}
+                  onPress={() => setIsFullscreen(false)}
+                  activeOpacity={0.8}
+                >
+                  <ArrowLeft color="#ffffff" size={18} />
+                  <Text style={styles.fullscreenTitle} numberOfLines={1}>
+                    {activeLesson.title}
+                  </Text>
+                </TouchableOpacity>
+                <View style={styles.fullscreenHeaderRight}>
+                  <View style={styles.protectedBadge}>
+                    <Shield color={colors.neonCyan} size={11} />
+                    <Text style={styles.protectedBadgeText}>SECURE</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.fullscreenExitBtn}
+                    onPress={() => setIsFullscreen(false)}
+                    activeOpacity={0.8}
+                  >
+                    <Minimize2 color="#ffffff" size={18} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={styles.fullscreenToggleBtn}
+                onPress={() => setIsFullscreen(true)}
+                activeOpacity={0.8}
+              >
+                <Maximize2 color="#ffffff" size={16} />
+              </TouchableOpacity>
+            )}
+          </>
         ) : (
           <View style={styles.videoLocked}>
             <Lock color={colors.mutedForeground} size={40} />
@@ -663,8 +745,107 @@ const styles = StyleSheet.create({
     width: SCREEN_W,
     height: (SCREEN_W * 9) / 16,
     backgroundColor: "#000",
+    position: "relative",
+    overflow: "hidden",
+  },
+  videoContainerFullscreen: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    width: "100%",
+    height: "100%",
+    backgroundColor: "#000",
+    zIndex: 9999,
+    justifyContent: "center",
   },
   video: { width: "100%", height: "100%" },
+  fullscreenToggleBtn: {
+    position: "absolute",
+    bottom: 12,
+    right: 12,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    padding: 8,
+    borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.25)",
+    zIndex: 20,
+  },
+  fullscreenHeader: {
+    position: "absolute",
+    top: 14,
+    left: 14,
+    right: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: "rgba(5, 8, 16, 0.85)",
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radii.lg,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.25)",
+    zIndex: 30,
+  },
+  fullscreenBackBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+    flex: 1,
+  },
+  fullscreenTitle: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.sm,
+    fontWeight: "bold",
+    color: colors.foreground,
+    flex: 1,
+  },
+  fullscreenHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing[2],
+  },
+  protectedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(0, 243, 255, 0.1)",
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: radii.full,
+    borderWidth: 1,
+    borderColor: "rgba(0, 243, 255, 0.3)",
+  },
+  protectedBadgeText: {
+    fontFamily: fonts.display,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    letterSpacing: 0.5,
+  },
+  fullscreenExitBtn: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    padding: 6,
+    borderRadius: radii.md,
+  },
+  watermarkContainer: {
+    position: "absolute",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    borderRadius: radii.sm,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    zIndex: 15,
+  },
+  watermarkText: {
+    fontFamily: fonts.sans,
+    fontSize: 10,
+    color: "rgba(255, 255, 255, 0.35)",
+    fontWeight: "bold",
+    letterSpacing: 0.5,
+  },
   videoLocked: {
     flex: 1,
     alignItems: "center",

@@ -112,8 +112,10 @@ export class MailService {
       }
     }
 
-    // Always log OTP for development / backup fallback
-    this.logger.log(`[RESET OTP FALLBACK] Code for ${toEmail}: ${resetCode}`);
+    // Fallback logging for local testing only
+    if (process.env.NODE_ENV !== "production") {
+      this.logger.debug(`[DEV ONLY] Reset code generated for ${toEmail}`);
+    }
     return true;
   }
 }

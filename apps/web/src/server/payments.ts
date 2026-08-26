@@ -204,11 +204,10 @@ export const verifyRazorpayPaymentFn = createServerFn({ method: "POST" })
       };
     }
 
-    const { keyId, keySecret } = getRazorpayKeys();
-    const isDev =
-      keyId.includes("placeholder") ||
-      keySecret.includes("placeholder") ||
-      razorpayOrderId.startsWith("order_dev_");
+    const { keySecret } = getRazorpayKeys();
+    const isMockAllowed =
+      process.env.NODE_ENV !== "production" &&
+      process.env.ENABLE_MOCK_PAYMENTS === "true";
 
     // Cryptographic HMAC SHA-256 Signature Verification
     const expectedSignature = crypto
@@ -216,9 +215,17 @@ export const verifyRazorpayPaymentFn = createServerFn({ method: "POST" })
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
       .digest("hex");
 
-    const isValidSignature =
-      expectedSignature === razorpaySignature ||
-      (isDev && razorpaySignature.startsWith("dev_sig_"));
+    let isValidSignature = false;
+    try {
+      isValidSignature =
+        crypto.timingSafeEqual(
+          Buffer.from(expectedSignature, "utf8"),
+          Buffer.from(razorpaySignature, "utf8"),
+        ) ||
+        (isMockAllowed && razorpaySignature.startsWith("dev_sig_"));
+    } catch {
+      isValidSignature = false;
+    }
 
     if (!isValidSignature) {
       await prisma.payment.update({

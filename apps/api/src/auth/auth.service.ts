@@ -8,7 +8,10 @@ import { SignInDto } from "./dto/sign-in.dto";
 
 @Injectable()
 export class AuthService {
-  private resetCodes = new Map<string, { code: string; expiresAt: number }>();
+  private resetCodes = new Map<
+    string,
+    { code: string; expiresAt: number; attempts: number }
+  >();
 
   constructor(
     private prisma: PrismaService,
@@ -162,7 +165,7 @@ export class AuthService {
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
 
-    this.resetCodes.set(normalizedEmail, { code, expiresAt });
+    this.resetCodes.set(normalizedEmail, { code, expiresAt, attempts: 0 });
 
     await this.mailService.sendPasswordResetEmail(normalizedEmail, code);
 
@@ -194,8 +197,25 @@ export class AuthService {
       throw new BadRequestException("Reset code has expired. Please request a new one.");
     }
 
+    if (record.attempts >= 5) {
+      this.resetCodes.delete(normalizedEmail);
+      throw new BadRequestException(
+        "Too many failed verification attempts. Please request a new reset code.",
+      );
+    }
+
     if (record.code !== code.trim()) {
-      throw new BadRequestException("Incorrect verification code. Please check your email.");
+      record.attempts += 1;
+      const remaining = 5 - record.attempts;
+      if (remaining <= 0) {
+        this.resetCodes.delete(normalizedEmail);
+        throw new BadRequestException(
+          "Too many failed verification attempts. Please request a new reset code.",
+        );
+      }
+      throw new BadRequestException(
+        `Incorrect verification code. ${remaining} attempt(s) remaining.`,
+      );
     }
 
     const hashedPassword = await bcryptjs.hash(newPassword, 10);

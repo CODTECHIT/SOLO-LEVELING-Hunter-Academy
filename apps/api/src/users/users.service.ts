@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 
 @Injectable()
@@ -205,7 +205,26 @@ export class UsersService {
       where: { id: data.lessonId },
       include: { course: true },
     });
-    if (!lesson) throw new Error("Lesson not found");
+    if (!lesson) throw new NotFoundException("Lesson not found");
+
+    // Verify active course enrollment
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: {
+          userId,
+          courseId: lesson.courseId,
+        },
+      },
+    });
+
+    const isExpired =
+      enrollment?.expiresAt && enrollment.expiresAt.getTime() <= Date.now();
+
+    if (!enrollment || isExpired) {
+      throw new ForbiddenException(
+        "Active course enrollment required to save lesson progress",
+      );
+    }
 
     const existing = await this.prisma.lessonProgress.findUnique({
       where: {

@@ -15,10 +15,36 @@ export class QuizzesService {
     });
   }
 
-  async findOneForStudent(quizId: string) {
+  async verifyQuizAccess(userId: string, courseId?: string | null) {
+    if (!courseId) return;
+
+    const course = await this.prisma.course.findUnique({
+      where: { id: courseId },
+      select: { price: true },
+    });
+    if (course && course.price <= 0) return;
+
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: { userId, courseId },
+      },
+    });
+
+    const isExpired =
+      enrollment?.expiresAt && enrollment.expiresAt.getTime() <= Date.now();
+
+    if (!enrollment || isExpired) {
+      throw new ForbiddenException(
+        "Active course enrollment required to access course quizzes",
+      );
+    }
+  }
+
+  async findOneForStudent(userId: string, quizId: string) {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id: quizId },
       include: {
+        lesson: { select: { courseId: true } },
         questions: {
           orderBy: { order: "asc" },
           select: {
@@ -40,7 +66,12 @@ export class QuizzesService {
     });
 
     if (!quiz) throw new NotFoundException("Quiz not found");
-    return quiz;
+
+    const courseId = quiz.courseId || quiz.lesson?.courseId;
+    await this.verifyQuizAccess(userId, courseId);
+
+    const { lesson: _lesson, ...rest } = quiz;
+    return rest;
   }
 
   async submitAttempt(
@@ -51,6 +82,7 @@ export class QuizzesService {
     const quiz = await this.prisma.quiz.findUnique({
       where: { id: quizId },
       include: {
+        lesson: { select: { courseId: true } },
         questions: {
           include: {
             options: true,
@@ -60,6 +92,9 @@ export class QuizzesService {
     });
 
     if (!quiz) throw new NotFoundException("Quiz not found");
+
+    const courseId = quiz.courseId || quiz.lesson?.courseId;
+    await this.verifyQuizAccess(userId, courseId);
 
     let totalMarks = 0;
     let earnedScore = 0;
