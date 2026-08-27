@@ -383,6 +383,8 @@ function LearnCourse() {
                       key={currentLesson.id}
                       src={getCloudFrontUrl(currentLesson.videoUrl.trim())}
                       controls
+                      controlsList="nodownload"
+                      disablePictureInPicture
                       playsInline
                       preload="metadata"
                       className="h-full w-full object-contain"

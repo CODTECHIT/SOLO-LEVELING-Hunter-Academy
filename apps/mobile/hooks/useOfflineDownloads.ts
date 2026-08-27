@@ -1,9 +1,10 @@
 import { create } from "zustand";
+import { Platform } from "react-native";
 import * as FileSystem from "expo-file-system/legacy";
 import { getCloudFrontUrl, getYouTubeVideoId } from "@/lib/cdn";
 
-const OFFLINE_DIR = `${FileSystem.documentDirectory}cybertech_offline/`;
-const INDEX_FILE = `${FileSystem.documentDirectory}cybertech_offline/index.json`;
+const OFFLINE_DIR = FileSystem.documentDirectory ? `${FileSystem.documentDirectory}cybertech_offline/` : "";
+const INDEX_FILE = FileSystem.documentDirectory ? `${FileSystem.documentDirectory}cybertech_offline/index.json` : "";
 
 export interface OfflineLesson {
   id: string;
@@ -43,6 +44,11 @@ export const useOfflineStore = create<OfflineStoreState>((set, get) => ({
   initialized: false,
 
   init: async () => {
+    if (Platform.OS === "web" || !FileSystem.documentDirectory) {
+      set({ downloads: {}, initialized: true });
+      return;
+    }
+
     try {
       // Ensure directory exists
       const dirInfo = await FileSystem.getInfoAsync(OFFLINE_DIR);
@@ -80,6 +86,10 @@ export const useOfflineStore = create<OfflineStoreState>((set, get) => ({
   },
 
   downloadLesson: async (lesson) => {
+    if (Platform.OS === "web" || !FileSystem.documentDirectory) {
+      throw new Error("Offline downloads are only supported on native mobile devices (iOS/Android).");
+    }
+
     if (getYouTubeVideoId(lesson.videoUrl)) {
       throw new Error("YouTube streamed videos cannot be saved for offline playback.");
     }
@@ -151,6 +161,10 @@ export const useOfflineStore = create<OfflineStoreState>((set, get) => ({
   },
 
   deleteDownload: async (lessonId: string) => {
+    if (Platform.OS === "web" || !FileSystem.documentDirectory) {
+      return;
+    }
+
     const item = get().downloads[lessonId];
     if (item?.localUri) {
       try {

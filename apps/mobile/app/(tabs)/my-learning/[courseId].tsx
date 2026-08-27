@@ -19,26 +19,18 @@ import {
   CheckCircle2,
   ChevronDown,
   Lock,
-  Download,
-  Trash2,
-  HardDriveDownload,
-  WifiOff,
   Award,
   ChevronRight,
   Sparkles,
   Swords,
   Zap,
   Bot,
-  Maximize2,
-  Minimize2,
-  Shield,
 } from "lucide-react-native";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { useSafePreventScreenCapture, useScreenshotListener } from "@/hooks/useSafeScreenCapture";
 import { useCourse, useEnrolledCourses } from "@/hooks/useCourses";
-import { useOfflineDownloads } from "@/hooks/useOfflineDownloads";
 import { useAuthStore } from "@/store/authStore";
 import { CertificateModal } from "@/components/ui/CertificateModal";
 import { CourseAssistantModal } from "@/components/ui/CourseAssistantModal";
@@ -63,15 +55,6 @@ export default function LearningPlayerScreen() {
   // Screen recording restriction (Active across the player screen)
   useSafePreventScreenCapture("learning_player_screen");
 
-  const {
-    isDownloaded,
-    getOfflineUri,
-    downloadLesson,
-    deleteDownload,
-    progressMap,
-    isDownloading,
-  } = useOfflineDownloads();
-
   const { data: enrollments, refetch: refetchEnrollments } = useEnrolledCourses();
   const { user } = useAuthStore();
   const course = enrollments?.find((c: any) => c.id === courseId || c.slug === courseId);
@@ -94,27 +77,49 @@ export default function LearningPlayerScreen() {
 
   // Fullscreen orientation handlers (instant switch to landscape / portrait)
   const enterFullscreen = useCallback(async () => {
-    try {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-    } catch {}
-    StatusBar.setHidden(true, "fade");
+    if (Platform.OS !== "web") {
+      try {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+      } catch {}
+      StatusBar.setHidden(true, "fade");
+    }
     setIsFullscreen(true);
   }, []);
 
   const exitFullscreen = useCallback(async () => {
-    try {
-      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-    } catch {}
-    StatusBar.setHidden(false, "fade");
+    if (Platform.OS !== "web") {
+      try {
+        await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+      } catch {}
+      StatusBar.setHidden(false, "fade");
+    }
     setIsFullscreen(false);
   }, []);
 
   // Cleanup orientation on unmount
   useEffect(() => {
     return () => {
-      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
-      StatusBar.setHidden(false, "fade");
+      if (Platform.OS !== "web") {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+        StatusBar.setHidden(false, "fade");
+      }
     };
+  }, []);
+
+  // Strict anti-download prevention on HTML5 video elements (web preview)
+  useEffect(() => {
+    if (Platform.OS === "web") {
+      const applyNoDownload = () => {
+        const videoElements = document.querySelectorAll("video");
+        videoElements.forEach((video) => {
+          video.setAttribute("controlsList", "nodownload");
+          video.setAttribute("disablePictureInPicture", "true");
+        });
+      };
+      applyNoDownload();
+      const interval = setInterval(applyNoDownload, 500);
+      return () => clearInterval(interval);
+    }
   }, []);
 
   // Auto-pause video and alert if screenshot or screen capture is triggered
@@ -151,12 +156,11 @@ export default function LearningPlayerScreen() {
     ? Math.round((completedIds.length / lessons.length) * 100)
     : 0;
 
-  const offlineUri = activeLesson ? getOfflineUri(activeLesson.id) : null;
   const youtubeId = getYouTubeVideoId(activeLesson?.videoUrl ?? "");
   const cloudFrontUrl = getCloudFrontUrl(activeLesson?.videoUrl ?? "");
-  const videoSource = offlineUri || (youtubeId ? "" : cloudFrontUrl);
+  const videoSource = youtubeId ? "" : cloudFrontUrl;
 
-  // Video player (for native expo-video with offline sandbox playback support)
+  // Video player (for native expo-video)
   const player = useVideoPlayer(videoSource, (p) => {
     p.loop = false;
     p.play();
@@ -318,17 +322,28 @@ export default function LearningPlayerScreen() {
                 nativeControls={true}
                 contentFit="contain"
                 surfaceType="textureView"
+                fullscreenOptions={{
+                  enable: true,
+                  orientation: "landscape",
+                }}
+                onFullscreenEnter={async () => {
+                  if (Platform.OS !== "web") {
+                    try {
+                      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+                    } catch {}
+                    StatusBar.setHidden(true, "fade");
+                  }
+                }}
+                onFullscreenExit={async () => {
+                  if (Platform.OS !== "web") {
+                    try {
+                      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
+                    } catch {}
+                    StatusBar.setHidden(false, "fade");
+                  }
+                }}
               />
             )}
-
-            {/* Fullscreen Toggle Button */}
-            <TouchableOpacity
-              style={styles.fullscreenToggleBtn}
-              onPress={enterFullscreen}
-              activeOpacity={0.8}
-            >
-              <Maximize2 color="#ffffff" size={16} />
-            </TouchableOpacity>
           </>
         ) : (
           <View style={styles.videoLocked}>
@@ -383,35 +398,6 @@ export default function LearningPlayerScreen() {
               surfaceType="textureView"
             />
           )}
-
-          {/* Fullscreen Overlay Header with Safe Area Insets */}
-          <View
-            style={[
-              styles.fullscreenHeader,
-              {
-                top: Math.max(Platform.OS === "android" ? (StatusBar.currentHeight || 0) : insets.top, insets.top) + 14,
-                left: Math.max(insets.left, 16),
-                right: Math.max(insets.right, 16),
-              },
-            ]}
-          >
-            <TouchableOpacity
-              style={styles.fullscreenBackBtn}
-              onPress={exitFullscreen}
-              activeOpacity={0.8}
-            >
-              <ArrowLeft color="#ffffff" size={18} />
-              <Text style={styles.fullscreenTitle} numberOfLines={1}>
-                {activeLesson?.title || "Lesson"}
-              </Text>
-            </TouchableOpacity>
-            <View style={styles.fullscreenHeaderRight}>
-              <View style={styles.protectedBadge}>
-                <Shield color={colors.neonCyan} size={11} />
-                <Text style={styles.protectedBadgeText}>SECURE</Text>
-              </View>
-            </View>
-          </View>
         </View>
       </Modal>
 
@@ -507,79 +493,15 @@ export default function LearningPlayerScreen() {
         </View>
       )}
 
-      {/* Lesson title & Offline Download Action */}
+      {/* Lesson title */}
       <View style={styles.lessonHeader}>
         <View style={{ flex: 1 }}>
           <Text style={styles.lessonTitle}>{activeLesson?.title}</Text>
-          {offlineUri && (
-            <View style={styles.offlineBadgeRow}>
-              <WifiOff color={colors.neonLime} size={12} />
-              <Text style={styles.offlineBadgeText}>Playing Offline Sandboxed</Text>
-            </View>
-          )}
         </View>
 
         <View style={styles.headerActions}>
           {isCurrentCompleted && (
             <CheckCircle2 color={colors.neonLime} size={20} />
-          )}
-
-          {isEnrolled && activeLesson && (
-            isDownloaded(activeLesson.id) ? (
-              <TouchableOpacity
-                style={styles.downloadBtnSuccess}
-                onPress={() => {
-                  Alert.alert(
-                    "Delete Offline Download",
-                    "Do you want to remove this video from your device storage?",
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Delete",
-                        style: "destructive",
-                        onPress: () => deleteDownload(activeLesson.id),
-                      },
-                    ]
-                  );
-                }}
-              >
-                <Trash2 color={colors.destructive || "#ef4444"} size={16} />
-              </TouchableOpacity>
-            ) : isDownloading(activeLesson.id) ? (
-              <View style={styles.downloadingContainer}>
-                <ActivityIndicator size="small" color={colors.neonCyan} />
-                <Text style={styles.downloadingText}>
-                  {progressMap[activeLesson.id] ?? 0}%
-                </Text>
-              </View>
-            ) : (
-              !getYouTubeVideoId(activeLesson.videoUrl || "") && (
-                <TouchableOpacity
-                  style={styles.downloadBtn}
-                  onPress={async () => {
-                    try {
-                      await downloadLesson({
-                        id: activeLesson.id,
-                        title: activeLesson.title,
-                        courseId: courseId,
-                        courseTitle: data.course.title,
-                        videoUrl: activeLesson.videoUrl,
-                        duration: activeLesson.duration,
-                      });
-                      Alert.alert(
-                        "Downloaded!",
-                        "Lesson saved securely in-app for offline playback."
-                      );
-                    } catch (err: any) {
-                      Alert.alert("Download Error", err.message || "Failed to download");
-                    }
-                  }}
-                >
-                  <Download color={colors.neonCyan} size={16} />
-                  <Text style={styles.downloadBtnText}>Save Offline</Text>
-                </TouchableOpacity>
-              )
-            )
           )}
         </View>
       </View>
@@ -685,8 +607,6 @@ export default function LearningPlayerScreen() {
             const isCompleted = completedIds.includes(lesson.id);
             const isActive = lesson.id === activeId;
             const isAccessible = isEnrolled;
-            const isLessonSaved = isDownloaded(lesson.id);
-            const isLessonDownloading = isDownloading(lesson.id);
             const hasQuiz = Boolean(lesson.quiz);
 
             return (
@@ -728,18 +648,6 @@ export default function LearningPlayerScreen() {
                     </View>
                   )}
                 </View>
-
-                {isAccessible && (
-                  isLessonSaved ? (
-                    <View style={styles.savedIconBadge}>
-                      <HardDriveDownload color={colors.neonLime} size={14} />
-                    </View>
-                  ) : isLessonDownloading ? (
-                    <Text style={styles.downloadingSmallText}>
-                      {progressMap[lesson.id]}%
-                    </Text>
-                  ) : null
-                )}
               </TouchableOpacity>
             );
           })}
@@ -807,74 +715,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   video: { width: "100%", height: "100%" },
-  fullscreenToggleBtn: {
-    position: "absolute",
-    bottom: 12,
-    right: 12,
-    backgroundColor: "rgba(0, 0, 0, 0.75)",
-    padding: 8,
-    borderRadius: radii.md,
-    borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.25)",
-    zIndex: 20,
-  },
-  fullscreenHeader: {
-    position: "absolute",
-    top: 14,
-    left: 14,
-    right: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "rgba(5, 8, 16, 0.85)",
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    borderRadius: radii.lg,
-    borderWidth: 1,
-    borderColor: "rgba(0, 243, 255, 0.25)",
-    zIndex: 30,
-  },
-  fullscreenBackBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
-    flex: 1,
-  },
-  fullscreenTitle: {
-    fontFamily: fonts.sans,
-    fontSize: fontSizes.sm,
-    fontWeight: "bold",
-    color: colors.foreground,
-    flex: 1,
-  },
-  fullscreenHeaderRight: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing[2],
-  },
-  protectedBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "rgba(0, 243, 255, 0.1)",
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: radii.full,
-    borderWidth: 1,
-    borderColor: "rgba(0, 243, 255, 0.3)",
-  },
-  protectedBadgeText: {
-    fontFamily: fonts.display,
-    fontSize: 9,
-    fontWeight: "bold",
-    color: colors.neonCyan,
-    letterSpacing: 0.5,
-  },
-  fullscreenExitBtn: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
-    padding: 6,
-    borderRadius: radii.md,
-  },
   videoLocked: {
     flex: 1,
     alignItems: "center",
