@@ -6,25 +6,14 @@ import * as ScreenCapture from "expo-screen-capture";
  * Platform-safe hook to prevent screenshots and screen recording on Android/iOS native devices,
  * gracefully no-opping on web previews.
  */
-export function useSafePreventScreenCapture(key?: string) {
+export function useSafePreventScreenCapture(key: string = "learning_player_screen") {
   useEffect(() => {
     if (Platform.OS === "web") return;
 
-    try {
-      ScreenCapture.preventScreenCaptureAsync(key).catch(() => {});
-    } catch {
-      // Ignore native module availability exceptions on unsupported platforms
-    }
-
-    return () => {
-      if (Platform.OS !== "web") {
-        try {
-          ScreenCapture.allowScreenCaptureAsync(key).catch(() => {});
-        } catch {
-          // Ignore
-        }
-      }
-    };
+    // Enforce hardware-level FLAG_SECURE immediately
+    ScreenCapture.preventScreenCaptureAsync(key).catch((err) => {
+      console.warn("ScreenCapture prevent error:", err);
+    });
   }, [key]);
 }
 
