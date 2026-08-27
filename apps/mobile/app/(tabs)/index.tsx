@@ -229,7 +229,7 @@ export default function HomeScreen() {
                   nativeControls={true}
                   contentFit="cover"
                   fullscreenOptions={{ enable: true }}
-                  surfaceType="textureView"
+                  surfaceType="surfaceView"
                 />
                 <View style={styles.videoCaptionBar}>
                   <View style={styles.videoCaptionLeft}>

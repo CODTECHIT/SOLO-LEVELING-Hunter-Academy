@@ -74,6 +74,7 @@ export default function LearningPlayerScreen() {
   const [isMarkingComplete, setIsMarkingComplete] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [isScreenRecordingBlocked, setIsScreenRecordingBlocked] = useState<boolean>(false);
 
   // Fullscreen orientation handlers (instant switch to landscape / portrait)
   const enterFullscreen = useCallback(async () => {
@@ -122,14 +123,21 @@ export default function LearningPlayerScreen() {
     }
   }, []);
 
-  // Auto-pause video and alert if screenshot or screen capture is triggered
+  // Auto-pause video, blackout player and alert if screenshot or screen capture is triggered
   useScreenshotListener(() => {
     try {
       player?.pause();
     } catch {}
+    setIsScreenRecordingBlocked(true);
     Alert.alert(
       "Screen Capture Restricted",
-      "Screen recording or taking screenshots of academy lectures is strictly prohibited.",
+      "Screen recording or capturing academy lectures is strictly prohibited. Playback has been secured.",
+      [
+        {
+          text: "Resume",
+          onPress: () => setIsScreenRecordingBlocked(false),
+        },
+      ]
     );
   });
 
@@ -321,7 +329,7 @@ export default function LearningPlayerScreen() {
                 player={player}
                 nativeControls={true}
                 contentFit="contain"
-                surfaceType="textureView"
+                surfaceType="surfaceView"
                 fullscreenOptions={{
                   enable: true,
                   orientation: "landscape",
@@ -343,6 +351,14 @@ export default function LearningPlayerScreen() {
                   }
                 }}
               />
+            )}
+
+            {/* Active Capture Blackout Layer */}
+            {isScreenRecordingBlocked && (
+              <View style={styles.blackoutOverlay}>
+                <Text style={styles.blackoutText}>Screen Capture Restricted</Text>
+                <Text style={styles.blackoutSub}>Video feed protected</Text>
+              </View>
             )}
           </>
         ) : (
@@ -395,8 +411,16 @@ export default function LearningPlayerScreen() {
               player={player}
               nativeControls={true}
               contentFit="contain"
-              surfaceType="textureView"
+              surfaceType="surfaceView"
             />
+          )}
+
+          {/* Active Capture Blackout in Fullscreen */}
+          {isScreenRecordingBlocked && (
+            <View style={styles.blackoutOverlay}>
+              <Text style={styles.blackoutText}>Screen Capture Restricted</Text>
+              <Text style={styles.blackoutSub}>Video feed protected</Text>
+            </View>
           )}
         </View>
       </Modal>
@@ -1165,5 +1189,27 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: "bold",
     color: colors.neonPurple,
+  },
+  blackoutOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "#000000",
+    zIndex: 999,
+    alignItems: "center",
+    justifyContent: "center",
+    padding: spacing[4],
+  },
+  blackoutText: {
+    fontFamily: fonts.display,
+    fontSize: fontSizes.base,
+    fontWeight: "bold",
+    color: colors.neonCyan,
+    textAlign: "center",
+  },
+  blackoutSub: {
+    fontFamily: fonts.sans,
+    fontSize: fontSizes.xs,
+    color: colors.mutedForeground,
+    marginTop: 4,
+    textAlign: "center",
   },
 });
