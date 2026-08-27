@@ -329,7 +329,9 @@ export default function LearningPlayerScreen() {
                 player={player}
                 nativeControls={true}
                 contentFit="contain"
-                surfaceType="surfaceView"
+                surfaceType="textureView"
+                allowsPictureInPicture={false}
+                startsPictureInPictureAutomatically={false}
                 fullscreenOptions={{
                   enable: true,
                   orientation: "landscape",
@@ -353,11 +355,20 @@ export default function LearningPlayerScreen() {
               />
             )}
 
+            {/* Dynamic Security DRM Watermark (User Anti-Piracy Stamp) */}
+            {user && !isScreenRecordingBlocked && (
+              <View style={styles.watermarkContainer} pointerEvents="none">
+                <Text style={styles.watermarkText}>
+                  HUNTER SECURE • {user.email || user.name || "STUDENT"} • {user.id ? user.id.slice(-6).toUpperCase() : "PROT"}
+                </Text>
+              </View>
+            )}
+
             {/* Active Capture Blackout Layer */}
             {isScreenRecordingBlocked && (
               <View style={styles.blackoutOverlay}>
                 <Text style={styles.blackoutText}>Screen Capture Restricted</Text>
-                <Text style={styles.blackoutSub}>Video feed protected</Text>
+                <Text style={styles.blackoutSub}>Video feed protected by Academy DRM</Text>
               </View>
             )}
           </>
@@ -411,15 +422,26 @@ export default function LearningPlayerScreen() {
               player={player}
               nativeControls={true}
               contentFit="contain"
-              surfaceType="surfaceView"
+              surfaceType="textureView"
+              allowsPictureInPicture={false}
+              startsPictureInPictureAutomatically={false}
             />
+          )}
+
+          {/* Dynamic Security DRM Watermark in Fullscreen */}
+          {user && !isScreenRecordingBlocked && (
+            <View style={styles.watermarkContainerFullscreen} pointerEvents="none">
+              <Text style={styles.watermarkText}>
+                HUNTER SECURE • {user.email || user.name || "STUDENT"} • {user.id ? user.id.slice(-6).toUpperCase() : "PROT"}
+              </Text>
+            </View>
           )}
 
           {/* Active Capture Blackout in Fullscreen */}
           {isScreenRecordingBlocked && (
             <View style={styles.blackoutOverlay}>
               <Text style={styles.blackoutText}>Screen Capture Restricted</Text>
-              <Text style={styles.blackoutSub}>Video feed protected</Text>
+              <Text style={styles.blackoutSub}>Video feed protected by Academy DRM</Text>
             </View>
           )}
         </View>
@@ -1211,5 +1233,36 @@ const styles = StyleSheet.create({
     color: colors.mutedForeground,
     marginTop: 4,
     textAlign: "center",
+  },
+  watermarkContainer: {
+    position: "absolute",
+    top: 10,
+    right: 10,
+    backgroundColor: "rgba(0, 0, 0, 0.45)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
+    zIndex: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+  },
+  watermarkContainerFullscreen: {
+    position: "absolute",
+    top: 24,
+    right: 32,
+    backgroundColor: "rgba(0, 0, 0, 0.55)",
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 6,
+    zIndex: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.15)",
+  },
+  watermarkText: {
+    fontFamily: fonts.sans,
+    fontSize: 9,
+    fontWeight: "bold",
+    color: "rgba(255, 255, 255, 0.4)",
+    letterSpacing: 0.8,
   },
 });

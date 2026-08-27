@@ -69,7 +69,10 @@ export default function PurchasesScreen() {
 
       const orderId = purchase.id;
       const displayOrderId = purchase.razorpayOrderId || orderId;
-      const displayPaymentId = purchase.razorpayPaymentId || `PAY-${orderId.substring(0, 10).toUpperCase()}`;
+      const status = (purchase.status || "PENDING").toUpperCase();
+      const displayPaymentId =
+        purchase.razorpayPaymentId ||
+        (status === "PAID" ? `PAY-${orderId.substring(0, 10).toUpperCase()}` : "N/A (Pending Settlement)");
       const courseTitle = purchase.courseTitle || "Hunter Academy Course";
       const amountFormatted = purchase.amount.toLocaleString("en-IN");
       const currency = purchase.currency || "INR";
@@ -84,6 +87,52 @@ export default function PurchasesScreen() {
       });
       const studentName = user?.name || "Hunter Student";
       const studentEmail = user?.email || "student@cybertech.academy";
+
+      let statusTag = "✔ PAID & CONFIRMED";
+      let statusTagBg = "#ecfdf5";
+      let statusTagColor = "#059669";
+      let statusTagBorder = "#a7f3d0";
+      let receiptTitle = "Official Receipt";
+      let totalLabel = "Total Paid";
+      let verificationTitle = "Razorpay Secure Payment Gateway";
+      let verificationSub = "Transaction verified and logged into Cyber Tech Ledger.";
+      let verificationStamp = "AUTH VERIFIED";
+      let stampColor = "#059669";
+
+      if (status === "PENDING") {
+        statusTag = "⏳ PAYMENT PENDING";
+        statusTagBg = "#fffbeb";
+        statusTagColor = "#d97706";
+        statusTagBorder = "#fde68a";
+        receiptTitle = "Pending Payment Receipt";
+        totalLabel = "Amount Pending";
+        verificationTitle = "Payment Awaiting Settlement";
+        verificationSub = "Payment initiated and awaiting gateway / bank confirmation.";
+        verificationStamp = "PENDING";
+        stampColor = "#d97706";
+      } else if (status === "FAILED") {
+        statusTag = "✖ PAYMENT FAILED";
+        statusTagBg = "#fef2f2";
+        statusTagColor = "#dc2626";
+        statusTagBorder = "#fecaca";
+        receiptTitle = "Payment Failed Record";
+        totalLabel = "Amount Unpaid";
+        verificationTitle = "Payment Transaction Failed";
+        verificationSub = "This transaction was not completed or failed verification.";
+        verificationStamp = "FAILED";
+        stampColor = "#dc2626";
+      } else if (status === "REFUNDED") {
+        statusTag = "↩ REFUNDED";
+        statusTagBg = "#f5f3ff";
+        statusTagColor = "#7c3aed";
+        statusTagBorder = "#ddd6fe";
+        receiptTitle = "Refund Receipt";
+        totalLabel = "Total Refunded";
+        verificationTitle = "Payment Refunded";
+        verificationSub = "This purchase was refunded to the original payment method.";
+        verificationStamp = "REFUNDED";
+        stampColor = "#7c3aed";
+      }
 
       const receiptHtml = `
 <!DOCTYPE html>
@@ -143,7 +192,7 @@ export default function PurchasesScreen() {
       text-align: right;
     }
     .invoice-title {
-      font-size: 22px;
+      font-size: 20px;
       font-weight: 800;
       color: #090d16;
       text-transform: uppercase;
@@ -151,13 +200,12 @@ export default function PurchasesScreen() {
     }
     .invoice-tag {
       display: inline-block;
-      background: #ecfdf5;
-      color: #059669;
       font-size: 11px;
       font-weight: 700;
       padding: 3px 10px;
       border-radius: 9999px;
-      border: 1px solid #a7f3d0;
+      border-width: 1px;
+      border-style: solid;
       margin-top: 4px;
     }
     .info-grid {
@@ -265,10 +313,10 @@ export default function PurchasesScreen() {
     .verified-stamp {
       font-size: 12px;
       font-weight: 800;
-      color: #059669;
       letter-spacing: 1px;
       text-transform: uppercase;
-      border: 1.5px solid #059669;
+      border-width: 1.5px;
+      border-style: solid;
       padding: 4px 10px;
       border-radius: 6px;
     }
@@ -289,8 +337,8 @@ export default function PurchasesScreen() {
         <div class="brand-sub">Hunters Training & Certification Guild</div>
       </div>
       <div class="invoice-title-block">
-        <div class="invoice-title">Official Receipt</div>
-        <div class="invoice-tag">✔ PAID & CONFIRMED</div>
+        <div class="invoice-title">${receiptTitle}</div>
+        <div class="invoice-tag" style="background: ${statusTagBg}; color: ${statusTagColor}; border-color: ${statusTagBorder};">${statusTag}</div>
       </div>
     </div>
 
@@ -305,6 +353,7 @@ export default function PurchasesScreen() {
         <div class="info-val"><strong>Date:</strong> ${purchaseDate} ${purchaseTime}</div>
         <div class="info-val"><strong>Order ID:</strong> ${escapeHtml(displayOrderId)}</div>
         <div class="info-val"><strong>Payment ID:</strong> ${escapeHtml(displayPaymentId)}</div>
+        <div class="info-val"><strong>Status:</strong> <span style="font-weight: 700; color: ${statusTagColor};">${status}</span></div>
       </div>
     </div>
 
@@ -339,7 +388,7 @@ export default function PurchasesScreen() {
           <span>₹0.00</span>
         </div>
         <div class="summary-row total">
-          <span>Total Paid</span>
+          <span>${totalLabel}</span>
           <span>₹${amountFormatted} ${currency}</span>
         </div>
       </div>
@@ -347,14 +396,14 @@ export default function PurchasesScreen() {
 
     <div class="verification-box">
       <div>
-        <div class="verification-title">Razorpay Secure Payment Gateway</div>
-        <div class="verification-sub">Transaction verified and logged into Cyber Tech Ledger.</div>
+        <div class="verification-title">${verificationTitle}</div>
+        <div class="verification-sub">${verificationSub}</div>
       </div>
-      <div class="verified-stamp">AUTH VERIFIED</div>
+      <div class="verified-stamp" style="color: ${stampColor}; border-color: ${stampColor};">${verificationStamp}</div>
     </div>
 
     <div class="footer">
-      <p>This is a computer-generated official receipt. Thank you for training with Cyber Tech Academy. Arise, Hunter.</p>
+      <p>This is a computer-generated official document. Thank you for training with Cyber Tech Academy. Arise, Hunter.</p>
     </div>
   </div>
 </body>
@@ -382,6 +431,47 @@ export default function PurchasesScreen() {
       cyberAlert("Download Failed", error?.message || "Could not generate receipt PDF.", undefined, "error");
     } finally {
       setDownloadingId(null);
+    }
+  };
+
+  const getStatusBadgeConfig = (status: string) => {
+    const s = (status || "PENDING").toUpperCase();
+    switch (s) {
+      case "PAID":
+        return {
+          bg: "rgba(34, 197, 94, 0.15)",
+          color: "#22c55e",
+          border: "rgba(34, 197, 94, 0.3)",
+          label: "PAID",
+        };
+      case "PENDING":
+        return {
+          bg: "rgba(234, 179, 8, 0.15)",
+          color: "#eab308",
+          border: "rgba(234, 179, 8, 0.3)",
+          label: "PENDING",
+        };
+      case "FAILED":
+        return {
+          bg: "rgba(239, 68, 68, 0.15)",
+          color: "#ef4444",
+          border: "rgba(239, 68, 68, 0.3)",
+          label: "FAILED",
+        };
+      case "REFUNDED":
+        return {
+          bg: "rgba(168, 85, 247, 0.15)",
+          color: "#a855f7",
+          border: "rgba(168, 85, 247, 0.3)",
+          label: "REFUNDED",
+        };
+      default:
+        return {
+          bg: colors.neonCyan + "20",
+          color: colors.neonCyan,
+          border: "transparent",
+          label: s,
+        };
     }
   };
 
@@ -423,6 +513,7 @@ export default function PurchasesScreen() {
         ) : (
           purchases.map((purchase) => {
             const isDownloadingThis = downloadingId === purchase.id;
+            const statusConfig = getStatusBadgeConfig(purchase.status);
             return (
               <Card key={purchase.id} style={styles.purchaseCard}>
                 <View style={styles.cardHeader}>
@@ -447,8 +538,19 @@ export default function PurchasesScreen() {
                   </View>
                   <View style={styles.detailRow}>
                     <Text style={styles.detailLabel}>Status</Text>
-                    <View style={styles.statusBadge}>
-                      <Text style={styles.statusText}>{purchase.status}</Text>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor: statusConfig.bg,
+                          borderColor: statusConfig.border,
+                          borderWidth: 1,
+                        },
+                      ]}
+                    >
+                      <Text style={[styles.statusText, { color: statusConfig.color }]}>
+                        {statusConfig.label}
+                      </Text>
                     </View>
                   </View>
                 </View>
@@ -464,7 +566,7 @@ export default function PurchasesScreen() {
                   ) : (
                     <>
                       <Download color={colors.neonCyan} size={16} />
-                      <Text style={styles.receiptText}>Download Official PDF Receipt</Text>
+                      <Text style={styles.receiptText}>Download PDF Document</Text>
                     </>
                   )}
                 </TouchableOpacity>
