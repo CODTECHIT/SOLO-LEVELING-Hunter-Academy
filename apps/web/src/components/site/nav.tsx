@@ -366,7 +366,21 @@ export function SiteFooter() {
           Support
         </Link>
       </nav>
-      © {new Date().getFullYear()} Cyber Tech Academy — Arise, Hunter.
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-1.5 sm:gap-3 text-xs">
+        <span>© {new Date().getFullYear()} Cyber Tech Academy — Arise, Hunter.</span>
+        <span className="hidden sm:inline text-muted-foreground/40">•</span>
+        <span>
+          Designed by{" "}
+          <a
+            href="https://codtechitsolutions.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-semibold text-neon-cyan hover:underline transition-colors hover:text-white"
+          >
+            CODTECH IT Solutions
+          </a>
+        </span>
+      </div>
     </footer>
   );
 }
