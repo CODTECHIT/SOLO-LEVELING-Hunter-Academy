@@ -359,6 +359,9 @@ export function SiteFooter() {
         <Link to="/faq" className="hover:text-neon-cyan transition-colors">
           FAQ
         </Link>
+        <Link to="/privacy-policy" className="hover:text-neon-cyan transition-colors">
+          Privacy Policy
+        </Link>
         <Link to="/support" className="hover:text-neon-cyan transition-colors">
           Support
         </Link>

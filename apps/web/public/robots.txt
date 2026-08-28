@@ -4,6 +4,7 @@ Allow: /courses
 Allow: /pricing
 Allow: /ranks
 Allow: /faq
+Allow: /privacy-policy
 Allow: /support
 Disallow: /admin
 Disallow: /_admin
