@@ -125,20 +125,48 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Cyber Tech Academy — Gamified Hunter LMS" },
+      { title: "Cyber Tech Academy — Master Cyber Security & Full Stack Tech" },
       {
         name: "description",
         content:
-          "A dark, gamified learning platform where students level up through ranked courses, XP and achievements.",
+          "Level up your tech career with Cyber Tech Academy. Industry-led courses, hands-on labs, gamified Hunter ranking system, placement prep, and verifiable certificates.",
       },
+      {
+        name: "keywords",
+        content:
+          "cyber security courses, ethical hacking, full stack development, python data science, hunter pass, coding placement prep, cyber tech academy",
+      },
+      { name: "author", content: "Cyber Tech Academy" },
+      { name: "theme-color", content: "#050810" },
+      { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      // OpenGraph / Facebook
       { property: "og:type", content: "website" },
+      { property: "og:site_name", content: "Cyber Tech Academy" },
+      { property: "og:title", content: "Cyber Tech Academy — Master Cyber Security & Full Stack Tech" },
+      {
+        property: "og:description",
+        content:
+          "Level up your tech career with Cyber Tech Academy. Industry-led courses, hands-on labs, gamified Hunter ranking system, and verifiable certificates.",
+      },
+      { property: "og:url", content: "https://www.cybertechacadamy.com/" },
+      { property: "og:image", content: "https://www.cybertechacadamy.com/logo.png" },
+      { property: "og:locale", content: "en_IN" },
+      // Twitter Card
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Cyber Tech Academy — Master Cyber Security & Full Stack Tech" },
+      {
+        name: "twitter:description",
+        content:
+          "Level up your tech career with Cyber Tech Academy. Industry-led courses, hands-on labs, gamified Hunter ranking system, and verifiable certificates.",
+      },
+      { name: "twitter:image", content: "https://www.cybertechacadamy.com/logo.png" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
+      { rel: "canonical", href: "https://www.cybertechacadamy.com/" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -147,6 +175,41 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { rel: "icon", href: "/logo.png", type: "image/png" },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "EducationalOrganization",
+              "@id": "https://www.cybertechacadamy.com/#organization",
+              "name": "Cyber Tech Academy",
+              "url": "https://www.cybertechacadamy.com/",
+              "logo": "https://www.cybertechacadamy.com/logo.png",
+              "description": "Gamified tech learning platform offering elite cybersecurity, python, data science, and placement training.",
+              "sameAs": [
+                "https://www.cybertechacadamy.com"
+              ]
+            },
+            {
+              "@type": "WebSite",
+              "@id": "https://www.cybertechacadamy.com/#website",
+              "url": "https://www.cybertechacadamy.com/",
+              "name": "Cyber Tech Academy",
+              "publisher": {
+                "@id": "https://www.cybertechacadamy.com/#organization"
+              },
+              "potentialAction": {
+                "@type": "SearchAction",
+                "target": "https://www.cybertechacadamy.com/courses?q={search_term_string}",
+                "query-input": "required name=search_term_string"
+              }
+            }
+          ]
+        })
+      }
+    ]
   }),
 
 

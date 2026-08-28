@@ -19,8 +19,36 @@ export const Route = createFileRoute("/pricing")({
   },
   head: () => ({
     meta: [
-      { title: "Hunter Pass — Topic Modules — Cyber Tech Academy" },
-      { name: "description", content: "Short, topic-wise module courses from ₹399." },
+      { title: "Hunter Pass & Topic Modules Pricing — Cyber Tech Academy" },
+      {
+        name: "description",
+        content:
+          "Unlock focused tech modules and full career pathways. High-impact curriculum, 1-year access, practical labs, and verifiable certificates from ₹399.",
+      },
+      {
+        name: "keywords",
+        content:
+          "hunter pass pricing, coding courses cost, cyber security training price, tech certification plans",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "Hunter Pass & Topic Modules Pricing — Cyber Tech Academy" },
+      {
+        property: "og:description",
+        content:
+          "Unlock focused tech modules and full career pathways. High-impact curriculum, 1-year access, practical labs, and verifiable certificates.",
+      },
+      { property: "og:url", content: "https://www.cybertechacadamy.com/pricing" },
+      { property: "og:image", content: "https://www.cybertechacadamy.com/logo.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Hunter Pass & Topic Modules Pricing — Cyber Tech Academy" },
+      {
+        name: "twitter:description",
+        content:
+          "Unlock focused tech modules and full career pathways. High-impact curriculum, 1-year access, practical labs, and verifiable certificates.",
+      },
+    ],
+    links: [
+      { rel: "canonical", href: "https://www.cybertechacadamy.com/pricing" },
     ],
   }),
   component: PricingPage,

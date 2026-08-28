@@ -20,12 +20,74 @@ export const Route = createFileRoute("/courses/")({
     ]);
     return { categories, courses, user, enrolledCourses: enrolled };
   },
-  head: () => ({
-    meta: [
-      { title: "Course Catalog — Cyber Tech Academy" },
-      { name: "description", content: "Browse ranked course pathways." },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const courses = loaderData?.courses || [];
+    const itemListSchema = {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      "name": "Courses & Training Programs — Cyber Tech Academy",
+      "description": "Explore all ranked courses in Cybersecurity, Python, Data Science, and Placement Prep.",
+      "url": "https://www.cybertechacadamy.com/courses",
+      "numberOfItems": courses.length,
+      "itemListElement": courses.slice(0, 10).map((c: any, index: number) => ({
+        "@type": "ListItem",
+        "position": index + 1,
+        "item": {
+          "@type": "Course",
+          "name": c.title,
+          "description": c.description?.slice(0, 120),
+          "url": `https://www.cybertechacadamy.com/courses/${c.slug}`,
+          "image": c.thumbnail || "https://www.cybertechacadamy.com/logo.png",
+          "provider": {
+            "@type": "EducationalOrganization",
+            "name": "Cyber Tech Academy",
+            "sameAs": "https://www.cybertechacadamy.com/"
+          }
+        }
+      }))
+    };
+
+    return {
+      meta: [
+        { title: "Explore Tech & Cyber Security Courses — Cyber Tech Academy" },
+        {
+          name: "description",
+          content:
+            "Browse elite courses in Cyber Security, Ethical Hacking, Python, Data Science, and Machine Learning. Get certified and level up your career.",
+        },
+        {
+          name: "keywords",
+          content:
+            "cyber security courses, full stack development, python masterclass, coding bootcamp, placement training, technical certifications",
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:title", content: "Explore Tech & Cyber Security Courses — Cyber Tech Academy" },
+        {
+          property: "og:description",
+          content:
+            "Browse elite courses in Cyber Security, Ethical Hacking, Python, Data Science, and Machine Learning. Get certified and level up your career.",
+        },
+        { property: "og:url", content: "https://www.cybertechacadamy.com/courses" },
+        { property: "og:image", content: "https://www.cybertechacadamy.com/logo.png" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: "Explore Tech & Cyber Security Courses — Cyber Tech Academy" },
+        {
+          name: "twitter:description",
+          content:
+            "Browse elite courses in Cyber Security, Ethical Hacking, Python, Data Science, and Machine Learning. Get certified and level up your career.",
+        },
+      ],
+      links: [
+        { rel: "canonical", href: "https://www.cybertechacadamy.com/courses" },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(itemListSchema),
+        },
+      ],
+    };
+  },
   component: Catalog,
 });
 

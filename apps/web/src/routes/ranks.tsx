@@ -41,8 +41,32 @@ export const Route = createFileRoute("/ranks")({
       {
         name: "description",
         content:
-          "Understand the Cyber Tech Hunter ranking hierarchy (E to S Rank), EXP formulas, focus HP, and daily streak MP mechanics.",
+          "Master the Cyber Tech Hunter ranking hierarchy (E to S Rank), EXP formulas, focus HP mechanics, and daily streak progression system.",
       },
+      {
+        name: "keywords",
+        content:
+          "hunter ranks, solo leveling academy, gamified tech learning, developer EXP, tech leveling system",
+      },
+      { property: "og:type", content: "article" },
+      { property: "og:title", content: "Hunter Rank System & Progression Guide — Cyber Tech Academy" },
+      {
+        property: "og:description",
+        content:
+          "Master the Cyber Tech Hunter ranking hierarchy (E to S Rank), EXP formulas, focus HP mechanics, and daily streak progression system.",
+      },
+      { property: "og:url", content: "https://www.cybertechacadamy.com/ranks" },
+      { property: "og:image", content: "https://www.cybertechacadamy.com/logo.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Hunter Rank System & Progression Guide — Cyber Tech Academy" },
+      {
+        name: "twitter:description",
+        content:
+          "Master the Cyber Tech Hunter ranking hierarchy (E to S Rank), EXP formulas, focus HP mechanics, and daily streak progression system.",
+      },
+    ],
+    links: [
+      { rel: "canonical", href: "https://www.cybertechacadamy.com/ranks" },
     ],
   }),
   component: RankExplanationPage,

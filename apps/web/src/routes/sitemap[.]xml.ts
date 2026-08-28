@@ -1,34 +1,58 @@
 import { createFileRoute } from "@tanstack/react-router";
-import type {} from "@tanstack/react-start";
+import { prisma } from "@/server/db";
 
-// TODO: replace with your project URL once a project name or custom domain is set.
-const BASE_URL = "";
+const BASE_URL = "https://www.cybertechacadamy.com";
 
 interface SitemapEntry {
   path: string;
   changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   priority?: string;
+  lastmod?: string;
 }
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const entries: SitemapEntry[] = [
+        const staticEntries: SitemapEntry[] = [
           { path: "/", changefreq: "daily", priority: "1.0" },
-          { path: "/catalog", changefreq: "weekly", priority: "0.9" },
+          { path: "/courses", changefreq: "daily", priority: "0.9" },
           { path: "/pricing", changefreq: "weekly", priority: "0.9" },
-          { path: "/features/student", changefreq: "monthly", priority: "0.7" },
-          { path: "/features/instructor", changefreq: "monthly", priority: "0.7" },
+          { path: "/ranks", changefreq: "weekly", priority: "0.8" },
+          { path: "/faq", changefreq: "weekly", priority: "0.8" },
+          { path: "/support", changefreq: "monthly", priority: "0.7" },
           { path: "/login", changefreq: "yearly", priority: "0.4" },
           { path: "/signup", changefreq: "yearly", priority: "0.5" },
           { path: "/reset-password", changefreq: "yearly", priority: "0.3" },
         ];
 
-        const urls = entries.map((e) =>
+        let dynamicEntries: SitemapEntry[] = [];
+        try {
+          const courses = await prisma.course.findMany({
+            where: { published: true },
+            select: { slug: true, updatedAt: true, createdAt: true },
+          });
+
+          dynamicEntries = courses.map((course: any) => {
+            const dateVal = course?.updatedAt || course?.createdAt;
+            return {
+              path: `/courses/${course.slug}`,
+              changefreq: "weekly" as const,
+              priority: "0.9",
+              lastmod: dateVal ? new Date(dateVal).toISOString().split("T")[0] : undefined,
+            };
+          });
+        } catch (err) {
+          console.error("Failed to generate dynamic sitemap entries:", err);
+        }
+
+        const allEntries = [...staticEntries, ...dynamicEntries];
+
+        const urls = allEntries.map((e) =>
           [
             `  <url>`,
             `    <loc>${BASE_URL}${e.path}</loc>`,
+            e.lastmod ? `    <lastmod>${e.lastmod}</lastmod>` : null,
             e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
             e.priority ? `    <priority>${e.priority}</priority>` : null,
             `  </url>`,
@@ -47,7 +71,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         return new Response(xml, {
           headers: {
             "Content-Type": "application/xml",
-            "Cache-Control": "public, max-age=3600",
+            "Cache-Control": "public, max-age=3600, s-maxage=86400",
           },
         });
       },

@@ -42,7 +42,33 @@ export const Route = createFileRoute("/support")({
     return { faqs, user, tickets };
   },
   head: () => ({
-    meta: [{ title: "Customer Support & Live Help — Cyber Tech Academy" }],
+    meta: [
+      { title: "Student Support & Help Desk — Cyber Tech Academy" },
+      {
+        name: "description",
+        content:
+          "Need help with courses, certification, or payments? Contact Cyber Tech Academy student support or chat with our automated AI Assistant.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:title", content: "Student Support & Help Desk — Cyber Tech Academy" },
+      {
+        property: "og:description",
+        content:
+          "Need help with courses, certification, or payments? Contact Cyber Tech Academy student support or chat with our automated AI Assistant.",
+      },
+      { property: "og:url", content: "https://www.cybertechacadamy.com/support" },
+      { property: "og:image", content: "https://www.cybertechacadamy.com/logo.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Student Support & Help Desk — Cyber Tech Academy" },
+      {
+        name: "twitter:description",
+        content:
+          "Need help with courses, certification, or payments? Contact Cyber Tech Academy student support or chat with our automated AI Assistant.",
+      },
+    ],
+    links: [
+      { rel: "canonical", href: "https://www.cybertechacadamy.com/support" },
+    ],
   }),
   component: SupportPage,
 });

@@ -25,16 +25,105 @@ export const Route = createFileRoute("/courses/$slug")({
   loader: async ({ params }) => {
     return await getCourseFn({ data: { slug: params.slug } });
   },
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${loaderData?.course?.title ?? "Course"} — Cyber Tech Academy` },
-      {
-        name: "description",
-        content:
-          loaderData?.course?.description ?? "View course details and lessons.",
+  head: ({ loaderData, params }) => {
+    const course = (loaderData as any)?.course ?? loaderData;
+    const title = course?.title ? `${course.title} — Cyber Tech Academy` : "Course Details — Cyber Tech Academy";
+    const description = course?.description?.slice(0, 160) || "Master this course with hands-on labs, interactive quizzes, and verified certification at Cyber Tech Academy.";
+    const courseUrl = `https://www.cybertechacadamy.com/courses/${params.slug}`;
+    const imageUrl = course?.thumbnail || "https://www.cybertechacadamy.com/logo.png";
+    const price = course?.price ?? 0;
+
+    const courseSchema = {
+      "@context": "https://schema.org",
+      "@type": "Course",
+      "name": course?.title || "Online Course",
+      "description": course?.description || description,
+      "provider": {
+        "@type": "EducationalOrganization",
+        "name": "Cyber Tech Academy",
+        "sameAs": "https://www.cybertechacadamy.com/"
       },
-    ],
-  }),
+      "image": imageUrl,
+      "offers": [
+        {
+          "@type": "Offer",
+          "category": "Paid",
+          "price": price,
+          "priceCurrency": "INR",
+          "availability": "https://schema.org/InStock",
+          "url": courseUrl
+        }
+      ],
+      "hasCourseInstance": [
+        {
+          "@type": "CourseInstance",
+          "courseMode": "Online",
+          "courseWorkload": "PT10H",
+          "instructor": {
+            "@type": "Person",
+            "name": "Cyber Tech Academy Instructors"
+          }
+        }
+      ],
+      "educationalCredentialAwarded": "Certificate of Completion"
+    };
+
+    const breadcrumbSchema = {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://www.cybertechacadamy.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Courses",
+          "item": "https://www.cybertechacadamy.com/courses"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": course?.title || "Course",
+          "item": courseUrl
+        }
+      ]
+    };
+
+    return {
+      meta: [
+        { title },
+        { name: "description", content: description },
+        // OpenGraph
+        { property: "og:type", content: "article" },
+        { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:url", content: courseUrl },
+        { property: "og:image", content: imageUrl },
+        // Twitter
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: title },
+        { name: "twitter:description", content: description },
+        { name: "twitter:image", content: imageUrl },
+      ],
+      links: [
+        { rel: "canonical", href: courseUrl },
+      ],
+      scripts: [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(courseSchema),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(breadcrumbSchema),
+        },
+      ],
+    };
+  },
   component: CourseDetail,
 });
 

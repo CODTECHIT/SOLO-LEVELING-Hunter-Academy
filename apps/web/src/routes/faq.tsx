@@ -8,9 +8,57 @@ export const Route = createFileRoute("/faq")({
   loader: async () => {
     return await getPublicFaqsFn();
   },
-  head: () => ({
-    meta: [{ title: "FAQ — Cyber Tech Academy" }],
-  }),
+  head: ({ loaderData }) => {
+    const faqs = loaderData?.faqs || [];
+    const faqSchema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": faqs.map((f: any) => ({
+        "@type": "Question",
+        "name": f.question,
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": f.answer,
+        },
+      })),
+    };
+
+    return {
+      meta: [
+        { title: "Frequently Asked Questions — Cyber Tech Academy" },
+        {
+          name: "description",
+          content:
+            "Find answers to frequently asked questions about Cyber Tech Academy courses, certification, Hunter passes, refunds, and learning tracks.",
+        },
+        { property: "og:type", content: "website" },
+        { property: "og:title", content: "Frequently Asked Questions — Cyber Tech Academy" },
+        {
+          property: "og:description",
+          content:
+            "Find answers to frequently asked questions about Cyber Tech Academy courses, certification, Hunter passes, refunds, and learning tracks.",
+        },
+        { property: "og:url", content: "https://www.cybertechacadamy.com/faq" },
+        { property: "og:image", content: "https://www.cybertechacadamy.com/logo.png" },
+        { name: "twitter:card", content: "summary_large_image" },
+        { name: "twitter:title", content: "Frequently Asked Questions — Cyber Tech Academy" },
+        {
+          name: "twitter:description",
+          content:
+            "Find answers to frequently asked questions about Cyber Tech Academy courses, certification, Hunter passes, refunds, and learning tracks.",
+        },
+      ],
+      links: [
+        { rel: "canonical", href: "https://www.cybertechacadamy.com/faq" },
+      ],
+      scripts: faqs.length > 0 ? [
+        {
+          type: "application/ld+json",
+          children: JSON.stringify(faqSchema),
+        },
+      ] : [],
+    };
+  },
   component: FaqPage,
 });
 

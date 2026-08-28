@@ -1,14 +1,13 @@
-User-agent: Googlebot
-Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-User-agent: facebookexternalhit
-Allow: /
-
 User-agent: *
 Allow: /
+Allow: /courses
+Allow: /pricing
+Allow: /ranks
+Allow: /faq
+Allow: /support
+Disallow: /admin
+Disallow: /_admin
+Disallow: /_student
+Disallow: /api/
+
+Sitemap: https://www.cybertechacadamy.com/sitemap.xml
