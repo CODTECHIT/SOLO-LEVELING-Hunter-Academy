@@ -194,13 +194,15 @@ export const issueOrGetCertificateFn = createServerFn({ method: "POST" })
       });
     }
 
-    // Get specific template for course or default template
-    const template = await prisma.certificateTemplate.findFirst({
-      where: {
-        OR: [{ courseId: course.id }, { isDefault: true }],
-      },
-      orderBy: { courseId: "asc" },
+    // 1. Get specific template for course, or fallback to default template
+    let template = await prisma.certificateTemplate.findFirst({
+      where: { courseId: course.id },
     });
+    if (!template) {
+      template = await prisma.certificateTemplate.findFirst({
+        where: { isDefault: true },
+      });
+    }
 
     return {
       certificate,
@@ -231,12 +233,15 @@ export const getCertificateDetailsFn = createServerFn({ method: "GET" })
 
     if (!certificate) throw new Error("Certificate not found");
 
-    const template = await prisma.certificateTemplate.findFirst({
-      where: {
-        OR: [{ courseId: certificate.courseId }, { isDefault: true }],
-      },
-      orderBy: { courseId: "asc" },
+    // 1. Get specific template for course, or fallback to default template
+    let template = await prisma.certificateTemplate.findFirst({
+      where: { courseId: certificate.courseId },
     });
+    if (!template) {
+      template = await prisma.certificateTemplate.findFirst({
+        where: { isDefault: true },
+      });
+    }
 
     return { certificate, template };
   });

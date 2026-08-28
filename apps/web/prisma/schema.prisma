@@ -88,7 +88,7 @@ model Enrollment {
   course      Course    @relation(fields: [courseId], references: [id])
   paymentId   String?
   enrolledAt  DateTime  @default(now())
-  expiresAt   DateTime? // access expiry; null = lifetime
+  expiresAt   DateTime? // access expiry date; defaults to 365 days (1 year)
 
   @@unique([userId, courseId])
   @@index([courseId])

@@ -47,11 +47,11 @@ const faqs = [
     items: [
       {
         q: "What is the difference between Hunter Pass Modules and Full Paths?",
-        a: "Hunter Pass Topic Modules are quick, targeted skill sprints (from ₹399) to learn one specific tool fast. Full Career Masterclasses provide complete end-to-end curriculum, capstones, and lifetime access.",
+        a: "Hunter Pass Topic Modules are quick, targeted skill sprints (from ₹399) to learn one specific tool fast. Full Career Masterclasses provide complete end-to-end curriculum and 365 days (1 full year) of access.",
       },
       {
         q: "How long is my course access valid?",
-        a: "Full Masterclass purchases grant lifetime access including all future updates. Module courses remain active for 1 full year with simple one-click renewal.",
+        a: "All course enrollments remain active for 365 days (1 full year) from date of enrollment with simple one-click renewal.",
       },
       {
         q: "Can I switch between web and mobile devices?",

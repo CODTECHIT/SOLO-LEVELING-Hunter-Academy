@@ -119,7 +119,7 @@ export const passTiers = [
     name: "Premium Monarch",
     tag: "S-Rank Sovereign",
     price: 7999,
-    validity: "Lifetime access",
+    validity: "365 days (1 year) access",
     accent: "lime" as const,
     features: [
       "Everything in Pro",

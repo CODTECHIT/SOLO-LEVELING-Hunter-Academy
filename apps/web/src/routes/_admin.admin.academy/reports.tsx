@@ -125,7 +125,7 @@ function AdminReports() {
       {/* Top Metric Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {card(
-          "Lifetime Revenue",
+          "All-Time Revenue",
           `₹${totalRevenue.toLocaleString("en-IN")}`,
           "text-neon-amber border-neon-amber/50",
           Coins

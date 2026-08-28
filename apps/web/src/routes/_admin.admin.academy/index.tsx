@@ -131,7 +131,7 @@ function AdminDashboard() {
         {/* Only Super Admin can see financial revenue */}
         {stats.isSuperAdmin && (
           <MetricCard
-            title="Lifetime Revenue"
+            title="All-Time Revenue"
             value={`₹${stats.totalRevenue.toLocaleString("en-IN")}`}
             icon={Coins}
             accent="amber"

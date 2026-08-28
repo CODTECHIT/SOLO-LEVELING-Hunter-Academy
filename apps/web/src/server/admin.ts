@@ -897,11 +897,9 @@ export const getAdminStudentsFn = createServerFn({ method: "GET" })
 
     const enrollmentsData = enrollments.map((enrollment) => {
       const { user, course } = enrollment;
-      let status: "Active" | "Inactive" | "Expired" | "Lifetime";
+      let status: "Active" | "Inactive" | "Expired";
       if (enrollment.expiresAt && enrollment.expiresAt <= now) {
         status = "Expired";
-      } else if (!enrollment.expiresAt) {
-        status = "Lifetime";
       } else if (startedKeys.has(`${user.id}:${course.id}`)) {
         status = "Active";
       } else {

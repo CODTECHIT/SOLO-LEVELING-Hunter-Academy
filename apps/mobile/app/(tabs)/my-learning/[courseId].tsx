@@ -25,6 +25,8 @@ import {
   Swords,
   Zap,
   Bot,
+  Maximize2,
+  Minimize2,
 } from "lucide-react-native";
 import * as ScreenOrientation from "expo-screen-orientation";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -332,43 +334,24 @@ export default function LearningPlayerScreen() {
                 surfaceType="textureView"
                 allowsPictureInPicture={false}
                 startsPictureInPictureAutomatically={false}
-                fullscreenOptions={{
-                  enable: true,
-                  orientation: "landscape",
-                }}
-                onFullscreenEnter={async () => {
-                  if (Platform.OS !== "web") {
-                    try {
-                      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
-                    } catch {}
-                    StatusBar.setHidden(true, "fade");
-                  }
-                }}
-                onFullscreenExit={async () => {
-                  if (Platform.OS !== "web") {
-                    try {
-                      await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP);
-                    } catch {}
-                    StatusBar.setHidden(false, "fade");
-                  }
-                }}
+                fullscreenOptions={{ enable: false }}
               />
             )}
 
-            {/* Dynamic Security DRM Watermark (User Anti-Piracy Stamp) */}
-            {user && !isScreenRecordingBlocked && (
-              <View style={styles.watermarkContainer} pointerEvents="none">
-                <Text style={styles.watermarkText}>
-                  HUNTER SECURE • {user.email || user.name || "STUDENT"} • {user.id ? user.id.slice(-6).toUpperCase() : "PROT"}
-                </Text>
-              </View>
-            )}
+            {/* Custom In-Window Fullscreen Trigger (Protected by FLAG_SECURE) */}
+            <TouchableOpacity
+              style={styles.fullscreenToggleBtn}
+              onPress={enterFullscreen}
+              activeOpacity={0.8}
+            >
+              <Maximize2 color="#ffffff" size={16} />
+            </TouchableOpacity>
 
             {/* Active Capture Blackout Layer */}
             {isScreenRecordingBlocked && (
               <View style={styles.blackoutOverlay}>
                 <Text style={styles.blackoutText}>Screen Capture Restricted</Text>
-                <Text style={styles.blackoutSub}>Video feed protected by Academy DRM</Text>
+                <Text style={styles.blackoutSub}>Video feed protected</Text>
               </View>
             )}
           </>
@@ -380,16 +363,9 @@ export default function LearningPlayerScreen() {
         )}
       </View>
 
-      {/* Fullscreen Landscape Modal */}
-      <Modal
-        visible={isFullscreen}
-        transparent={false}
-        animationType="fade"
-        statusBarTranslucent
-        supportedOrientations={["landscape", "landscape-left", "landscape-right"]}
-        onRequestClose={exitFullscreen}
-      >
-        <View style={styles.modalFullscreenContainer}>
+      {/* In-Window Fullscreen Landscape Container (Protected by FLAG_SECURE) */}
+      {isFullscreen && (
+        <View style={styles.videoContainerFullscreen}>
           {youtubeId ? (
             <WebView
               style={styles.video}
@@ -425,27 +401,28 @@ export default function LearningPlayerScreen() {
               surfaceType="textureView"
               allowsPictureInPicture={false}
               startsPictureInPictureAutomatically={false}
+              fullscreenOptions={{ enable: false }}
             />
           )}
 
-          {/* Dynamic Security DRM Watermark in Fullscreen */}
-          {user && !isScreenRecordingBlocked && (
-            <View style={styles.watermarkContainerFullscreen} pointerEvents="none">
-              <Text style={styles.watermarkText}>
-                HUNTER SECURE • {user.email || user.name || "STUDENT"} • {user.id ? user.id.slice(-6).toUpperCase() : "PROT"}
-              </Text>
-            </View>
-          )}
+          {/* Exit Fullscreen Button */}
+          <TouchableOpacity
+            style={styles.exitFullscreenBtn}
+            onPress={exitFullscreen}
+            activeOpacity={0.8}
+          >
+            <Minimize2 color="#ffffff" size={18} />
+          </TouchableOpacity>
 
           {/* Active Capture Blackout in Fullscreen */}
           {isScreenRecordingBlocked && (
             <View style={styles.blackoutOverlay}>
               <Text style={styles.blackoutText}>Screen Capture Restricted</Text>
-              <Text style={styles.blackoutSub}>Video feed protected by Academy DRM</Text>
+              <Text style={styles.blackoutSub}>Video feed protected</Text>
             </View>
           )}
         </View>
-      </Modal>
+      )}
 
       <ScrollView
         style={{ flex: 1 }}
@@ -1234,35 +1211,26 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: "center",
   },
-  watermarkContainer: {
+  fullscreenToggleBtn: {
     position: "absolute",
-    top: 10,
+    bottom: 10,
     right: 10,
-    backgroundColor: "rgba(0, 0, 0, 0.45)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 4,
-    zIndex: 20,
+    backgroundColor: "rgba(0, 0, 0, 0.65)",
+    padding: 6,
+    borderRadius: radii.sm,
+    zIndex: 15,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderColor: "rgba(255, 255, 255, 0.2)",
   },
-  watermarkContainerFullscreen: {
+  exitFullscreenBtn: {
     position: "absolute",
-    top: 24,
-    right: 32,
-    backgroundColor: "rgba(0, 0, 0, 0.55)",
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 6,
-    zIndex: 20,
+    top: 20,
+    right: 24,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    padding: 8,
+    borderRadius: radii.md,
+    zIndex: 25,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.15)",
-  },
-  watermarkText: {
-    fontFamily: fonts.sans,
-    fontSize: 9,
-    fontWeight: "bold",
-    color: "rgba(255, 255, 255, 0.4)",
-    letterSpacing: 0.8,
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
 });

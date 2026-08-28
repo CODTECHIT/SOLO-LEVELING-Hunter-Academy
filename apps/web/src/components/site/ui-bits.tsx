@@ -80,7 +80,7 @@ export function RankBadge({ rank, className }: { rank: string; className?: strin
 
 export function StatusTag({ status }: { status: string }) {
   const tone =
-    status === "Active" || status === "Completed" || status === "Lifetime"
+    status === "Active" || status === "Completed"
       ? "text-neon-lime border-neon-lime/50 bg-neon-lime/10"
       : status === "Banned" || status === "Locked" || status === "Expired"
         ? "text-destructive border-destructive/50 bg-destructive/10"

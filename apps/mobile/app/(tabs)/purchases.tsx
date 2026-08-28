@@ -369,7 +369,7 @@ export default function PurchasesScreen() {
         <tr>
           <td>
             <div style="font-weight: 700;">${escapeHtml(courseTitle)}</div>
-            <div class="course-meta">Full Course Access • Lifetime Curriculum & Official Certificate</div>
+            <div class="course-meta">365 Days Validity (1 Year Access) • Curriculum & Official Certificate</div>
           </td>
           <td style="text-align: center;">1</td>
           <td class="amount-col">₹${amountFormatted} ${currency}</td>

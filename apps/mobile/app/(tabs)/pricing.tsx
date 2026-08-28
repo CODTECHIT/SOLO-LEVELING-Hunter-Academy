@@ -154,8 +154,8 @@ export default function PricingScreen() {
               <Text style={styles.trackPillTextPurple}>FULL MASTERCLASS</Text>
             </View>
             <View style={styles.priceTagBox}>
-              <Text style={styles.priceFromText}>PAY ONCE</Text>
-              <Text style={styles.priceValPurple}>LIFETIME</Text>
+              <Text style={styles.priceFromText}>VALIDITY</Text>
+              <Text style={styles.priceValPurple}>365 DAYS</Text>
             </View>
           </View>
 
@@ -169,7 +169,7 @@ export default function PricingScreen() {
           <View style={styles.featuresList}>
             <View style={styles.featureRow}>
               <CheckCircle2 color={colors.neonPurple} size={16} />
-              <Text style={styles.featureText}>Lifetime Access + All Future Curriculum Updates</Text>
+              <Text style={styles.featureText}>365 Days Full Course Access (1 Year Validity)</Text>
             </View>
             <View style={styles.featureRow}>
               <CheckCircle2 color={colors.neonPurple} size={16} />

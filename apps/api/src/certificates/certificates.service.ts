@@ -100,13 +100,15 @@ export class CertificatesService {
       });
     }
 
-    // Get specific template for course or default template
-    const template = await this.prisma.certificateTemplate.findFirst({
-      where: {
-        OR: [{ courseId: course.id }, { isDefault: true }],
-      },
-      orderBy: { courseId: "asc" },
+    // 1. Get specific template for course, or fallback to default template
+    let template = await this.prisma.certificateTemplate.findFirst({
+      where: { courseId: course.id },
     });
+    if (!template) {
+      template = await this.prisma.certificateTemplate.findFirst({
+        where: { isDefault: true },
+      });
+    }
 
     return {
       certificate,
@@ -144,12 +146,15 @@ export class CertificatesService {
       throw new NotFoundException("Certificate not found or invalid");
     }
 
-    const template = await this.prisma.certificateTemplate.findFirst({
-      where: {
-        OR: [{ courseId: certificate.courseId }, { isDefault: true }],
-      },
-      orderBy: { courseId: "asc" },
+    // 1. Get specific template for course, or fallback to default template
+    let template = await this.prisma.certificateTemplate.findFirst({
+      where: { courseId: certificate.courseId },
     });
+    if (!template) {
+      template = await this.prisma.certificateTemplate.findFirst({
+        where: { isDefault: true },
+      });
+    }
 
     return {
       certificate,

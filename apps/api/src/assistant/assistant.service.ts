@@ -59,9 +59,9 @@ const BUILTIN_KNOWLEDGE_TOPICS: {
     category: "Billing",
   },
   {
-    keywords: ["access", "lifetime", "validity", "expiry", "subscription", "how long"],
+    keywords: ["access", "validity", "expiry", "subscription", "how long", "duration", "365"],
     question: "How long is my course access valid?",
-    answer: "Full Masterclass career paths grant lifetime access with all future updates included. Hunter Pass Topic Modules provide 1 full year of access with easy 1-click renewal.",
+    answer: "All courses and career paths provide 365 days (1 full year) of complete access from the enrollment date, with simple 1-click renewal.",
     category: "Enrollment",
   },
   {

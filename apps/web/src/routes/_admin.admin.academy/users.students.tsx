@@ -345,7 +345,7 @@ function AdminStudents() {
                         {formatDate(enrollment.enrolledAt)}
                       </td>
                       <td className="px-6 py-4 text-xs text-muted-foreground">
-                        {enrollment.expiresAt ? formatDate(enrollment.expiresAt) : "Lifetime"}
+                        {enrollment.expiresAt ? formatDate(enrollment.expiresAt) : "365 Days"}
                       </td>
                       <td className="px-6 py-4 text-xs font-medium text-foreground">
                         {formatAmount(enrollment.amount, enrollment.currency)}
@@ -476,7 +476,7 @@ function AdminStudents() {
                     Expiry Date
                   </span>
                   <span className="text-right text-foreground">
-                    {viewing.expiresAt ? formatDate(viewing.expiresAt) : "Lifetime"}
+                    {viewing.expiresAt ? formatDate(viewing.expiresAt) : "365 Days"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-4">

@@ -109,11 +109,11 @@ const LOCAL_FAQS: {
     answer: "We support instant UPI (Google Pay, PhonePe, Paytm, BHIM), Credit/Debit Cards (Visa, Mastercard, RuPay), Net Banking across 50+ banks, and International Cards via our 256-bit encrypted Razorpay gateway.",
     category: "Billing & Payments",
   },
-  // 8. Lifetime Access vs Hunter Pass
+  // 8. 365 Days Course Validity
   {
-    keywords: ["access", "lifetime", "validity", "expiry", "subscription", "how long", "module", "pass"],
+    keywords: ["access", "validity", "expiry", "duration", "how long", "module", "pass", "365"],
     question: "How long is my course access valid?",
-    answer: "• Full Masterclass Purchases: Grant lifetime access with all future updates included.\n• Hunter Pass Topic Modules: Provide 1 full year of access with simple 1-click renewal.",
+    answer: "• All Course Enrollments: Provide 365 days (1 full year) of complete access from the enrollment date.\n• Simple 1-click renewal is available whenever access expires.",
     category: "Enrollment & Validity",
   },
   // 9. Sync Across Devices
