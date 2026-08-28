@@ -139,6 +139,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "author", content: "Cyber Tech Academy" },
       { name: "theme-color", content: "#050810" },
       { name: "robots", content: "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" },
+      { name: "google-site-verification", content: "eAEvrDQc03lF9SQznzEiBgzxHCHDvsUOU1Nct73S9Rc" },
       // OpenGraph / Facebook
       { property: "og:type", content: "website" },
       { property: "og:site_name", content: "Cyber Tech Academy" },
@@ -176,6 +177,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/logo.png", type: "image/png" },
     ],
     scripts: [
+      {
+        src: "https://www.googletagmanager.com/gtag/js?id=G-1JXW191R9Q",
+        async: true,
+      },
+      {
+        children: `window.dataLayer = window.dataLayer || [];\nfunction gtag(){dataLayer.push(arguments);}\ngtag('js', new Date());\ngtag('config', 'G-1JXW191R9Q');`,
+      },
       {
         type: "application/ld+json",
         children: JSON.stringify({
