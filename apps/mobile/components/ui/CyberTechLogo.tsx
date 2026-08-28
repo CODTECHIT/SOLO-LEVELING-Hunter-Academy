@@ -149,6 +149,7 @@ const styles = StyleSheet.create({
     color: colors.foreground,
     letterSpacing: 2,
     fontWeight: "900",
+    textAlign: "center",
   },
   brandSubtitle: {
     fontFamily: "Rajdhani_700Bold",

@@ -100,8 +100,7 @@ export class AuthService {
     };
   }
 
-  async syncOAuthUser(data: { email: string; name?: string; accessToken: string }) {
-    const normalizedEmail = data.email.trim().toLowerCase();
+  async syncOAuthUser(data: { email?: string; name?: string; accessToken: string }) {
     const { accessToken } = data;
 
     if (!accessToken) {
@@ -110,6 +109,8 @@ export class AuthService {
 
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
     const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+
+    let verifiedEmail = "";
 
     // Cryptographically / server-side verify token with Supabase Auth
     if (supabaseUrl && supabaseAnonKey) {
@@ -126,10 +127,17 @@ export class AuthService {
         }
 
         const supabaseUser: any = await response.json();
-        const verifiedEmail = supabaseUser?.email?.trim().toLowerCase();
+        verifiedEmail = supabaseUser?.email?.trim().toLowerCase();
 
-        if (!verifiedEmail || verifiedEmail !== normalizedEmail) {
-          throw new UnauthorizedException("Token identity does not match requested email address");
+        if (!verifiedEmail) {
+          throw new UnauthorizedException("Could not extract email from OAuth token");
+        }
+
+        if (data.email) {
+          const normalizedEmail = data.email.trim().toLowerCase();
+          if (verifiedEmail !== normalizedEmail) {
+            throw new UnauthorizedException("Token identity does not match requested email address");
+          }
         }
       } catch (err: any) {
         if (err instanceof UnauthorizedException) throw err;
@@ -137,10 +145,14 @@ export class AuthService {
       }
     } else if (process.env.NODE_ENV === "production") {
       throw new UnauthorizedException("OAuth provider configuration is missing in production");
+    } else if (data.email) {
+      verifiedEmail = data.email.trim().toLowerCase();
+    } else {
+       throw new UnauthorizedException("Email is required in local environment");
     }
 
     let user = await this.prisma.user.findUnique({
-      where: { email: normalizedEmail },
+      where: { email: verifiedEmail },
     });
 
     if (!user) {
@@ -150,7 +162,7 @@ export class AuthService {
       );
       user = await this.prisma.user.create({
         data: {
-          email: normalizedEmail,
+          email: verifiedEmail,
           name: data.name || "Hunter",
           password: randomPassword,
           role: "STUDENT",
