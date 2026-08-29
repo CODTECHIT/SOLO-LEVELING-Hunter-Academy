@@ -13,7 +13,7 @@ async function main() {
   console.log("Seeding Database...");
 
   const adminEmail = "admin@cybertech.academy";
-  const rawPassword = "AdminSecure123!";
+  const rawPassword = "Admin111Secure123!";
   const hashedPassword = await bcrypt.hash(rawPassword, 10);
 
   const admin = await prisma.user.upsert({

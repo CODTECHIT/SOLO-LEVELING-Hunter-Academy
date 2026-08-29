@@ -805,21 +805,23 @@ export const getAdminStudentsFn = createServerFn({ method: "GET" })
     const page = data?.page ?? 1;
     const pageSize = data?.pageSize ?? 10;
 
-    // Students only — staff (ADMIN/SUB_ADMIN) are managed on the Staff page.
-    // One row per enrollment, so each course a student has taken gets its own
-    // Enrolled/Expiry/Amount/Status values.
-    const where: Prisma.EnrollmentWhereInput = { user: { role: "STUDENT" } };
+    // Filter students by name/email/phone and optionally by course category
+    const userWhere: Prisma.UserWhereInput = { role: "STUDENT" };
     if (search) {
-      where.user = {
-        role: "STUDENT",
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-        ],
-      };
+      userWhere.OR = [
+        { name: { contains: search, mode: "insensitive" } },
+        { email: { contains: search, mode: "insensitive" } },
+        { phone: { contains: search, mode: "insensitive" } },
+      ];
     }
-    if (categoryId) {
-      where.course = { categoryId };
+    if (categoryId && categoryId !== "ALL") {
+      userWhere.enrollments = {
+        some: {
+          course: {
+            categoryId,
+          },
+        },
+      };
     }
 
     const now = new Date();
@@ -827,33 +829,61 @@ export const getAdminStudentsFn = createServerFn({ method: "GET" })
 
     const [
       total,
-      enrollments,
+      users,
       categories,
+      courses,
       totalStudents,
       activeStudents,
       newThisMonth,
       totalEnrollments,
     ] = await Promise.all([
-      prisma.enrollment.count({ where }),
-      prisma.enrollment.findMany({
-        where,
-        orderBy: { enrolledAt: "desc" },
+      prisma.user.count({ where: userWhere }),
+      prisma.user.findMany({
+        where: userWhere,
+        orderBy: { createdAt: "desc" },
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: {
-          user: { select: { id: true, name: true, email: true, phone: true } },
-          course: {
+          enrollments: {
+            orderBy: { enrolledAt: "desc" },
+            include: {
+              course: {
+                select: {
+                  id: true,
+                  title: true,
+                  categoryId: true,
+                  category: { select: { id: true, name: true } },
+                  lessons: { select: { id: true } },
+                },
+              },
+            },
+          },
+          payments: {
+            orderBy: { createdAt: "desc" },
             select: {
               id: true,
-              title: true,
-              categoryId: true,
-              category: { select: { name: true } },
-              lessons: { select: { id: true } },
+              courseId: true,
+              amount: true,
+              currency: true,
+              status: true,
+              createdAt: true,
+            },
+          },
+          progress: {
+            select: {
+              lessonId: true,
+              progressSeconds: true,
+              completed: true,
+              lesson: { select: { courseId: true } },
             },
           },
         },
       }),
       prisma.category.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+      prisma.course.findMany({
+        orderBy: { title: "asc" },
+        select: { id: true, title: true, price: true },
+      }),
       prisma.user.count({ where: { role: "STUDENT" } }),
       prisma.user.count({
         where: { role: "STUDENT", progress: { some: { progressSeconds: { gt: 0 } } } },
@@ -862,74 +892,147 @@ export const getAdminStudentsFn = createServerFn({ method: "GET" })
       prisma.enrollment.count({ where: { user: { role: "STUDENT" } } }),
     ]);
 
-    // Which student+course pairs have actually started watching (Active vs Inactive),
-    // and what they paid (Payment rows keyed by user+course).
-    const userIds = [...new Set(enrollments.map((e) => e.userId))];
-    const courseIds = [...new Set(enrollments.map((e) => e.courseId))];
-    const startedKeys = new Set<string>();
-    const paymentMap = new Map<string, { amount: number; currency: string; paid: boolean }>();
-    if (userIds.length > 0 && courseIds.length > 0) {
-      const [watched, payments] = await Promise.all([
-        prisma.lessonProgress.findMany({
-          where: { userId: { in: userIds }, lesson: { courseId: { in: courseIds } } },
-          select: { userId: true, progressSeconds: true, lesson: { select: { courseId: true } } },
-        }),
-        prisma.payment.findMany({
-          where: { userId: { in: userIds }, courseId: { in: courseIds } },
-          select: { userId: true, courseId: true, amount: true, currency: true, status: true },
-        }),
-      ]);
-      for (const p of watched) {
-        if (p.progressSeconds > 0) startedKeys.add(`${p.userId}:${p.lesson.courseId}`);
-      }
-      for (const p of payments) {
-        const key = `${p.userId}:${p.courseId}`;
-        const existing = paymentMap.get(key);
-        if (p.status === "PAID" || !existing || !existing.paid) {
-          paymentMap.set(key, {
-            amount: p.amount,
-            currency: p.currency,
-            paid: p.status === "PAID",
-          });
-        }
-      }
-    }
+    const studentsData = users.map((user) => {
+      // Map user enrollments
+      const userEnrollmentItems = user.enrollments.map((enrollment) => {
+        const totalLessons = enrollment.course.lessons?.length ?? 0;
+        const completedLessons = user.progress.filter(
+          (p) => p.lesson?.courseId === enrollment.course.id && p.completed,
+        ).length;
+        const progressSeconds = user.progress
+          .filter((p) => p.lesson?.courseId === enrollment.course.id)
+          .reduce((sum, p) => sum + p.progressSeconds, 0);
 
-    const enrollmentsData = enrollments.map((enrollment) => {
-      const { user, course } = enrollment;
-      let status: "Active" | "Inactive" | "Expired";
-      if (enrollment.expiresAt && enrollment.expiresAt <= now) {
-        status = "Expired";
-      } else if (startedKeys.has(`${user.id}:${course.id}`)) {
-        status = "Active";
+        const payment = user.payments.find((p) => p.courseId === enrollment.course.id && p.status === "PAID") ||
+          user.payments.find((p) => p.courseId === enrollment.course.id);
+
+        let status: "Active" | "Inactive" | "Expired";
+        if (enrollment.expiresAt && enrollment.expiresAt <= now) {
+          status = "Expired";
+        } else if (progressSeconds > 0 || completedLessons > 0) {
+          status = "Active";
+        } else {
+          status = "Inactive";
+        }
+
+        return {
+          id: enrollment.id,
+          enrollmentId: enrollment.id,
+          courseId: enrollment.course.id,
+          title: enrollment.course.title,
+          category: enrollment.course.category?.name || "General",
+          enrolledAt: enrollment.enrolledAt,
+          expiresAt: enrollment.expiresAt,
+          amount: payment?.amount ?? null,
+          currency: payment?.currency ?? "INR",
+          paid: payment?.status === "PAID",
+          status,
+          totalLessons,
+          completedLessons,
+          progressPercent:
+            totalLessons > 0 ? Math.min(100, Math.round((completedLessons / totalLessons) * 100)) : 0,
+        };
+      });
+
+      const totalPaid = user.payments
+        .filter((p) => p.status === "PAID")
+        .reduce((sum, p) => sum + p.amount, 0);
+
+      const hasStudyActivity = user.progress.some((p) => p.progressSeconds > 0 || p.completed);
+      const hasActiveEnrollment = userEnrollmentItems.some(
+        (e) => !e.expiresAt || new Date(e.expiresAt) > now,
+      );
+
+      let overallStatus: "Active" | "Enrolled" | "Registered" | "Expired";
+      if (hasStudyActivity) {
+        overallStatus = "Active";
+      } else if (hasActiveEnrollment) {
+        overallStatus = "Enrolled";
+      } else if (userEnrollmentItems.length > 0) {
+        overallStatus = "Expired";
       } else {
-        status = "Inactive";
+        overallStatus = "Registered";
       }
-      const payment = paymentMap.get(`${user.id}:${course.id}`);
+
+      // First enrollment or fallback
+      const primaryEnrollment = userEnrollmentItems[0] || null;
+
       return {
-        id: enrollment.id,
+        id: user.id,
         studentId: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,
-        course: { id: course.id, title: course.title, category: course.category.name },
-        enrolledAt: enrollment.enrolledAt,
-        expiresAt: enrollment.expiresAt,
-        amount: payment?.paid ? payment.amount : null,
-        currency: payment?.paid ? payment.currency : null,
-        status,
+        createdAt: user.createdAt,
+        lastStudyDate: user.lastStudyDate,
+        currentStreak: user.currentStreak,
+        longestStreak: user.longestStreak,
+        enrollments: userEnrollmentItems,
+        coursesCount: userEnrollmentItems.length,
+        course: primaryEnrollment
+          ? { id: primaryEnrollment.courseId, title: primaryEnrollment.title, category: primaryEnrollment.category }
+          : null,
+        enrolledAt: primaryEnrollment?.enrolledAt ?? null,
+        expiresAt: primaryEnrollment?.expiresAt ?? null,
+        amount: totalPaid > 0 ? totalPaid : primaryEnrollment?.amount ?? null,
+        currency: primaryEnrollment?.currency ?? "INR",
+        status: overallStatus,
       };
     });
 
     return {
-      enrollments: enrollmentsData,
+      students: studentsData,
+      enrollments: studentsData, // Backward compatibility alias
       total,
       page,
       pageSize,
       totalPages: Math.max(1, Math.ceil(total / pageSize)),
       categories,
+      courses,
       metrics: { totalStudents, activeStudents, newThisMonth, totalEnrollments },
     };
+  });
+
+export const adminEnrollStudentFn = createServerFn({ method: "POST" })
+  .validator(
+    z.object({
+      userId: z.string(),
+      courseId: z.string(),
+      expiresInDays: z.number().int().min(1).default(365),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await ensurePermission("users");
+
+    const user = await prisma.user.findFirst({ where: { id: data.userId, role: "STUDENT" } });
+    if (!user) throw new Error("Student not found");
+
+    const course = await prisma.course.findUnique({ where: { id: data.courseId } });
+    if (!course) throw new Error("Course not found");
+
+    const expiresAt = new Date(Date.now() + data.expiresInDays * 24 * 60 * 60 * 1000);
+
+    const existing = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId: data.userId, courseId: data.courseId } },
+    });
+
+    if (existing) {
+      await prisma.enrollment.update({
+        where: { id: existing.id },
+        data: { expiresAt, enrolledAt: new Date() },
+      });
+    } else {
+      await prisma.enrollment.create({
+        data: {
+          userId: data.userId,
+          courseId: data.courseId,
+          enrolledAt: new Date(),
+          expiresAt,
+        },
+      });
+    }
+
+    return { success: true };
   });
 
 export const updateStudentFn = createServerFn({ method: "POST" })
