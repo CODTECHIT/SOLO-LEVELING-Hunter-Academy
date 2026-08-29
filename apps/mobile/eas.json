@@ -22,7 +22,7 @@
         "EXPO_PUBLIC_API_URL": "https://api.cybertechacadamy.com",
         "EXPO_PUBLIC_SUPABASE_URL": "https://nvezyhkrikioxxxlaytq.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52ZXp5aGtyaWtpb3h4eGxheXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1OTc4OTEsImV4cCI6MjEwMTE3Mzg5MX0.orFx_uKR2EALX29lIhAcA0FSnrGWxerT2srLIuscwlQ",
-        "EXPO_PUBLIC_RAZORPAY_KEY_ID": "rzp_test_TTIQzZjWon7wPU",
+        "EXPO_PUBLIC_RAZORPAY_KEY_ID": "rzp_live_TVJTRExay3twx9",
         "EAS_SKIP_AUTO_FINGERPRINT": "1",
         "NODE_OPTIONS": "--max-old-space-size=8192"
       }
@@ -37,7 +37,7 @@
         "EXPO_PUBLIC_API_URL": "https://api.cybertechacadamy.com",
         "EXPO_PUBLIC_SUPABASE_URL": "https://nvezyhkrikioxxxlaytq.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52ZXp5aGtyaWtpb3h4eGxheXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1OTc4OTEsImV4cCI6MjEwMTE3Mzg5MX0.orFx_uKR2EALX29lIhAcA0FSnrGWxerT2srLIuscwlQ",
-        "EXPO_PUBLIC_RAZORPAY_KEY_ID": "rzp_test_TTIQzZjWon7wPU",
+        "EXPO_PUBLIC_RAZORPAY_KEY_ID": "rzp_live_TVJTRExay3twx9",
         "NODE_OPTIONS": "--max-old-space-size=8192"
       }
     }

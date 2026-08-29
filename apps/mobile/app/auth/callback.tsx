@@ -23,7 +23,7 @@ export default function AuthCallbackScreen() {
       try {
         setStatus("Synchronizing Hunter profile...");
         // Prefer the full incoming URL if available, or build from parameters
-        const callbackUrl = url || (typeof window !== "undefined" ? window.location.href : null);
+        const callbackUrl = url || (typeof window !== "undefined" && window.location ? window.location.href : null);
         const result = await handleOAuthUrl(callbackUrl);
 
         if (!isMounted) return;
